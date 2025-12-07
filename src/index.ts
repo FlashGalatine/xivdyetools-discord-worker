@@ -28,6 +28,7 @@ import {
   handlePresetCommand,
 } from './handlers/commands/index.js';
 import { checkRateLimit, formatRateLimitMessage } from './services/rate-limiter.js';
+import { getCollections } from './services/user-storage.js';
 import { handleButtonInteraction } from './handlers/buttons/index.js';
 import { handlePresetRejectionModal, isPresetRejectionModal } from './handlers/modals/index.js';
 import { DyeService, dyeDatabase } from 'xivdyetools-core';
@@ -348,8 +349,21 @@ async function handleAutocomplete(
   const query = (focusedOption?.value as string) || '';
   let choices: Array<{ name: string; value: string }> = [];
 
+  // Handle collection command autocomplete
+  if (commandName === 'collection') {
+    const focusedName = focusedOption?.name;
+
+    // Collection name autocomplete (for add, remove, show, delete, rename subcommands)
+    if (focusedName === 'name') {
+      choices = await getCollectionAutocompleteChoices(interaction, env, query);
+    }
+    // Dye autocomplete (for add/remove subcommands)
+    else if (focusedName === 'dye') {
+      choices = getDyeAutocompleteChoices(query);
+    }
+  }
   // Handle preset command autocomplete
-  if (commandName === 'preset') {
+  else if (commandName === 'preset') {
     const focusedName = focusedOption?.name;
 
     // Preset name autocomplete (for show, vote, moderate subcommands)
@@ -372,6 +386,44 @@ async function handleAutocomplete(
     type: InteractionResponseType.APPLICATION_COMMAND_AUTOCOMPLETE_RESULT,
     data: { choices },
   });
+}
+
+/**
+ * Get collection autocomplete choices for the given query
+ */
+async function getCollectionAutocompleteChoices(
+  interaction: DiscordInteraction,
+  env: Env,
+  query: string
+): Promise<Array<{ name: string; value: string }>> {
+  const userId = interaction.member?.user?.id ?? interaction.user?.id;
+
+  if (!userId) {
+    return [];
+  }
+
+  try {
+    const collections = await getCollections(env.KV, userId);
+
+    if (collections.length === 0) {
+      return [];
+    }
+
+    // Filter collections by query (case-insensitive)
+    const lowerQuery = query.toLowerCase();
+    const filtered = query.length > 0
+      ? collections.filter((c) => c.name.toLowerCase().includes(lowerQuery))
+      : collections;
+
+    // Return up to 25 choices (Discord's maximum)
+    return filtered.slice(0, 25).map((c) => ({
+      name: `${c.name} (${c.dyes.length} dyes)`,
+      value: c.name,
+    }));
+  } catch (error) {
+    console.error('Failed to get collection autocomplete choices:', error);
+    return [];
+  }
 }
 
 /**

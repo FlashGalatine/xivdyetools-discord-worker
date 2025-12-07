@@ -433,6 +433,7 @@ const commands = [
             description: 'Collection name',
             type: OptionType.STRING,
             required: true,
+            autocomplete: true,
           },
         ],
       },
@@ -446,6 +447,7 @@ const commands = [
             description: 'Collection name',
             type: OptionType.STRING,
             required: true,
+            autocomplete: true,
           },
           {
             name: 'dye',
@@ -466,6 +468,7 @@ const commands = [
             description: 'Collection name',
             type: OptionType.STRING,
             required: true,
+            autocomplete: true,
           },
           {
             name: 'dye',
@@ -486,6 +489,7 @@ const commands = [
             description: 'Collection name',
             type: OptionType.STRING,
             required: true,
+            autocomplete: true,
           },
         ],
       },
@@ -504,6 +508,7 @@ const commands = [
             description: 'Current collection name',
             type: OptionType.STRING,
             required: true,
+            autocomplete: true,
           },
           {
             name: 'new_name',
