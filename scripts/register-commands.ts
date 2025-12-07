@@ -399,6 +399,122 @@ const commands = [
       },
     ],
   },
+
+  {
+    name: 'collection',
+    description: 'Manage your dye collections',
+    options: [
+      {
+        name: 'create',
+        description: 'Create a new collection',
+        type: OptionType.SUB_COMMAND,
+        options: [
+          {
+            name: 'name',
+            description: 'Collection name (max 50 characters)',
+            type: OptionType.STRING,
+            required: true,
+          },
+          {
+            name: 'description',
+            description: 'Optional description for the collection',
+            type: OptionType.STRING,
+            required: false,
+          },
+        ],
+      },
+      {
+        name: 'delete',
+        description: 'Delete a collection',
+        type: OptionType.SUB_COMMAND,
+        options: [
+          {
+            name: 'name',
+            description: 'Collection name',
+            type: OptionType.STRING,
+            required: true,
+          },
+        ],
+      },
+      {
+        name: 'add',
+        description: 'Add a dye to a collection',
+        type: OptionType.SUB_COMMAND,
+        options: [
+          {
+            name: 'name',
+            description: 'Collection name',
+            type: OptionType.STRING,
+            required: true,
+          },
+          {
+            name: 'dye',
+            description: 'Dye name or hex color',
+            type: OptionType.STRING,
+            required: true,
+            autocomplete: true,
+          },
+        ],
+      },
+      {
+        name: 'remove',
+        description: 'Remove a dye from a collection',
+        type: OptionType.SUB_COMMAND,
+        options: [
+          {
+            name: 'name',
+            description: 'Collection name',
+            type: OptionType.STRING,
+            required: true,
+          },
+          {
+            name: 'dye',
+            description: 'Dye name',
+            type: OptionType.STRING,
+            required: true,
+            autocomplete: true,
+          },
+        ],
+      },
+      {
+        name: 'show',
+        description: 'Display a collection',
+        type: OptionType.SUB_COMMAND,
+        options: [
+          {
+            name: 'name',
+            description: 'Collection name',
+            type: OptionType.STRING,
+            required: true,
+          },
+        ],
+      },
+      {
+        name: 'list',
+        description: 'List all your collections',
+        type: OptionType.SUB_COMMAND,
+      },
+      {
+        name: 'rename',
+        description: 'Rename a collection',
+        type: OptionType.SUB_COMMAND,
+        options: [
+          {
+            name: 'name',
+            description: 'Current collection name',
+            type: OptionType.STRING,
+            required: true,
+          },
+          {
+            name: 'new_name',
+            description: 'New collection name',
+            type: OptionType.STRING,
+            required: true,
+          },
+        ],
+      },
+    ],
+  },
 ];
 
 // ============================================================================
