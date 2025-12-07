@@ -174,13 +174,20 @@ export async function resolveUserLocale(
 /**
  * Initialize the LocalizationService with a locale
  * Should be called at the start of command handling if translations are needed
+ *
+ * Note: We clear the singleton's state before setting the locale to ensure
+ * clean language switching. This prevents stale locale state from persisting
+ * across requests in Cloudflare Workers isolates.
  */
 export async function initializeLocale(locale: LocaleCode): Promise<void> {
   try {
+    // Clear previous state to ensure clean locale switching
+    LocalizationService.clear();
     await LocalizationService.setLocale(locale);
   } catch (error) {
     console.error('Failed to initialize locale:', error);
     // Fall back to English
+    LocalizationService.clear();
     await LocalizationService.setLocale('en');
   }
 }
