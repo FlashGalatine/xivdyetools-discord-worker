@@ -264,5 +264,80 @@
     "copyHex": "Copier HEX",
     "copyRgb": "Copier RGB",
     "copyHsv": "Copier HSV"
+  },
+  "preset": {
+    "title": "Préréglages communautaires",
+    "notConfigured": "Les préréglages communautaires ne sont pas configurés sur ce bot.",
+    "notFound": "Aucun préréglage correspondant à « {name} » trouvé.",
+    "noPresetsFound": "Aucun préréglage correspondant à vos critères.",
+    "noRandomPreset": "Aucun préréglage trouvé{category}.",
+    "noPendingPresets": "Aucun préréglage en attente de modération.",
+    "notModerator": "Vous n'avez pas la permission d'effectuer des actions de modération.",
+    "missingPresetId": "Veuillez spécifier un ID de préréglage pour cette action.",
+    "missingReason": "Veuillez fournir une raison de rejet.",
+    "list": {
+      "title": "Préréglages communautaires",
+      "description": "Affichage de {count} préréglages{filter}",
+      "filterBy": " filtrés par {category}",
+      "sortedBy": " triés par {sort}",
+      "noPresets": "Aucun préréglage disponible pour le moment.",
+      "useShowHint": "Utilisez `/preset show <nom>` pour voir les détails"
+    },
+    "show": {
+      "title": "Préréglage : {name}",
+      "byAuthor": "par {author}",
+      "votes": "{count} votes",
+      "category": "Catégorie",
+      "tags": "Tags",
+      "dyes": "Teintures",
+      "useVoteHint": "Utilisez `/preset vote` pour soutenir ce préréglage"
+    },
+    "random": {
+      "title": "Préréglage aléatoire",
+      "description": "Voici un préréglage choisi au hasard pour l'inspiration :",
+      "tryAgainHint": "Relancez pour un autre préréglage !"
+    },
+    "submit": {
+      "success": "Votre préréglage **{name}** a été soumis !",
+      "pending": "Il est en attente d'approbation par un modérateur.",
+      "approved": "Il a été automatiquement approuvé et est maintenant en ligne !",
+      "duplicate": "Un préréglage similaire existe déjà : **{name}**",
+      "duplicateVoted": "Votre vote a été ajouté au préréglage existant.",
+      "remaining": "Il vous reste {count} soumissions aujourd'hui.",
+      "invalidDye": "Teinture introuvable : {name}",
+      "needMoreDyes": "Veuillez fournir au moins 2 teintures pour votre préréglage."
+    },
+    "vote": {
+      "added": "Vote ajouté pour **{name}** !",
+      "removed": "Vote retiré de **{name}**.",
+      "newCount": "Nouveau nombre de votes : {count}",
+      "alreadyVoted": "Vous avez déjà voté pour ce préréglage."
+    },
+    "moderate": {
+      "pendingTitle": "Préréglages en attente de modération",
+      "pendingCount": "{count} préréglage(s) en attente de révision",
+      "approved": "Préréglage **{name}** approuvé !",
+      "rejected": "Préréglage **{name}** rejeté.",
+      "statsTitle": "Statistiques de modération",
+      "statsPending": "En attente",
+      "statsApproved": "Approuvés",
+      "statsRejected": "Rejetés",
+      "statsFlagged": "Signalés",
+      "statsLastWeek": "Actions (7j)"
+    },
+    "status": {
+      "pending": "En attente",
+      "approved": "Approuvé",
+      "rejected": "Rejeté",
+      "flagged": "Signalé"
+    },
+    "categories": {
+      "jobs": "Classes FFXIV",
+      "grand-companies": "Grandes Compagnies",
+      "seasons": "Saisons",
+      "events": "Événements FFXIV",
+      "aesthetics": "Esthétique",
+      "community": "Communauté"
+    }
   }
 }

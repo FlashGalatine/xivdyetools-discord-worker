@@ -264,5 +264,80 @@
     "copyHex": "Copy HEX",
     "copyRgb": "Copy RGB",
     "copyHsv": "Copy HSV"
+  },
+  "preset": {
+    "title": "Community Presets",
+    "notConfigured": "Community presets are not configured on this bot.",
+    "notFound": "Could not find a preset matching \"{name}\".",
+    "noPresetsFound": "No presets found matching your criteria.",
+    "noRandomPreset": "No presets found{category}.",
+    "noPendingPresets": "No presets awaiting moderation.",
+    "notModerator": "You don't have permission to perform moderation actions.",
+    "missingPresetId": "Please specify a preset ID for this action.",
+    "missingReason": "Please provide a reason for rejection.",
+    "list": {
+      "title": "Community Presets",
+      "description": "Showing {count} presets{filter}",
+      "filterBy": " filtered by {category}",
+      "sortedBy": " sorted by {sort}",
+      "noPresets": "No presets available yet.",
+      "useShowHint": "Use `/preset show <name>` to view details"
+    },
+    "show": {
+      "title": "Preset: {name}",
+      "byAuthor": "by {author}",
+      "votes": "{count} votes",
+      "category": "Category",
+      "tags": "Tags",
+      "dyes": "Dyes",
+      "useVoteHint": "Use `/preset vote` to support this preset"
+    },
+    "random": {
+      "title": "Random Preset",
+      "description": "Here's a randomly selected preset for inspiration:",
+      "tryAgainHint": "Run again for a different preset!"
+    },
+    "submit": {
+      "success": "Your preset **{name}** has been submitted!",
+      "pending": "It is now awaiting moderator approval.",
+      "approved": "It has been automatically approved and is now live!",
+      "duplicate": "A similar preset already exists: **{name}**",
+      "duplicateVoted": "Your vote has been added to the existing preset.",
+      "remaining": "You have {count} submissions remaining today.",
+      "invalidDye": "Could not find dye: {name}",
+      "needMoreDyes": "Please provide at least 2 dyes for your preset."
+    },
+    "vote": {
+      "added": "Vote added to **{name}**!",
+      "removed": "Vote removed from **{name}**.",
+      "newCount": "New vote count: {count}",
+      "alreadyVoted": "You've already voted for this preset."
+    },
+    "moderate": {
+      "pendingTitle": "Presets Awaiting Moderation",
+      "pendingCount": "{count} preset(s) pending review",
+      "approved": "Preset **{name}** has been approved!",
+      "rejected": "Preset **{name}** has been rejected.",
+      "statsTitle": "Moderation Statistics",
+      "statsPending": "Pending",
+      "statsApproved": "Approved",
+      "statsRejected": "Rejected",
+      "statsFlagged": "Flagged",
+      "statsLastWeek": "Actions (7d)"
+    },
+    "status": {
+      "pending": "Pending",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "flagged": "Flagged"
+    },
+    "categories": {
+      "jobs": "FFXIV Jobs",
+      "grand-companies": "Grand Companies",
+      "seasons": "Seasons",
+      "events": "FFXIV Events",
+      "aesthetics": "Aesthetics",
+      "community": "Community"
+    }
   }
 }

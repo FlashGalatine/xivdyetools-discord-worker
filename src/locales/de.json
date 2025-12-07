@@ -264,5 +264,80 @@
     "copyHex": "HEX kopieren",
     "copyRgb": "RGB kopieren",
     "copyHsv": "HSV kopieren"
+  },
+  "preset": {
+    "title": "Community-Vorlagen",
+    "notConfigured": "Community-Vorlagen sind für diesen Bot nicht konfiguriert.",
+    "notFound": "Keine Vorlage mit dem Namen \"{name}\" gefunden.",
+    "noPresetsFound": "Keine Vorlagen gefunden, die deinen Kriterien entsprechen.",
+    "noRandomPreset": "Keine Vorlagen gefunden{category}.",
+    "noPendingPresets": "Keine Vorlagen warten auf Moderation.",
+    "notModerator": "Du hast keine Berechtigung für Moderationsaktionen.",
+    "missingPresetId": "Bitte gib eine Vorlagen-ID für diese Aktion an.",
+    "missingReason": "Bitte gib einen Ablehnungsgrund an.",
+    "list": {
+      "title": "Community-Vorlagen",
+      "description": "Zeige {count} Vorlagen{filter}",
+      "filterBy": " gefiltert nach {category}",
+      "sortedBy": " sortiert nach {sort}",
+      "noPresets": "Noch keine Vorlagen verfügbar.",
+      "useShowHint": "Verwende `/preset show <Name>` für Details"
+    },
+    "show": {
+      "title": "Vorlage: {name}",
+      "byAuthor": "von {author}",
+      "votes": "{count} Stimmen",
+      "category": "Kategorie",
+      "tags": "Tags",
+      "dyes": "Farbstoffe",
+      "useVoteHint": "Verwende `/preset vote` um diese Vorlage zu unterstützen"
+    },
+    "random": {
+      "title": "Zufällige Vorlage",
+      "description": "Hier ist eine zufällig ausgewählte Vorlage zur Inspiration:",
+      "tryAgainHint": "Führe erneut aus für eine andere Vorlage!"
+    },
+    "submit": {
+      "success": "Deine Vorlage **{name}** wurde eingereicht!",
+      "pending": "Sie wartet nun auf die Genehmigung eines Moderators.",
+      "approved": "Sie wurde automatisch genehmigt und ist jetzt live!",
+      "duplicate": "Eine ähnliche Vorlage existiert bereits: **{name}**",
+      "duplicateVoted": "Deine Stimme wurde der bestehenden Vorlage hinzugefügt.",
+      "remaining": "Du hast heute noch {count} Einreichungen übrig.",
+      "invalidDye": "Farbstoff nicht gefunden: {name}",
+      "needMoreDyes": "Bitte gib mindestens 2 Farbstoffe für deine Vorlage an."
+    },
+    "vote": {
+      "added": "Stimme für **{name}** hinzugefügt!",
+      "removed": "Stimme für **{name}** entfernt.",
+      "newCount": "Neuer Stimmenstand: {count}",
+      "alreadyVoted": "Du hast bereits für diese Vorlage gestimmt."
+    },
+    "moderate": {
+      "pendingTitle": "Vorlagen zur Moderation",
+      "pendingCount": "{count} Vorlage(n) warten auf Überprüfung",
+      "approved": "Vorlage **{name}** wurde genehmigt!",
+      "rejected": "Vorlage **{name}** wurde abgelehnt.",
+      "statsTitle": "Moderationsstatistiken",
+      "statsPending": "Ausstehend",
+      "statsApproved": "Genehmigt",
+      "statsRejected": "Abgelehnt",
+      "statsFlagged": "Markiert",
+      "statsLastWeek": "Aktionen (7T)"
+    },
+    "status": {
+      "pending": "Ausstehend",
+      "approved": "Genehmigt",
+      "rejected": "Abgelehnt",
+      "flagged": "Markiert"
+    },
+    "categories": {
+      "jobs": "FFXIV-Jobs",
+      "grand-companies": "Staatliche Gesellschaften",
+      "seasons": "Jahreszeiten",
+      "events": "FFXIV-Events",
+      "aesthetics": "Ästhetik",
+      "community": "Community"
+    }
   }
 }

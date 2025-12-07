@@ -264,5 +264,80 @@
     "copyHex": "复制HEX",
     "copyRgb": "复制RGB",
     "copyHsv": "复制HSV"
+  },
+  "preset": {
+    "title": "社区预设",
+    "notConfigured": "此机器人未配置社区预设功能。",
+    "notFound": "找不到名为\"{name}\"的预设。",
+    "noPresetsFound": "没有符合条件的预设。",
+    "noRandomPreset": "找不到预设{category}。",
+    "noPendingPresets": "没有待审核的预设。",
+    "notModerator": "您没有执行审核操作的权限。",
+    "missingPresetId": "请指定此操作的预设ID。",
+    "missingReason": "请提供拒绝原因。",
+    "list": {
+      "title": "社区预设",
+      "description": "显示 {count} 个预设{filter}",
+      "filterBy": "（按{category}筛选）",
+      "sortedBy": "（按{sort}排序）",
+      "noPresets": "暂无预设。",
+      "useShowHint": "使用 `/preset show <名称>` 查看详情"
+    },
+    "show": {
+      "title": "预设：{name}",
+      "byAuthor": "作者：{author}",
+      "votes": "{count} 票",
+      "category": "类别",
+      "tags": "标签",
+      "dyes": "染剂",
+      "useVoteHint": "使用 `/preset vote` 支持此预设"
+    },
+    "random": {
+      "title": "随机预设",
+      "description": "这是一个随机选择的预设，供您参考：",
+      "tryAgainHint": "再次运行以获取不同的预设！"
+    },
+    "submit": {
+      "success": "您的预设 **{name}** 已提交！",
+      "pending": "正在等待管理员审核。",
+      "approved": "已自动批准并上线！",
+      "duplicate": "类似的预设已存在：**{name}**",
+      "duplicateVoted": "您的投票已添加到现有预设。",
+      "remaining": "今日剩余提交次数：{count}",
+      "invalidDye": "找不到染剂：{name}",
+      "needMoreDyes": "预设需要至少2种染剂。"
+    },
+    "vote": {
+      "added": "已为 **{name}** 投票！",
+      "removed": "已取消对 **{name}** 的投票。",
+      "newCount": "新投票数：{count}",
+      "alreadyVoted": "您已经为此预设投过票了。"
+    },
+    "moderate": {
+      "pendingTitle": "待审核预设",
+      "pendingCount": "{count} 个预设待审核",
+      "approved": "预设 **{name}** 已批准！",
+      "rejected": "预设 **{name}** 已拒绝。",
+      "statsTitle": "审核统计",
+      "statsPending": "待审核",
+      "statsApproved": "已批准",
+      "statsRejected": "已拒绝",
+      "statsFlagged": "已标记",
+      "statsLastWeek": "操作（7天）"
+    },
+    "status": {
+      "pending": "待审核",
+      "approved": "已批准",
+      "rejected": "已拒绝",
+      "flagged": "已标记"
+    },
+    "categories": {
+      "jobs": "FFXIV职业",
+      "grand-companies": "大国防联军",
+      "seasons": "季节",
+      "events": "FFXIV活动",
+      "aesthetics": "美学",
+      "community": "社区"
+    }
   }
 }
