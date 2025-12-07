@@ -12,3 +12,4 @@ export { handleMatchImageCommand } from './match-image.js';
 export { handleAccessibilityCommand } from './accessibility.js';
 export { handleManualCommand } from './manual.js';
 export { handleComparisonCommand } from './comparison.js';
+export { handleLanguageCommand } from './language.js';

@@ -316,6 +316,44 @@ const commands = [
       },
     ],
   },
+
+  {
+    name: 'language',
+    description: 'Manage your language preference for bot responses',
+    options: [
+      {
+        name: 'set',
+        description: 'Set your preferred language',
+        type: OptionType.SUB_COMMAND,
+        options: [
+          {
+            name: 'locale',
+            description: 'Language to use',
+            type: OptionType.STRING,
+            required: true,
+            choices: [
+              { name: 'English', value: 'en' },
+              { name: '日本語 (Japanese)', value: 'ja' },
+              { name: 'Deutsch (German)', value: 'de' },
+              { name: 'Français (French)', value: 'fr' },
+              { name: '한국어 (Korean)', value: 'ko' },
+              { name: '中文 (Chinese)', value: 'zh' },
+            ],
+          },
+        ],
+      },
+      {
+        name: 'show',
+        description: 'Show your current language setting',
+        type: OptionType.SUB_COMMAND,
+      },
+      {
+        name: 'reset',
+        description: 'Reset to use Discord client language',
+        type: OptionType.SUB_COMMAND,
+      },
+    ],
+  },
 ];
 
 // ============================================================================

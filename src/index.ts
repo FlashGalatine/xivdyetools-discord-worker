@@ -22,6 +22,7 @@ import {
   handleAccessibilityCommand,
   handleManualCommand,
   handleComparisonCommand,
+  handleLanguageCommand,
 } from './handlers/commands/index.js';
 import { checkRateLimit, formatRateLimitMessage } from './services/rate-limiter.js';
 import { DyeService, dyeDatabase } from 'xivdyetools-core';
@@ -182,6 +183,9 @@ async function handleCommand(
     case 'comparison':
       return handleComparisonCommand(interaction, env, ctx);
 
+    case 'language':
+      return handleLanguageCommand(interaction, env, ctx);
+
     default:
       // Command not yet implemented
       return ephemeralResponse(
@@ -288,6 +292,7 @@ interface DiscordInteraction {
   type: number;
   application_id: string;
   token: string;
+  locale?: string; // User's locale (e.g., "en-US", "ja")
   guild_id?: string;
   channel_id?: string;
   member?: {
