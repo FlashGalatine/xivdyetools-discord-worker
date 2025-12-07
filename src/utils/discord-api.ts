@@ -215,3 +215,74 @@ export async function deleteOriginalResponse(
     method: 'DELETE',
   });
 }
+
+/**
+ * Options for sending a message to a channel
+ */
+export interface SendMessageOptions {
+  content?: string;
+  embeds?: DiscordEmbed[];
+  components?: DiscordActionRow[];
+}
+
+/**
+ * Sends a message to a Discord channel.
+ * Requires bot token authentication.
+ *
+ * @param botToken - Discord bot token
+ * @param channelId - Target channel ID
+ * @param options - Message content and options
+ */
+export async function sendMessage(
+  botToken: string,
+  channelId: string,
+  options: SendMessageOptions
+): Promise<Response> {
+  const url = `${DISCORD_API_BASE}/channels/${channelId}/messages`;
+
+  const body: Record<string, unknown> = {};
+  if (options.content) body.content = options.content;
+  if (options.embeds) body.embeds = options.embeds;
+  if (options.components) body.components = options.components;
+
+  return fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bot ${botToken}`,
+    },
+    body: JSON.stringify(body),
+  });
+}
+
+/**
+ * Edits a message in a channel.
+ * Requires bot token authentication.
+ *
+ * @param botToken - Discord bot token
+ * @param channelId - Channel ID containing the message
+ * @param messageId - Message ID to edit
+ * @param options - New message content and options
+ */
+export async function editMessage(
+  botToken: string,
+  channelId: string,
+  messageId: string,
+  options: SendMessageOptions
+): Promise<Response> {
+  const url = `${DISCORD_API_BASE}/channels/${channelId}/messages/${messageId}`;
+
+  const body: Record<string, unknown> = {};
+  if (options.content) body.content = options.content;
+  if (options.embeds) body.embeds = options.embeds;
+  if (options.components) body.components = options.components;
+
+  return fetch(url, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bot ${botToken}`,
+    },
+    body: JSON.stringify(body),
+  });
+}
