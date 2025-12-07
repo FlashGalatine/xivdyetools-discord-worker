@@ -123,8 +123,8 @@ async function handleCommand(
             '`/mixer` - Create color gradients',
             '',
             '**Links:**',
-            '[Web App](https://xiv-colorexplorer.pages.dev)',
-            '[GitHub](https://github.com/your-repo)',
+            '[Web App](https://xivdyetools.projectgalatine.com/)',
+            '[GitHub](https://github.com/FlashGalatine/xivdyetools-discord-worker)',
           ].join('\n'),
           color: 0x5865f2, // Discord Blurple
           footer: {
