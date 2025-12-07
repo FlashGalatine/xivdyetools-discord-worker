@@ -42,8 +42,8 @@ database_id = "e17d68a1-5a44-4c88-b02b-07d053cbe321"
 # Environment Variables (non-sensitive)
 # ============================================================================
 [vars]
-# Discord Application ID - update with your test app ID
-DISCORD_CLIENT_ID = "YOUR_TEST_APP_ID"
+# Discord Application ID (test app)
+DISCORD_CLIENT_ID = "1447108133020369048"
 
 # Presets API URL (existing worker)
 PRESETS_API_URL = "https://xivdyetools-worker.ashejunius.workers.dev"
