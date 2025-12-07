@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2025-12-07
+
+### Added
+
+#### Preset Editing
+- `/preset edit` - Edit your own presets (name, description, dyes, tags)
+- Autocomplete for user's own presets
+- Duplicate dye combination detection
+- Content moderation for edited text
+
+#### Moderation
+- **Revert Button**: New moderation button to revert flagged edits
+- Modal for revert reason input
+- Logs revert actions in moderation log
+
+### Changed
+
+- Updated `/preset` command registration with edit subcommand
+- Added `preset_revert_` button handler
+
+### Files Modified
+- `src/handlers/commands/preset.ts` - Edit subcommand
+- `src/handlers/buttons/preset-moderation.ts` - Revert button handler
+- `src/services/preset-api.ts` - Edit and revert API methods
+- `scripts/register-commands.ts` - Updated command definitions
+
+---
+
 ## [1.0.0] - 2025-12-07
 
 ### Added
