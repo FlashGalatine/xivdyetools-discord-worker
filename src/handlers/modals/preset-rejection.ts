@@ -133,14 +133,16 @@ async function processRejection(
       await editMessage(env.DISCORD_TOKEN, interaction.channel_id, interaction.message.id, {
         embeds: [
           {
-            ...originalEmbed,
             title: `❌ Preset Rejected`,
+            description: originalEmbed.description,
             color: STATUS_DISPLAY.rejected.color,
             fields: [
               ...(originalEmbed.fields || []),
               { name: 'Action', value: `Rejected by ${userName}`, inline: true },
               { name: 'Reason', value: reason, inline: false },
             ],
+            footer: originalEmbed.footer?.text ? { text: originalEmbed.footer.text } : undefined,
+            timestamp: originalEmbed.timestamp,
           },
         ],
         components: [], // Remove buttons
@@ -172,11 +174,15 @@ async function processRejection(
       await editMessage(env.DISCORD_TOKEN, interaction.channel_id, interaction.message.id, {
         embeds: [
           {
-            ...originalEmbed,
+            title: originalEmbed.title,
+            description: originalEmbed.description,
+            color: originalEmbed.color,
             fields: [
               ...(originalEmbed.fields || []),
               { name: 'Error', value: `Failed to reject: ${error}`, inline: false },
             ],
+            footer: originalEmbed.footer?.text ? { text: originalEmbed.footer.text } : undefined,
+            timestamp: originalEmbed.timestamp,
           },
         ],
       });
@@ -185,10 +191,22 @@ async function processRejection(
 }
 
 /**
+ * Modal component structure for type safety
+ */
+type ModalComponents = Array<{
+  type: number;
+  components: Array<{
+    type: number;
+    custom_id: string;
+    value: string;
+  }>;
+}>;
+
+/**
  * Extract a text input value from modal components
  */
 function extractTextInputValue(
-  components: ModalInteraction['data']['components'] | undefined,
+  components: ModalComponents | undefined,
   customId: string
 ): string | undefined {
   if (!components) return undefined;

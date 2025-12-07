@@ -25,10 +25,15 @@ import {
   handleLanguageCommand,
   handleFavoritesCommand,
   handleCollectionCommand,
+  handlePresetCommand,
 } from './handlers/commands/index.js';
 import { checkRateLimit, formatRateLimitMessage } from './services/rate-limiter.js';
 import { handleButtonInteraction } from './handlers/buttons/index.js';
+import { handlePresetRejectionModal, isPresetRejectionModal } from './handlers/modals/index.js';
 import { DyeService, dyeDatabase } from 'xivdyetools-core';
+import * as presetApi from './services/preset-api.js';
+import { sendMessage } from './utils/discord-api.js';
+import { STATUS_DISPLAY, type PresetNotificationPayload } from './types/preset.js';
 
 // Initialize DyeService for autocomplete
 const dyeService = new DyeService(dyeDatabase);
@@ -48,6 +53,112 @@ app.get('/health', (c) => {
     service: 'xivdyetools-discord-worker',
     timestamp: new Date().toISOString(),
   });
+});
+
+/**
+ * Webhook endpoint for preset submissions from web app
+ *
+ * Receives notifications when presets are submitted via the web app.
+ * Posts to moderation channel (if pending) and submission log channel.
+ *
+ * @see PresetNotificationPayload for expected body format
+ */
+app.post('/webhooks/preset-submission', async (c) => {
+  const env = c.env;
+
+  // Verify webhook secret
+  const authHeader = c.req.header('Authorization');
+  const expectedAuth = `Bearer ${env.INTERNAL_WEBHOOK_SECRET}`;
+
+  if (!env.INTERNAL_WEBHOOK_SECRET || authHeader !== expectedAuth) {
+    console.error('Webhook authentication failed');
+    return c.json({ error: 'Unauthorized' }, 401);
+  }
+
+  // Parse payload
+  let payload: PresetNotificationPayload;
+  try {
+    payload = await c.req.json();
+  } catch {
+    return c.json({ error: 'Invalid JSON body' }, 400);
+  }
+
+  if (payload.type !== 'submission' || !payload.preset) {
+    return c.json({ error: 'Invalid payload' }, 400);
+  }
+
+  const { preset } = payload;
+  console.log(`Received preset webhook: ${preset.name} (${preset.id}) from ${preset.source}`);
+
+  // Post to submission log channel (all submissions)
+  if (env.SUBMISSION_LOG_CHANNEL_ID) {
+    const statusIcon = STATUS_DISPLAY[preset.status]?.icon || '📋';
+    const statusColor = STATUS_DISPLAY[preset.status]?.color || 0x5865f2;
+
+    await sendMessage(env.DISCORD_TOKEN, env.SUBMISSION_LOG_CHANNEL_ID, {
+      embeds: [
+        {
+          title: `${statusIcon} New Preset Submission`,
+          description: `**${preset.name}** submitted via ${preset.source === 'web' ? 'Web App' : 'Discord Bot'}`,
+          color: statusColor,
+          fields: [
+            { name: 'Description', value: preset.description, inline: false },
+            { name: 'Category', value: preset.category_id, inline: true },
+            { name: 'Author', value: preset.author_name || 'Unknown', inline: true },
+            { name: 'Status', value: preset.status, inline: true },
+            { name: 'Dyes', value: preset.dyes.length.toString(), inline: true },
+          ],
+          footer: { text: `ID: ${preset.id}` },
+          timestamp: preset.created_at,
+        },
+      ],
+    });
+  }
+
+  // Post to moderation channel if pending
+  if (preset.status === 'pending' && env.MODERATION_CHANNEL_ID) {
+    await sendMessage(env.DISCORD_TOKEN, env.MODERATION_CHANNEL_ID, {
+      embeds: [
+        {
+          title: '🟡 Preset Awaiting Moderation',
+          description: `**${preset.name}**\n\n${preset.description}`,
+          color: STATUS_DISPLAY.pending.color,
+          fields: [
+            { name: 'Category', value: preset.category_id, inline: true },
+            { name: 'Author', value: preset.author_name || 'Unknown', inline: true },
+            { name: 'Source', value: preset.source === 'web' ? 'Web App' : 'Discord', inline: true },
+            { name: 'Dyes', value: preset.dyes.join(', '), inline: false },
+            ...(preset.tags.length > 0 ? [{ name: 'Tags', value: preset.tags.join(', '), inline: false }] : []),
+          ],
+          footer: { text: `ID: ${preset.id}` },
+          timestamp: preset.created_at,
+        },
+      ],
+      components: [
+        {
+          type: 1, // Action Row
+          components: [
+            {
+              type: 2, // Button
+              style: 3, // Success (green)
+              label: 'Approve',
+              emoji: { name: '✅' },
+              custom_id: `preset_approve_${preset.id}`,
+            },
+            {
+              type: 2, // Button
+              style: 4, // Danger (red)
+              label: 'Reject',
+              emoji: { name: '❌' },
+              custom_id: `preset_reject_${preset.id}`,
+            },
+          ],
+        },
+      ],
+    });
+  }
+
+  return c.json({ success: true });
 });
 
 /**
@@ -195,6 +306,9 @@ async function handleCommand(
     case 'collection':
       return handleCollectionCommand(interaction, env, ctx);
 
+    case 'preset':
+      return handlePresetCommand(interaction, env, ctx);
+
     default:
       // Command not yet implemented
       return ephemeralResponse(
@@ -210,10 +324,12 @@ async function handleAutocomplete(
   interaction: DiscordInteraction,
   env: Env
 ): Promise<Response> {
+  const commandName = interaction.data?.name;
   const options = interaction.data?.options || [];
 
   // Find the focused option (the one the user is currently typing in)
   let focusedOption: { name: string; value?: string | number | boolean; focused?: boolean } | undefined;
+  let subcommandName: string | undefined;
 
   // Check top-level options first
   focusedOption = options.find((opt) => opt.focused);
@@ -222,6 +338,7 @@ async function handleAutocomplete(
   if (!focusedOption) {
     for (const opt of options) {
       if (opt.options) {
+        subcommandName = opt.name;
         focusedOption = opt.options.find((subOpt) => subOpt.focused);
         if (focusedOption) break;
       }
@@ -229,15 +346,43 @@ async function handleAutocomplete(
   }
 
   const query = (focusedOption?.value as string) || '';
-
-  // Search for dyes matching the query (excluding Facewear)
   let choices: Array<{ name: string; value: string }> = [];
 
+  // Handle preset command autocomplete
+  if (commandName === 'preset') {
+    const focusedName = focusedOption?.name;
+
+    // Preset name autocomplete (for show, vote, moderate subcommands)
+    if (focusedName === 'name' || focusedName === 'preset' || focusedName === 'preset_id') {
+      // For moderate subcommand, search pending presets
+      const status = subcommandName === 'moderate' ? 'pending' : 'approved';
+      choices = await presetApi.searchPresetsForAutocomplete(env, query, { status });
+    }
+    // Dye autocomplete (for submit subcommand) - falls through to default dye search
+    else if (focusedName?.startsWith('dye')) {
+      choices = getDyeAutocompleteChoices(query);
+    }
+  }
+  // Default: Dye autocomplete for other commands
+  else {
+    choices = getDyeAutocompleteChoices(query);
+  }
+
+  return Response.json({
+    type: InteractionResponseType.APPLICATION_COMMAND_AUTOCOMPLETE_RESULT,
+    data: { choices },
+  });
+}
+
+/**
+ * Get dye autocomplete choices for the given query
+ */
+function getDyeAutocompleteChoices(query: string): Array<{ name: string; value: string }> {
   if (query.length >= 1) {
     const matchingDyes = dyeService.searchByName(query);
 
     // Filter out Facewear dyes and limit to 25 (Discord's maximum)
-    choices = matchingDyes
+    return matchingDyes
       .filter((dye) => dye.category !== 'Facewear')
       .slice(0, 25)
       .map((dye) => ({
@@ -247,7 +392,7 @@ async function handleAutocomplete(
   } else {
     // Show popular/common dyes when no query (excluding Facewear)
     const allDyes = dyeService.getAllDyes();
-    choices = allDyes
+    return allDyes
       .filter((dye) => dye.category !== 'Facewear')
       .slice(0, 25)
       .map((dye) => ({
@@ -255,11 +400,6 @@ async function handleAutocomplete(
         value: dye.name,
       }));
   }
-
-  return Response.json({
-    type: InteractionResponseType.APPLICATION_COMMAND_AUTOCOMPLETE_RESULT,
-    data: { choices },
-  });
 }
 
 /**
@@ -292,11 +432,16 @@ async function handleModal(
   env: Env,
   ctx: ExecutionContext
 ): Promise<Response> {
-  const customId = interaction.data?.custom_id;
+  const customId = interaction.data?.custom_id || '';
   console.log(`Handling modal: ${customId}`);
 
-  // TODO: Implement modal handlers
-  return ephemeralResponse('Modal submissions coming soon!');
+  // Route preset rejection modal
+  if (isPresetRejectionModal(customId)) {
+    return handlePresetRejectionModal(interaction, env, ctx);
+  }
+
+  // Unknown modal
+  return ephemeralResponse('Unknown modal submission.');
 }
 
 /**

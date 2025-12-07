@@ -103,13 +103,15 @@ async function processApproval(
       await editMessage(env.DISCORD_TOKEN, interaction.channel_id, interaction.message.id, {
         embeds: [
           {
-            ...originalEmbed,
             title: `✅ Preset Approved`,
+            description: originalEmbed.description,
             color: STATUS_DISPLAY.approved.color,
             fields: [
               ...(originalEmbed.fields || []),
               { name: 'Action', value: `Approved by ${userName}`, inline: false },
             ],
+            footer: originalEmbed.footer?.text ? { text: originalEmbed.footer.text } : undefined,
+            timestamp: originalEmbed.timestamp,
           },
         ],
         components: [], // Remove buttons
@@ -140,11 +142,15 @@ async function processApproval(
       await editMessage(env.DISCORD_TOKEN, interaction.channel_id, interaction.message.id, {
         embeds: [
           {
-            ...originalEmbed,
+            title: originalEmbed.title,
+            description: originalEmbed.description,
+            color: originalEmbed.color,
             fields: [
               ...(originalEmbed.fields || []),
               { name: 'Error', value: `Failed to approve: ${error}`, inline: false },
             ],
+            footer: originalEmbed.footer?.text ? { text: originalEmbed.footer.text } : undefined,
+            timestamp: originalEmbed.timestamp,
           },
         ],
       });
