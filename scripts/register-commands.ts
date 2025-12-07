@@ -515,6 +515,203 @@ const commands = [
       },
     ],
   },
+
+  // =========================================================================
+  // Phase 4: Community presets
+  // =========================================================================
+  {
+    name: 'preset',
+    description: 'Browse, submit, and vote on community color presets',
+    options: [
+      {
+        name: 'list',
+        description: 'Browse community presets',
+        type: OptionType.SUB_COMMAND,
+        options: [
+          {
+            name: 'category',
+            description: 'Filter by category',
+            type: OptionType.STRING,
+            required: false,
+            choices: [
+              { name: '⚔️ FFXIV Jobs', value: 'jobs' },
+              { name: '🏛️ Grand Companies', value: 'grand-companies' },
+              { name: '🍂 Seasons', value: 'seasons' },
+              { name: '🎉 FFXIV Events', value: 'events' },
+              { name: '🎨 Aesthetics', value: 'aesthetics' },
+              { name: '🌐 Community', value: 'community' },
+            ],
+          },
+          {
+            name: 'sort',
+            description: 'Sort order',
+            type: OptionType.STRING,
+            required: false,
+            choices: [
+              { name: '⭐ Most Popular', value: 'popular' },
+              { name: '🕐 Most Recent', value: 'recent' },
+              { name: '🔤 Alphabetical', value: 'name' },
+            ],
+          },
+        ],
+      },
+      {
+        name: 'show',
+        description: 'Display a specific preset',
+        type: OptionType.SUB_COMMAND,
+        options: [
+          {
+            name: 'name',
+            description: 'Preset name',
+            type: OptionType.STRING,
+            required: true,
+            autocomplete: true,
+          },
+        ],
+      },
+      {
+        name: 'random',
+        description: 'Get a random preset for inspiration',
+        type: OptionType.SUB_COMMAND,
+        options: [
+          {
+            name: 'category',
+            description: 'Filter by category',
+            type: OptionType.STRING,
+            required: false,
+            choices: [
+              { name: '⚔️ FFXIV Jobs', value: 'jobs' },
+              { name: '🏛️ Grand Companies', value: 'grand-companies' },
+              { name: '🍂 Seasons', value: 'seasons' },
+              { name: '🎉 FFXIV Events', value: 'events' },
+              { name: '🎨 Aesthetics', value: 'aesthetics' },
+              { name: '🌐 Community', value: 'community' },
+            ],
+          },
+        ],
+      },
+      {
+        name: 'submit',
+        description: 'Submit a new community preset',
+        type: OptionType.SUB_COMMAND,
+        options: [
+          {
+            name: 'preset_name',
+            description: 'Name for your preset (2-50 characters)',
+            type: OptionType.STRING,
+            required: true,
+          },
+          {
+            name: 'description',
+            description: 'Describe your preset (10-200 characters)',
+            type: OptionType.STRING,
+            required: true,
+          },
+          {
+            name: 'category',
+            description: 'Preset category',
+            type: OptionType.STRING,
+            required: true,
+            choices: [
+              { name: '⚔️ FFXIV Jobs', value: 'jobs' },
+              { name: '🏛️ Grand Companies', value: 'grand-companies' },
+              { name: '🍂 Seasons', value: 'seasons' },
+              { name: '🎉 FFXIV Events', value: 'events' },
+              { name: '🎨 Aesthetics', value: 'aesthetics' },
+              { name: '🌐 Community', value: 'community' },
+            ],
+          },
+          {
+            name: 'dye1',
+            description: 'First dye (required)',
+            type: OptionType.STRING,
+            required: true,
+            autocomplete: true,
+          },
+          {
+            name: 'dye2',
+            description: 'Second dye (required)',
+            type: OptionType.STRING,
+            required: true,
+            autocomplete: true,
+          },
+          {
+            name: 'dye3',
+            description: 'Third dye (optional)',
+            type: OptionType.STRING,
+            required: false,
+            autocomplete: true,
+          },
+          {
+            name: 'dye4',
+            description: 'Fourth dye (optional)',
+            type: OptionType.STRING,
+            required: false,
+            autocomplete: true,
+          },
+          {
+            name: 'dye5',
+            description: 'Fifth dye (optional)',
+            type: OptionType.STRING,
+            required: false,
+            autocomplete: true,
+          },
+          {
+            name: 'tags',
+            description: 'Comma-separated tags (optional, max 10)',
+            type: OptionType.STRING,
+            required: false,
+          },
+        ],
+      },
+      {
+        name: 'vote',
+        description: 'Toggle your vote on a preset',
+        type: OptionType.SUB_COMMAND,
+        options: [
+          {
+            name: 'preset',
+            description: 'Preset to vote on',
+            type: OptionType.STRING,
+            required: true,
+            autocomplete: true,
+          },
+        ],
+      },
+      {
+        name: 'moderate',
+        description: 'Moderation actions (moderators only)',
+        type: OptionType.SUB_COMMAND,
+        options: [
+          {
+            name: 'action',
+            description: 'Action to perform',
+            type: OptionType.STRING,
+            required: true,
+            choices: [
+              { name: '📋 View Pending', value: 'pending' },
+              { name: '✅ Approve', value: 'approve' },
+              { name: '❌ Reject', value: 'reject' },
+              { name: '📊 Statistics', value: 'stats' },
+            ],
+          },
+          {
+            name: 'preset_id',
+            description: 'Preset to moderate (for approve/reject)',
+            type: OptionType.STRING,
+            required: false,
+            autocomplete: true,
+          },
+          {
+            name: 'reason',
+            description: 'Reason for rejection (required for reject)',
+            type: OptionType.STRING,
+            required: false,
+          },
+        ],
+      },
+    ],
+  },
 ];
 
 // ============================================================================
