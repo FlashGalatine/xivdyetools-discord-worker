@@ -13,7 +13,15 @@ import type { Env, InteractionType as IType } from './types/env.js';
 import { InteractionType, InteractionResponseType } from './types/env.js';
 import { verifyDiscordRequest, unauthorizedResponse, badRequestResponse } from './utils/verify.js';
 import { pongResponse, ephemeralResponse, messageResponse } from './utils/response.js';
-import { handleHarmonyCommand, handleDyeCommand, handleMixerCommand, handleMatchCommand, handleManualCommand } from './handlers/commands/index.js';
+import {
+  handleHarmonyCommand,
+  handleDyeCommand,
+  handleMixerCommand,
+  handleMatchCommand,
+  handleMatchImageCommand,
+  handleAccessibilityCommand,
+  handleManualCommand,
+} from './handlers/commands/index.js';
 import { DyeService, dyeDatabase } from 'xivdyetools-core';
 
 // Initialize DyeService for autocomplete
@@ -149,6 +157,12 @@ async function handleCommand(
 
     case 'match':
       return handleMatchCommand(interaction, env, ctx);
+
+    case 'match_image':
+      return handleMatchImageCommand(interaction, env, ctx);
+
+    case 'accessibility':
+      return handleAccessibilityCommand(interaction, env, ctx);
 
     case 'manual':
       return handleManualCommand(interaction, env, ctx);
@@ -291,6 +305,18 @@ interface DiscordInteraction {
         focused?: boolean;
       }>;
     }>;
+    resolved?: {
+      attachments?: Record<string, {
+        id: string;
+        filename: string;
+        size: number;
+        url: string;
+        proxy_url: string;
+        content_type?: string;
+        width?: number;
+        height?: number;
+      }>;
+    };
     custom_id?: string;
     component_type?: number;
     values?: string[];

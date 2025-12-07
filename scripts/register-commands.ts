@@ -204,6 +204,76 @@ const commands = [
     ],
   },
 
+  // =========================================================================
+  // Phase 2: Image processing commands
+  // =========================================================================
+  {
+    name: 'match_image',
+    description: 'Extract colors from an image and find matching FFXIV dyes',
+    options: [
+      {
+        name: 'image',
+        description: 'Image to analyze',
+        type: OptionType.ATTACHMENT,
+        required: true,
+      },
+      {
+        name: 'colors',
+        description: 'Number of colors to extract (1-5)',
+        type: OptionType.INTEGER,
+        required: false,
+        min_value: 1,
+        max_value: 5,
+      },
+    ],
+  },
+
+  {
+    name: 'accessibility',
+    description: 'Check color accessibility for colorblind users or contrast',
+    options: [
+      {
+        name: 'dye',
+        description: 'Primary dye (hex code or dye name)',
+        type: OptionType.STRING,
+        required: true,
+        autocomplete: true,
+      },
+      {
+        name: 'dye2',
+        description: 'Second dye for contrast comparison (optional)',
+        type: OptionType.STRING,
+        required: false,
+        autocomplete: true,
+      },
+      {
+        name: 'dye3',
+        description: 'Third dye for contrast comparison (optional)',
+        type: OptionType.STRING,
+        required: false,
+        autocomplete: true,
+      },
+      {
+        name: 'dye4',
+        description: 'Fourth dye for contrast comparison (optional)',
+        type: OptionType.STRING,
+        required: false,
+        autocomplete: true,
+      },
+      {
+        name: 'vision',
+        description: 'Filter to specific vision type (single dye mode only)',
+        type: OptionType.STRING,
+        required: false,
+        choices: [
+          { name: 'Protanopia (red-blind)', value: 'protanopia' },
+          { name: 'Deuteranopia (green-blind)', value: 'deuteranopia' },
+          { name: 'Tritanopia (blue-blind)', value: 'tritanopia' },
+        ],
+      },
+    ],
+  },
+
   {
     name: 'manual',
     description: 'Show help and usage guide for all commands',
