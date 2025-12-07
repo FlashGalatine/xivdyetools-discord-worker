@@ -16,6 +16,8 @@ import {
   type PresetListResponse,
   type PresetSubmitResponse,
   type PresetSubmission,
+  type PresetEditRequest,
+  type PresetEditResponse,
   type VoteResponse,
   type ModerationStats,
   type ModerationLogEntry,
@@ -280,6 +282,48 @@ export async function deletePreset(
   }
 }
 
+/**
+ * Get all presets owned by a user
+ *
+ * Returns presets in all statuses (pending, approved, rejected)
+ * Sorted by creation date (newest first)
+ */
+export async function getMyPresets(
+  env: Env,
+  userDiscordId: string
+): Promise<CommunityPreset[]> {
+  const response = await request<{ presets: CommunityPreset[]; total: number }>(
+    env,
+    'GET',
+    '/api/v1/presets/mine',
+    { userDiscordId }
+  );
+  return response.presets;
+}
+
+/**
+ * Edit a preset (owner only)
+ *
+ * If name/description changes trigger content moderation and content is flagged,
+ * the preset will be set to 'pending' status with previous values stored for revert.
+ *
+ * @returns Edit response with updated preset and moderation status
+ * @throws PresetAPIError with status 409 if dye combination is duplicate
+ */
+export async function editPreset(
+  env: Env,
+  presetId: string,
+  updates: PresetEditRequest,
+  userDiscordId: string,
+  userName: string
+): Promise<PresetEditResponse> {
+  return request<PresetEditResponse>(env, 'PATCH', `/api/v1/presets/${presetId}`, {
+    body: updates,
+    userDiscordId,
+    userName,
+  });
+}
+
 // ============================================================================
 // Vote Functions
 // ============================================================================
@@ -463,6 +507,37 @@ export async function getModerationHistory(
     { userDiscordId: moderatorId }
   );
   return response.history;
+}
+
+/**
+ * Revert a preset to its previous values (moderators only)
+ *
+ * Used when an edit was flagged by content moderation and the moderator
+ * decides to restore the original content instead of approving the edit.
+ *
+ * @param env - Environment bindings
+ * @param presetId - Preset to revert
+ * @param reason - Reason for reverting (10-200 chars, required for audit trail)
+ * @param moderatorId - Discord ID of the moderator performing the action
+ * @returns Reverted preset
+ * @throws PresetAPIError if preset has no previous values or moderator lacks permission
+ */
+export async function revertPreset(
+  env: Env,
+  presetId: string,
+  reason: string,
+  moderatorId: string
+): Promise<CommunityPreset> {
+  const response = await request<{ success: boolean; preset: CommunityPreset }>(
+    env,
+    'PATCH',
+    `/api/v1/moderation/${presetId}/revert`,
+    {
+      body: { reason },
+      userDiscordId: moderatorId,
+    }
+  );
+  return response.preset;
 }
 
 // ============================================================================

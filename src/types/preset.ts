@@ -62,6 +62,18 @@ export interface CommunityPreset {
   created_at: string;
   /** ISO 8601 last update timestamp */
   updated_at: string;
+  /** Previous values stored when edit was flagged (for revert) */
+  previous_values?: PresetPreviousValues | null;
+}
+
+/**
+ * Previous values stored for revert capability
+ */
+export interface PresetPreviousValues {
+  name: string;
+  description: string;
+  tags: string[];
+  dyes: number[];
 }
 
 /**
@@ -122,6 +134,20 @@ export interface PresetSubmission {
   tags: string[];
 }
 
+/**
+ * Payload for editing an existing preset
+ */
+export interface PresetEditRequest {
+  /** New preset name (2-50 chars) */
+  name?: string;
+  /** New description (10-200 chars) */
+  description?: string;
+  /** New dye IDs (2-5 dyes) */
+  dyes?: number[];
+  /** New tags (0-10 tags, max 30 chars each) */
+  tags?: string[];
+}
+
 // ============================================================================
 // API Response Types
 // ============================================================================
@@ -158,6 +184,26 @@ export interface PresetSubmitResponse {
   moderation_status?: 'approved' | 'pending';
   /** Remaining submissions today */
   remaining_submissions?: number;
+}
+
+/**
+ * Response from editing a preset
+ */
+export interface PresetEditResponse {
+  /** Whether operation succeeded */
+  success: boolean;
+  /** The updated preset */
+  preset?: CommunityPreset;
+  /** Moderation result */
+  moderation_status?: 'approved' | 'pending';
+  /** Duplicate info if dye combination exists */
+  duplicate?: {
+    id: string;
+    name: string;
+    author_name: string | null;
+  };
+  /** Error type for specific handling */
+  error?: string;
 }
 
 /**
@@ -201,7 +247,7 @@ export interface ModerationLogEntry {
   /** Moderator's Discord ID */
   moderator_discord_id: string;
   /** Action taken */
-  action: 'approve' | 'reject' | 'flag' | 'unflag';
+  action: 'approve' | 'reject' | 'flag' | 'unflag' | 'revert';
   /** Optional reason */
   reason: string | null;
   /** ISO 8601 timestamp */
