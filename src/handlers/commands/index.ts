@@ -6,3 +6,4 @@
 
 export { handleHarmonyCommand, getHarmonyTypeChoices } from './harmony.js';
 export { handleDyeCommand } from './dye.js';
+export { handleMixerCommand } from './mixer.js';

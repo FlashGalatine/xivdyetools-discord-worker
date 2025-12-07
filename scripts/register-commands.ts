@@ -176,6 +176,35 @@ const commands = [
   },
 
   {
+    name: 'mixer',
+    description: 'Generate a color gradient between two colors with intermediate dyes',
+    options: [
+      {
+        name: 'start_color',
+        description: 'Starting color: hex (e.g., #FF0000) or dye name',
+        type: OptionType.STRING,
+        required: true,
+        autocomplete: true,
+      },
+      {
+        name: 'end_color',
+        description: 'Ending color: hex (e.g., #0000FF) or dye name',
+        type: OptionType.STRING,
+        required: true,
+        autocomplete: true,
+      },
+      {
+        name: 'steps',
+        description: 'Number of color steps (default: 6)',
+        type: OptionType.INTEGER,
+        required: false,
+        min_value: 2,
+        max_value: 10,
+      },
+    ],
+  },
+
+  {
     name: 'manual',
     description: 'Show help and usage guide for all commands',
   },
