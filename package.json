@@ -22,6 +22,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@cf-wasm/photon": "^0.3.4",
     "@cloudflare/workers-types": "^4.20251205.0",
     "@resvg/resvg-wasm": "^2.6.2",
     "discord-interactions": "^4.4.0",
