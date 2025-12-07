@@ -8,6 +8,7 @@
 import { DyeService, dyeDatabase, ColorService, type Dye } from 'xivdyetools-core';
 import { messageResponse, errorEmbed, hexToDiscordColor } from '../../utils/response.js';
 import { getDyeEmoji } from '../../services/emoji.js';
+import { createCopyButtons } from '../buttons/index.js';
 import type { Env } from '../../types/env.js';
 
 // Initialize DyeService with the database
@@ -223,6 +224,15 @@ function buildSingleMatchResponse(
   matchDesc += `**HSV:** \`${formatHsv(dye.hex)}\`\n`;
   matchDesc += `**Category:** ${dye.category}`;
 
+  // Create copy buttons for the matched dye
+  const rgb = ColorService.hexToRgb(dye.hex);
+  const hsv = ColorService.rgbToHsv(rgb.r, rgb.g, rgb.b);
+  const copyButtons = createCopyButtons(
+    dye.hex,
+    rgb,
+    { h: Math.round(hsv.h), s: Math.round(hsv.s), v: Math.round(hsv.v) }
+  );
+
   return messageResponse({
     embeds: [
       {
@@ -250,6 +260,7 @@ function buildSingleMatchResponse(
         },
       },
     ],
+    components: [copyButtons],
   });
 }
 

@@ -13,6 +13,7 @@
 import { DyeService, dyeDatabase, type Dye } from 'xivdyetools-core';
 import { messageResponse, errorEmbed, hexToDiscordColor } from '../../utils/response.js';
 import { getDyeEmoji } from '../../services/emoji.js';
+import { createCopyButtons } from '../buttons/index.js';
 import type { Env } from '../../types/env.js';
 
 // Initialize DyeService with the database
@@ -208,6 +209,13 @@ function handleInfoSubcommand(
     inline: true,
   });
 
+  // Create copy buttons
+  const copyButtons = createCopyButtons(
+    dye.hex,
+    rgb,
+    { h: Math.round(hsv.h), s: Math.round(hsv.s), v: Math.round(hsv.v) }
+  );
+
   return messageResponse({
     embeds: [
       {
@@ -218,6 +226,7 @@ function handleInfoSubcommand(
         footer: { text: 'XIV Dye Tools' },
       },
     ],
+    components: [copyButtons],
   });
 }
 

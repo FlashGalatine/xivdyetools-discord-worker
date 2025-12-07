@@ -27,6 +27,7 @@ import {
   handleCollectionCommand,
 } from './handlers/commands/index.js';
 import { checkRateLimit, formatRateLimitMessage } from './services/rate-limiter.js';
+import { handleButtonInteraction } from './handlers/buttons/index.js';
 import { DyeService, dyeDatabase } from 'xivdyetools-core';
 
 // Initialize DyeService for autocomplete
@@ -270,10 +271,17 @@ async function handleComponent(
   ctx: ExecutionContext
 ): Promise<Response> {
   const customId = interaction.data?.custom_id;
-  console.log(`Handling component: ${customId}`);
+  const componentType = interaction.data?.component_type;
 
-  // TODO: Implement component handlers
-  return ephemeralResponse('Component interactions coming soon!');
+  console.log(`Handling component: ${customId} (type: ${componentType})`);
+
+  // Buttons have component_type 2
+  if (componentType === 2) {
+    return handleButtonInteraction(interaction, env, ctx);
+  }
+
+  // Select menus and other components
+  return ephemeralResponse('This component type is not yet supported.');
 }
 
 /**
