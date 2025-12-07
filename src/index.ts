@@ -14,6 +14,10 @@ import { InteractionType, InteractionResponseType } from './types/env.js';
 import { verifyDiscordRequest, unauthorizedResponse, badRequestResponse } from './utils/verify.js';
 import { pongResponse, ephemeralResponse, messageResponse } from './utils/response.js';
 import { handleHarmonyCommand } from './handlers/commands/index.js';
+import { DyeService, dyeDatabase } from 'xivdyetools-core';
+
+// Initialize DyeService for autocomplete
+const dyeService = new DyeService(dyeDatabase);
 
 // Create Hono app with environment type
 const app = new Hono<{ Bindings: Env }>();
@@ -152,10 +156,49 @@ async function handleAutocomplete(
   interaction: DiscordInteraction,
   env: Env
 ): Promise<Response> {
-  // TODO: Implement autocomplete
+  const options = interaction.data?.options || [];
+
+  // Find the focused option (the one the user is currently typing in)
+  let focusedOption: { name: string; value?: string | number | boolean; focused?: boolean } | undefined;
+
+  // Check top-level options first
+  focusedOption = options.find((opt) => opt.focused);
+
+  // If not found, check nested options (for subcommands)
+  if (!focusedOption) {
+    for (const opt of options) {
+      if (opt.options) {
+        focusedOption = opt.options.find((subOpt) => subOpt.focused);
+        if (focusedOption) break;
+      }
+    }
+  }
+
+  const query = (focusedOption?.value as string) || '';
+
+  // Search for dyes matching the query
+  let choices: Array<{ name: string; value: string }> = [];
+
+  if (query.length >= 1) {
+    const matchingDyes = dyeService.searchByName(query);
+
+    // Limit to 25 (Discord's maximum for autocomplete)
+    choices = matchingDyes.slice(0, 25).map((dye) => ({
+      name: `${dye.name} (${dye.hex.toUpperCase()})`,
+      value: dye.name,
+    }));
+  } else {
+    // Show popular/common dyes when no query
+    const allDyes = dyeService.getAllDyes();
+    choices = allDyes.slice(0, 25).map((dye) => ({
+      name: `${dye.name} (${dye.hex.toUpperCase()})`,
+      value: dye.name,
+    }));
+  }
+
   return Response.json({
     type: InteractionResponseType.APPLICATION_COMMAND_AUTOCOMPLETE_RESULT,
-    data: { choices: [] },
+    data: { choices },
   });
 }
 

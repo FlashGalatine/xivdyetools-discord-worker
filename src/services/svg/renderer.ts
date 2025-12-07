@@ -12,9 +12,9 @@ let wasmInitialized = false;
 let wasmInitPromise: Promise<void> | null = null;
 
 // WASM binary URL from jsDelivr CDN
-// Using a specific version for stability
+// Using a specific version for stability - matches the npm package version
 const RESVG_WASM_URL =
-  'https://cdn.jsdelivr.net/npm/@anthropic-ai/anthropic-quickstarts-resvg-wasm@0.0.2/resvg.wasm';
+  'https://cdn.jsdelivr.net/npm/@resvg/resvg-wasm@2.6.2/index_bg.wasm';
 
 /**
  * Initializes the WASM module.
