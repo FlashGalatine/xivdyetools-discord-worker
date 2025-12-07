@@ -34,7 +34,7 @@ export interface Env {
   // =========================================================================
 
   /** KV Namespace for rate limiting and user preferences */
-  KV?: KVNamespace;
+  KV: KVNamespace;
 
   /** R2 Bucket for generated images */
   IMAGES?: R2Bucket;

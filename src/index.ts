@@ -22,6 +22,7 @@ import {
   handleAccessibilityCommand,
   handleManualCommand,
 } from './handlers/commands/index.js';
+import { checkRateLimit, formatRateLimitMessage } from './services/rate-limiter.js';
 import { DyeService, dyeDatabase } from 'xivdyetools-core';
 
 // Initialize DyeService for autocomplete
@@ -115,7 +116,17 @@ async function handleCommand(
   ctx: ExecutionContext
 ): Promise<Response> {
   const commandName = interaction.data?.name;
-  console.log(`Handling command: /${commandName}`);
+  const userId = interaction.member?.user?.id ?? interaction.user?.id;
+  console.log(`Handling command: /${commandName} from user ${userId}`);
+
+  // Check rate limit (skip for utility commands)
+  if (userId && commandName && !['about', 'manual'].includes(commandName)) {
+    const rateLimitResult = await checkRateLimit(env.KV, userId, commandName);
+    if (!rateLimitResult.allowed) {
+      console.log(`User ${userId} rate limited for /${commandName}`);
+      return ephemeralResponse(formatRateLimitMessage(rateLimitResult));
+    }
+  }
 
   // TODO: Route to specific command handlers
   // For now, respond with a placeholder message

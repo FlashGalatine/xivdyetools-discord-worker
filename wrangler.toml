@@ -8,11 +8,10 @@ compatibility_flags = ["nodejs_compat"]
 
 # ============================================================================
 # KV Namespace for rate limiting and user preferences
-# Create with: wrangler kv namespace create "DISCORD_BOT_KV"
 # ============================================================================
-# [[kv_namespaces]]
-# binding = "KV"
-# id = "<KV_NAMESPACE_ID>"
+[[kv_namespaces]]
+binding = "KV"
+id = "1fcb7e037ccd4172a47fccd97cf8e753"
 
 # ============================================================================
 # R2 Bucket for generated images (with 1hr expiry)
