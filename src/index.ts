@@ -21,6 +21,7 @@ import {
   handleMatchImageCommand,
   handleAccessibilityCommand,
   handleManualCommand,
+  handleComparisonCommand,
 } from './handlers/commands/index.js';
 import { checkRateLimit, formatRateLimitMessage } from './services/rate-limiter.js';
 import { DyeService, dyeDatabase } from 'xivdyetools-core';
@@ -177,6 +178,9 @@ async function handleCommand(
 
     case 'manual':
       return handleManualCommand(interaction, env, ctx);
+
+    case 'comparison':
+      return handleComparisonCommand(interaction, env, ctx);
 
     default:
       // Command not yet implemented

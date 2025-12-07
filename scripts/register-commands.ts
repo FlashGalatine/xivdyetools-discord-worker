@@ -278,6 +278,44 @@ const commands = [
     name: 'manual',
     description: 'Show help and usage guide for all commands',
   },
+
+  // =========================================================================
+  // Phase 3: Feature parity commands
+  // =========================================================================
+  {
+    name: 'comparison',
+    description: 'Compare 2-4 dyes side-by-side with color analysis',
+    options: [
+      {
+        name: 'dye1',
+        description: 'First dye (hex code or dye name)',
+        type: OptionType.STRING,
+        required: true,
+        autocomplete: true,
+      },
+      {
+        name: 'dye2',
+        description: 'Second dye (hex code or dye name)',
+        type: OptionType.STRING,
+        required: true,
+        autocomplete: true,
+      },
+      {
+        name: 'dye3',
+        description: 'Third dye (optional)',
+        type: OptionType.STRING,
+        required: false,
+        autocomplete: true,
+      },
+      {
+        name: 'dye4',
+        description: 'Fourth dye (optional)',
+        type: OptionType.STRING,
+        required: false,
+        autocomplete: true,
+      },
+    ],
+  },
 ];
 
 // ============================================================================
