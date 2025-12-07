@@ -7,3 +7,5 @@
 export { handleHarmonyCommand, getHarmonyTypeChoices } from './harmony.js';
 export { handleDyeCommand } from './dye.js';
 export { handleMixerCommand } from './mixer.js';
+export { handleMatchCommand } from './match.js';
+export { handleManualCommand } from './manual.js';

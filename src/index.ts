@@ -13,7 +13,7 @@ import type { Env, InteractionType as IType } from './types/env.js';
 import { InteractionType, InteractionResponseType } from './types/env.js';
 import { verifyDiscordRequest, unauthorizedResponse, badRequestResponse } from './utils/verify.js';
 import { pongResponse, ephemeralResponse, messageResponse } from './utils/response.js';
-import { handleHarmonyCommand, handleDyeCommand, handleMixerCommand } from './handlers/commands/index.js';
+import { handleHarmonyCommand, handleDyeCommand, handleMixerCommand, handleMatchCommand, handleManualCommand } from './handlers/commands/index.js';
 import { DyeService, dyeDatabase } from 'xivdyetools-core';
 
 // Initialize DyeService for autocomplete
@@ -146,6 +146,12 @@ async function handleCommand(
 
     case 'mixer':
       return handleMixerCommand(interaction, env, ctx);
+
+    case 'match':
+      return handleMatchCommand(interaction, env, ctx);
+
+    case 'manual':
+      return handleManualCommand(interaction, env, ctx);
 
     default:
       // Command not yet implemented
