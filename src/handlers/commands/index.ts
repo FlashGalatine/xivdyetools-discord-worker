@@ -5,3 +5,4 @@
  */
 
 export { handleHarmonyCommand, getHarmonyTypeChoices } from './harmony.js';
+export { handleDyeCommand } from './dye.js';

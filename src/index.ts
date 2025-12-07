@@ -13,7 +13,7 @@ import type { Env, InteractionType as IType } from './types/env.js';
 import { InteractionType, InteractionResponseType } from './types/env.js';
 import { verifyDiscordRequest, unauthorizedResponse, badRequestResponse } from './utils/verify.js';
 import { pongResponse, ephemeralResponse, messageResponse } from './utils/response.js';
-import { handleHarmonyCommand } from './handlers/commands/index.js';
+import { handleHarmonyCommand, handleDyeCommand } from './handlers/commands/index.js';
 import { DyeService, dyeDatabase } from 'xivdyetools-core';
 
 // Initialize DyeService for autocomplete
@@ -141,6 +141,9 @@ async function handleCommand(
     case 'harmony':
       return handleHarmonyCommand(interaction, env, ctx);
 
+    case 'dye':
+      return handleDyeCommand(interaction, env, ctx);
+
     default:
       // Command not yet implemented
       return ephemeralResponse(
@@ -176,24 +179,30 @@ async function handleAutocomplete(
 
   const query = (focusedOption?.value as string) || '';
 
-  // Search for dyes matching the query
+  // Search for dyes matching the query (excluding Facewear)
   let choices: Array<{ name: string; value: string }> = [];
 
   if (query.length >= 1) {
     const matchingDyes = dyeService.searchByName(query);
 
-    // Limit to 25 (Discord's maximum for autocomplete)
-    choices = matchingDyes.slice(0, 25).map((dye) => ({
-      name: `${dye.name} (${dye.hex.toUpperCase()})`,
-      value: dye.name,
-    }));
+    // Filter out Facewear dyes and limit to 25 (Discord's maximum)
+    choices = matchingDyes
+      .filter((dye) => dye.category !== 'Facewear')
+      .slice(0, 25)
+      .map((dye) => ({
+        name: `${dye.name} (${dye.hex.toUpperCase()})`,
+        value: dye.name,
+      }));
   } else {
-    // Show popular/common dyes when no query
+    // Show popular/common dyes when no query (excluding Facewear)
     const allDyes = dyeService.getAllDyes();
-    choices = allDyes.slice(0, 25).map((dye) => ({
-      name: `${dye.name} (${dye.hex.toUpperCase()})`,
-      value: dye.name,
-    }));
+    choices = allDyes
+      .filter((dye) => dye.category !== 'Facewear')
+      .slice(0, 25)
+      .map((dye) => ({
+        name: `${dye.name} (${dye.hex.toUpperCase()})`,
+        value: dye.name,
+      }));
   }
 
   return Response.json({
