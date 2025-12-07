@@ -354,6 +354,51 @@ const commands = [
       },
     ],
   },
+
+  {
+    name: 'favorites',
+    description: 'Manage your favorite dyes',
+    options: [
+      {
+        name: 'add',
+        description: 'Add a dye to your favorites',
+        type: OptionType.SUB_COMMAND,
+        options: [
+          {
+            name: 'dye',
+            description: 'Dye name or hex color',
+            type: OptionType.STRING,
+            required: true,
+            autocomplete: true,
+          },
+        ],
+      },
+      {
+        name: 'remove',
+        description: 'Remove a dye from your favorites',
+        type: OptionType.SUB_COMMAND,
+        options: [
+          {
+            name: 'dye',
+            description: 'Dye name',
+            type: OptionType.STRING,
+            required: true,
+            autocomplete: true,
+          },
+        ],
+      },
+      {
+        name: 'list',
+        description: 'Show all your favorite dyes',
+        type: OptionType.SUB_COMMAND,
+      },
+      {
+        name: 'clear',
+        description: 'Remove all favorites',
+        type: OptionType.SUB_COMMAND,
+      },
+    ],
+  },
 ];
 
 // ============================================================================

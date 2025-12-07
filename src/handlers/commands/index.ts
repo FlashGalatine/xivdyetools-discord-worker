@@ -13,3 +13,4 @@ export { handleAccessibilityCommand } from './accessibility.js';
 export { handleManualCommand } from './manual.js';
 export { handleComparisonCommand } from './comparison.js';
 export { handleLanguageCommand } from './language.js';
+export { handleFavoritesCommand } from './favorites.js';

@@ -1,0 +1,403 @@
+/**
+ * /favorites Command Handler
+ *
+ * Manages user's favorite dyes using Cloudflare KV storage.
+ * Subcommands: add, remove, list, clear
+ */
+
+import { DyeService, dyeDatabase, type Dye } from 'xivdyetools-core';
+import { ephemeralResponse, successEmbed, errorEmbed, infoEmbed } from '../../utils/response.js';
+import {
+  getFavorites,
+  addFavorite,
+  removeFavorite,
+  clearFavorites,
+  MAX_FAVORITES,
+} from '../../services/user-storage.js';
+import { getDyeEmoji } from '../../services/emoji.js';
+import type { Env } from '../../types/env.js';
+
+// Initialize DyeService
+const dyeService = new DyeService(dyeDatabase);
+
+interface DiscordInteraction {
+  id: string;
+  token: string;
+  application_id: string;
+  member?: {
+    user: {
+      id: string;
+      username: string;
+    };
+  };
+  user?: {
+    id: string;
+    username: string;
+  };
+  data?: {
+    options?: Array<{
+      name: string;
+      type: number;
+      value?: string | number | boolean;
+      options?: Array<{
+        name: string;
+        type: number;
+        value?: string | number | boolean;
+      }>;
+    }>;
+  };
+}
+
+/**
+ * Resolve dye input to a Dye object
+ * Accepts dye name or hex color
+ */
+function resolveDyeInput(input: string): Dye | null {
+  // Try finding by name first
+  const dyes = dyeService.searchByName(input);
+  if (dyes.length > 0) {
+    // Filter out Facewear and return first match
+    const nonFacewear = dyes.filter((d) => d.category !== 'Facewear');
+    return nonFacewear[0] || dyes[0];
+  }
+
+  // Try as hex color - find closest dye
+  if (/^#?[0-9A-Fa-f]{6}$/.test(input)) {
+    const hex = input.startsWith('#') ? input : `#${input}`;
+    return dyeService.findClosestDye(hex);
+  }
+
+  return null;
+}
+
+/**
+ * Handles the /favorites command
+ */
+export async function handleFavoritesCommand(
+  interaction: DiscordInteraction,
+  env: Env,
+  ctx: ExecutionContext
+): Promise<Response> {
+  const userId = interaction.member?.user?.id ?? interaction.user?.id;
+
+  if (!userId) {
+    return ephemeralResponse('Could not identify user.');
+  }
+
+  // Extract subcommand
+  const options = interaction.data?.options || [];
+  const subcommand = options.find((opt) => opt.type === 1); // SUB_COMMAND type
+
+  if (!subcommand) {
+    return ephemeralResponse('Please specify a subcommand: `add`, `remove`, `list`, or `clear`.');
+  }
+
+  switch (subcommand.name) {
+    case 'add':
+      return handleAddFavorite(env, userId, subcommand.options);
+
+    case 'remove':
+      return handleRemoveFavorite(env, userId, subcommand.options);
+
+    case 'list':
+      return handleListFavorites(env, userId);
+
+    case 'clear':
+      return handleClearFavorites(env, userId);
+
+    default:
+      return ephemeralResponse(`Unknown subcommand: ${subcommand.name}`);
+  }
+}
+
+/**
+ * Handle /favorites add <dye>
+ */
+async function handleAddFavorite(
+  env: Env,
+  userId: string,
+  options?: Array<{ name: string; value?: string | number | boolean }>
+): Promise<Response> {
+  const dyeOption = options?.find((opt) => opt.name === 'dye');
+  const dyeInput = dyeOption?.value as string | undefined;
+
+  if (!dyeInput) {
+    return Response.json({
+      type: 4,
+      data: {
+        embeds: [errorEmbed('Missing Dye', 'Please specify a dye to add.')],
+        flags: 64,
+      },
+    });
+  }
+
+  // Resolve the dye
+  const dye = resolveDyeInput(dyeInput);
+  if (!dye) {
+    return Response.json({
+      type: 4,
+      data: {
+        embeds: [
+          errorEmbed(
+            'Dye Not Found',
+            `Could not find a dye matching "${dyeInput}".\n\n` +
+              'Please enter a valid dye name or hex color.'
+          ),
+        ],
+        flags: 64,
+      },
+    });
+  }
+
+  // Add to favorites
+  const result = await addFavorite(env.KV, userId, dye.id);
+
+  if (!result.success) {
+    switch (result.reason) {
+      case 'alreadyExists':
+        return Response.json({
+          type: 4,
+          data: {
+            embeds: [
+              infoEmbed(
+                'Already a Favorite',
+                `**${dye.name}** is already in your favorites.`
+              ),
+            ],
+            flags: 64,
+          },
+        });
+
+      case 'limitReached':
+        return Response.json({
+          type: 4,
+          data: {
+            embeds: [
+              errorEmbed(
+                'Favorites Full',
+                `You've reached the maximum of ${MAX_FAVORITES} favorites.\n\n` +
+                  'Use `/favorites remove` to make room for new ones.'
+              ),
+            ],
+            flags: 64,
+          },
+        });
+
+      default:
+        return Response.json({
+          type: 4,
+          data: {
+            embeds: [
+              errorEmbed(
+                'Failed to Add',
+                'Could not add the dye to your favorites. Please try again later.'
+              ),
+            ],
+            flags: 64,
+          },
+        });
+    }
+  }
+
+  const emoji = getDyeEmoji(dye.id);
+  const emojiStr = emoji ? `${emoji} ` : '';
+
+  return Response.json({
+    type: 4,
+    data: {
+      embeds: [
+        successEmbed(
+          'Favorite Added',
+          `${emojiStr}**${dye.name}** (\`${dye.hex.toUpperCase()}\`) has been added to your favorites.`
+        ),
+      ],
+      flags: 64,
+    },
+  });
+}
+
+/**
+ * Handle /favorites remove <dye>
+ */
+async function handleRemoveFavorite(
+  env: Env,
+  userId: string,
+  options?: Array<{ name: string; value?: string | number | boolean }>
+): Promise<Response> {
+  const dyeOption = options?.find((opt) => opt.name === 'dye');
+  const dyeInput = dyeOption?.value as string | undefined;
+
+  if (!dyeInput) {
+    return Response.json({
+      type: 4,
+      data: {
+        embeds: [errorEmbed('Missing Dye', 'Please specify a dye to remove.')],
+        flags: 64,
+      },
+    });
+  }
+
+  // Resolve the dye
+  const dye = resolveDyeInput(dyeInput);
+  if (!dye) {
+    return Response.json({
+      type: 4,
+      data: {
+        embeds: [
+          errorEmbed('Dye Not Found', `Could not find a dye matching "${dyeInput}".`),
+        ],
+        flags: 64,
+      },
+    });
+  }
+
+  // Remove from favorites
+  const removed = await removeFavorite(env.KV, userId, dye.id);
+
+  if (!removed) {
+    return Response.json({
+      type: 4,
+      data: {
+        embeds: [
+          infoEmbed(
+            'Not a Favorite',
+            `**${dye.name}** is not in your favorites.`
+          ),
+        ],
+        flags: 64,
+      },
+    });
+  }
+
+  const emoji = getDyeEmoji(dye.id);
+  const emojiStr = emoji ? `${emoji} ` : '';
+
+  return Response.json({
+    type: 4,
+    data: {
+      embeds: [
+        successEmbed(
+          'Favorite Removed',
+          `${emojiStr}**${dye.name}** has been removed from your favorites.`
+        ),
+      ],
+      flags: 64,
+    },
+  });
+}
+
+/**
+ * Handle /favorites list
+ */
+async function handleListFavorites(env: Env, userId: string): Promise<Response> {
+  const favoriteIds = await getFavorites(env.KV, userId);
+
+  if (favoriteIds.length === 0) {
+    return Response.json({
+      type: 4,
+      data: {
+        embeds: [
+          infoEmbed(
+            'No Favorites',
+            "You don't have any favorite dyes yet.\n\n" +
+              'Use `/favorites add <dye>` to add some!'
+          ),
+        ],
+        flags: 64,
+      },
+    });
+  }
+
+  // Get dye details for each favorite
+  const dyes = favoriteIds
+    .map((id) => dyeService.getDyeById(id))
+    .filter((dye): dye is Dye => dye !== null);
+
+  // Build list with emojis
+  const dyeList = dyes.map((dye, index) => {
+    const emoji = getDyeEmoji(dye.id);
+    const emojiStr = emoji ? `${emoji} ` : '';
+    return `${index + 1}. ${emojiStr}**${dye.name}** (\`${dye.hex.toUpperCase()}\`) - ${dye.category}`;
+  });
+
+  // Group by category for summary
+  const categoryCount = dyes.reduce((acc, dye) => {
+    acc[dye.category] = (acc[dye.category] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const categorySummary = Object.entries(categoryCount)
+    .map(([cat, count]) => `${cat}: ${count}`)
+    .join(' • ');
+
+  return Response.json({
+    type: 4,
+    data: {
+      embeds: [
+        {
+          title: `Your Favorites (${dyes.length}/${MAX_FAVORITES})`,
+          description: dyeList.join('\n'),
+          color: 0x5865f2,
+          footer: {
+            text: categorySummary,
+          },
+        },
+      ],
+      flags: 64,
+    },
+  });
+}
+
+/**
+ * Handle /favorites clear
+ */
+async function handleClearFavorites(env: Env, userId: string): Promise<Response> {
+  // Get current count for confirmation message
+  const favorites = await getFavorites(env.KV, userId);
+  const count = favorites.length;
+
+  if (count === 0) {
+    return Response.json({
+      type: 4,
+      data: {
+        embeds: [
+          infoEmbed(
+            'No Favorites',
+            "You don't have any favorites to clear."
+          ),
+        ],
+        flags: 64,
+      },
+    });
+  }
+
+  const success = await clearFavorites(env.KV, userId);
+
+  if (!success) {
+    return Response.json({
+      type: 4,
+      data: {
+        embeds: [
+          errorEmbed(
+            'Failed to Clear',
+            'Could not clear your favorites. Please try again later.'
+          ),
+        ],
+        flags: 64,
+      },
+    });
+  }
+
+  return Response.json({
+    type: 4,
+    data: {
+      embeds: [
+        successEmbed(
+          'Favorites Cleared',
+          `Successfully removed ${count} dye${count !== 1 ? 's' : ''} from your favorites.`
+        ),
+      ],
+      flags: 64,
+    },
+  });
+}

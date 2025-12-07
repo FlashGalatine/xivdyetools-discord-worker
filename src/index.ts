@@ -23,6 +23,7 @@ import {
   handleManualCommand,
   handleComparisonCommand,
   handleLanguageCommand,
+  handleFavoritesCommand,
 } from './handlers/commands/index.js';
 import { checkRateLimit, formatRateLimitMessage } from './services/rate-limiter.js';
 import { DyeService, dyeDatabase } from 'xivdyetools-core';
@@ -185,6 +186,9 @@ async function handleCommand(
 
     case 'language':
       return handleLanguageCommand(interaction, env, ctx);
+
+    case 'favorites':
+      return handleFavoritesCommand(interaction, env, ctx);
 
     default:
       // Command not yet implemented
