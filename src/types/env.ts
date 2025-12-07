@@ -19,6 +19,22 @@ export interface Env {
   /** Shared secret for authenticating with the Presets API */
   BOT_API_SECRET?: string;
 
+  /** Shared secret for incoming webhook notifications */
+  INTERNAL_WEBHOOK_SECRET?: string;
+
+  // =========================================================================
+  // Moderation Configuration (set via wrangler secret put)
+  // =========================================================================
+
+  /** Comma-separated Discord user IDs who can moderate presets */
+  MODERATOR_IDS?: string;
+
+  /** Discord channel ID for moderation queue (pending presets) */
+  MODERATION_CHANNEL_ID?: string;
+
+  /** Discord channel ID for submission logs (all presets) */
+  SUBMISSION_LOG_CHANNEL_ID?: string;
+
   // =========================================================================
   // Variables (from wrangler.toml [vars])
   // =========================================================================
