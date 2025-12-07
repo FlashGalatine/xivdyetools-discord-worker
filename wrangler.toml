@@ -1,0 +1,67 @@
+# XIV Dye Tools Discord Bot - Cloudflare Workers
+# See: https://developers.cloudflare.com/workers/wrangler/configuration/
+
+name = "xivdyetools-discord-worker"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
+
+# ============================================================================
+# KV Namespace for rate limiting and user preferences
+# Create with: wrangler kv namespace create "DISCORD_BOT_KV"
+# ============================================================================
+# [[kv_namespaces]]
+# binding = "KV"
+# id = "<KV_NAMESPACE_ID>"
+
+# ============================================================================
+# R2 Bucket for generated images (with 1hr expiry)
+# Create with: wrangler r2 bucket create xivdyetools-bot-images
+# ============================================================================
+# [[r2_buckets]]
+# binding = "IMAGES"
+# bucket_name = "xivdyetools-bot-images"
+
+# ============================================================================
+# R2 Bucket for static assets (fonts)
+# Can share with existing assets bucket if available
+# ============================================================================
+# [[r2_buckets]]
+# binding = "ASSETS"
+# bucket_name = "xivdyetools-assets"
+
+# ============================================================================
+# D1 Database (reuse existing presets database)
+# ============================================================================
+[[d1_databases]]
+binding = "DB"
+database_name = "xivdyetools-presets"
+database_id = "e17d68a1-5a44-4c88-b02b-07d053cbe321"
+
+# ============================================================================
+# Environment Variables (non-sensitive)
+# ============================================================================
+[vars]
+# Discord Application ID - update with your test app ID
+DISCORD_CLIENT_ID = "YOUR_TEST_APP_ID"
+
+# Presets API URL (existing worker)
+PRESETS_API_URL = "https://xivdyetools-worker.ashejunius.workers.dev"
+
+# ============================================================================
+# Secrets (set via wrangler secret put):
+# - DISCORD_TOKEN
+# - DISCORD_PUBLIC_KEY
+# - BOT_API_SECRET (for presets API auth)
+# ============================================================================
+
+# ============================================================================
+# Production Environment
+# ============================================================================
+[env.production]
+name = "xivdyetools-discord-worker"
+
+[env.production.vars]
+# Production Discord Application ID
+DISCORD_CLIENT_ID = "1433508594426445878"
+PRESETS_API_URL = "https://xivdyetools-worker.ashejunius.workers.dev"

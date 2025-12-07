@@ -1,0 +1,12 @@
+# Local Development Secrets
+# Copy this file to .dev.vars and fill in your values
+# This file is used by `wrangler dev` for local development
+
+# Discord Bot Token (from Discord Developer Portal > Bot > Token)
+DISCORD_TOKEN=your_bot_token_here
+
+# Discord Application Public Key (from Discord Developer Portal > General Information)
+DISCORD_PUBLIC_KEY=your_public_key_here
+
+# Shared secret for Presets API authentication
+BOT_API_SECRET=your_api_secret_here
