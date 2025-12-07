@@ -77,29 +77,48 @@ function resolveColorInput(input: string): { hex: string; name?: string; id?: nu
 }
 
 /**
+ * Filters out Facewear dyes (they have generic names like "Red", "Blue")
+ */
+function excludeFacewear(dyes: Dye[]): Dye[] {
+  return dyes.filter((dye) => dye.category !== 'Facewear');
+}
+
+/**
  * Gets harmony dyes based on the harmony type
  */
 function getHarmonyDyes(hex: string, type: HarmonyType): Dye[] {
+  let dyes: Dye[];
+
   switch (type) {
     case 'triadic':
-      return dyeService.findTriadicDyes(hex);
+      dyes = dyeService.findTriadicDyes(hex);
+      break;
     case 'complementary': {
       const comp = dyeService.findComplementaryPair(hex);
-      return comp ? [comp] : [];
+      dyes = comp ? [comp] : [];
+      break;
     }
     case 'analogous':
-      return dyeService.findAnalogousDyes(hex, 30);
+      dyes = dyeService.findAnalogousDyes(hex, 30);
+      break;
     case 'split-complementary':
-      return dyeService.findSplitComplementaryDyes(hex);
+      dyes = dyeService.findSplitComplementaryDyes(hex);
+      break;
     case 'tetradic':
-      return dyeService.findTetradicDyes(hex);
+      dyes = dyeService.findTetradicDyes(hex);
+      break;
     case 'square':
-      return dyeService.findSquareDyes(hex);
+      dyes = dyeService.findSquareDyes(hex);
+      break;
     case 'monochromatic':
-      return dyeService.findMonochromaticDyes(hex, 5);
+      dyes = dyeService.findMonochromaticDyes(hex, 5);
+      break;
     default:
-      return dyeService.findTriadicDyes(hex);
+      dyes = dyeService.findTriadicDyes(hex);
   }
+
+  // Filter out Facewear dyes (generic names like "Red", "Blue")
+  return excludeFacewear(dyes);
 }
 
 /**
@@ -196,8 +215,8 @@ async function processHarmonyCommand(
       baseName: baseName || baseHex.toUpperCase(),
       harmonyType,
       dyes: dyesForWheel,
-      width: 400,
-      height: 400,
+      width: 600,
+      height: 600,
     });
 
     // Render to PNG

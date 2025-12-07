@@ -96,7 +96,12 @@ export function generateHarmonyWheel(options: HarmonyWheelOptions): string {
   const centerX = width / 2;
   const centerY = height / 2;
   const wheelRadius = Math.min(width, height) / 2 - 40;
-  const markerRadius = 18;
+  const markerRadius = 20;
+
+  // Inner radius ratio - larger = thinner wheel
+  const innerRadiusRatio = 0.55;
+  // Position markers in the middle of the ring
+  const markerRadiusRatio = (1 + innerRadiusRatio) / 2; // 0.775
 
   const elements: string[] = [];
 
@@ -104,11 +109,11 @@ export function generateHarmonyWheel(options: HarmonyWheelOptions): string {
   elements.push(rect(0, 0, width, height, THEME.background, { rx: 12 }));
 
   // Generate the filled color wheel (like 1.x)
-  elements.push(generateFilledColorWheel(centerX, centerY, wheelRadius));
+  elements.push(generateFilledColorWheel(centerX, centerY, wheelRadius, innerRadiusRatio));
 
   // Dark center circle
   elements.push(
-    circle(centerX, centerY, wheelRadius * 0.35, THEME.background, {
+    circle(centerX, centerY, wheelRadius * innerRadiusRatio, THEME.background, {
       stroke: THEME.border,
       strokeWidth: 1,
     })
@@ -121,8 +126,8 @@ export function generateHarmonyWheel(options: HarmonyWheelOptions): string {
   // Base color line
   const baseAngle = baseHue - 90; // -90 to start from top
   const baseRad = (baseAngle * Math.PI) / 180;
-  const baseX = centerX + Math.cos(baseRad) * wheelRadius * 0.7;
-  const baseY = centerY + Math.sin(baseRad) * wheelRadius * 0.7;
+  const baseX = centerX + Math.cos(baseRad) * wheelRadius * markerRadiusRatio;
+  const baseY = centerY + Math.sin(baseRad) * wheelRadius * markerRadiusRatio;
 
   elements.push(
     line(centerX, centerY, baseX, baseY, '#ffffff', 2, { opacity: 0.6 })
@@ -133,8 +138,8 @@ export function generateHarmonyWheel(options: HarmonyWheelOptions): string {
     const dyeHue = getHueFromHex(dye.hex);
     const dyeAngle = dyeHue - 90;
     const dyeRad = (dyeAngle * Math.PI) / 180;
-    const dyeX = centerX + Math.cos(dyeRad) * wheelRadius * 0.7;
-    const dyeY = centerY + Math.sin(dyeRad) * wheelRadius * 0.7;
+    const dyeX = centerX + Math.cos(dyeRad) * wheelRadius * markerRadiusRatio;
+    const dyeY = centerY + Math.sin(dyeRad) * wheelRadius * markerRadiusRatio;
 
     elements.push(
       line(centerX, centerY, dyeX, dyeY, '#ffffff', 2, { opacity: 0.6 })
@@ -154,8 +159,8 @@ export function generateHarmonyWheel(options: HarmonyWheelOptions): string {
     const dyeHue = getHueFromHex(dye.hex);
     const dyeAngle = dyeHue - 90;
     const dyeRad = (dyeAngle * Math.PI) / 180;
-    const dyeX = centerX + Math.cos(dyeRad) * wheelRadius * 0.7;
-    const dyeY = centerY + Math.sin(dyeRad) * wheelRadius * 0.7;
+    const dyeX = centerX + Math.cos(dyeRad) * wheelRadius * markerRadiusRatio;
+    const dyeY = centerY + Math.sin(dyeRad) * wheelRadius * markerRadiusRatio;
 
     elements.push(
       circle(dyeX, dyeY, markerRadius, dye.hex, {
@@ -174,12 +179,13 @@ export function generateHarmonyWheel(options: HarmonyWheelOptions): string {
 function generateFilledColorWheel(
   cx: number,
   cy: number,
-  radius: number
+  radius: number,
+  innerRadiusRatio: number = 0.55
 ): string {
   const segments: string[] = [];
   const segmentCount = 72; // More segments for smoother gradient
   const segmentAngle = 360 / segmentCount;
-  const innerRadius = radius * 0.35;
+  const innerRadius = radius * innerRadiusRatio;
 
   for (let i = 0; i < segmentCount; i++) {
     const startAngle = i * segmentAngle;
