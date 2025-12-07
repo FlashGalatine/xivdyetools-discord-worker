@@ -33,10 +33,13 @@
     "missingInput": "Please provide a color (hex code or dye name).",
     "missingQuery": "Please provide a search term.",
     "missingName": "Please provide a dye name.",
+    "missingSubcommand": "Please specify a subcommand.",
+    "unknownSubcommand": "Unknown subcommand: {name}",
     "noMatchFound": "Could not find any matching dyes in the database.",
     "noDyesAvailable": "No dyes available in the database.",
     "failedToSave": "Could not save your preference. Please try again later.",
-    "failedToReset": "Could not clear your preference. Please try again later."
+    "failedToReset": "Could not clear your preference. Please try again later.",
+    "generationFailed": "An error occurred while generating the visualization. Please try again later."
   },
   "quality": {
     "perfect": "Perfect",
@@ -165,13 +168,25 @@
     "fails": "Fail"
   },
   "accessibility": {
-    "title": "Accessibility Check",
+    "title": "Color Vision Accessibility",
     "normalVision": "Normal Vision",
-    "protanopia": "Protanopia (Red-Blind)",
-    "deuteranopia": "Deuteranopia (Green-Blind)",
-    "tritanopia": "Tritanopia (Blue-Blind)",
+    "protanopia": "Protanopia",
+    "deuteranopia": "Deuteranopia",
+    "tritanopia": "Tritanopia",
+    "protanopiaDesc": "Reduced sensitivity to red light (~1% of males)",
+    "deuteranopiaDesc": "Reduced sensitivity to green light (~1% of males)",
+    "tritanopiaDesc": "Reduced sensitivity to blue light (rare)",
+    "description": "This visualization shows how the dye appears to people with different types of color vision deficiency:",
     "simulatedAppearance": "Simulated Appearance",
-    "contrastAnalysis": "Contrast Analysis"
+    "simulationMethod": "Brettel 1997 colorblind simulation",
+    "contrastAnalysis": "WCAG Contrast Analysis",
+    "contrastTitle": "Contrast Comparison",
+    "comparing": "Comparing {count} dyes",
+    "matrixDescription": "The matrix shows WCAG contrast ratios between each pair of dyes:",
+    "wcagAAADesc": "Excellent for all text sizes",
+    "wcagAADesc": "Acceptable for normal text",
+    "wcagFailDesc": "May be difficult to distinguish",
+    "wcagGuidelines": "WCAG 2.1 contrast guidelines"
   },
   "favorites": {
     "title": "Your Favorites",
@@ -228,6 +243,22 @@
     "commands": "Commands",
     "links": "Links",
     "poweredBy": "Powered by Cloudflare Workers"
+  },
+  "matchImage": {
+    "missingImage": "Please attach an image to analyze.",
+    "invalidAttachment": "Could not find the attached image.",
+    "noColors": "The image appears to be fully transparent or too small to analyze.",
+    "extractionFailed": "Could not extract colors from the image.",
+    "colorMatch": "Color Match",
+    "colorPalette": "{count} Color Palette",
+    "closestMatch": "Closest Dye Match",
+    "topMatches": "Top {count} Matching Dyes",
+    "extractionMethod": "Color extracted via K-means clustering",
+    "processingFailed": "An error occurred while processing the image.",
+    "onlyDiscord": "Only images uploaded directly to Discord can be analyzed.",
+    "imageTooLarge": "Image is too large. Please use a smaller image.",
+    "unsupportedFormat": "Unsupported image format. Please use PNG, JPEG, GIF, or WebP.",
+    "timeout": "Image download timed out. Please try again."
   },
   "buttons": {
     "copyHex": "Copy HEX",

@@ -24,6 +24,8 @@ import { renderSvgToPng } from '../../services/svg/renderer.js';
 import { getDyeEmoji } from '../../services/emoji.js';
 import { validateAndFetchImage, processImageForExtraction } from '../../services/image/index.js';
 import { getMatchQuality } from '../../types/image.js';
+import { createTranslator, createUserTranslator, type Translator } from '../../services/bot-i18n.js';
+import { resolveUserLocale, discordLocaleToLocaleCode, initializeLocale, getLocalizedDyeName, type LocaleCode } from '../../services/i18n.js';
 import type { Env } from '../../types/env.js';
 
 // ============================================================================
@@ -41,6 +43,15 @@ interface DiscordInteraction {
   id: string;
   token: string;
   application_id: string;
+  locale?: string;
+  member?: {
+    user: {
+      id: string;
+    };
+  };
+  user?: {
+    id: string;
+  };
   data?: {
     options?: Array<{
       name: string;
@@ -90,6 +101,8 @@ export async function handleMatchImageCommand(
   env: Env,
   ctx: ExecutionContext
 ): Promise<Response> {
+  const userId = interaction.member?.user?.id ?? interaction.user?.id;
+
   // Extract options
   const options = interaction.data?.options || [];
   const attachments = interaction.data?.resolved?.attachments || {};
@@ -98,12 +111,17 @@ export async function handleMatchImageCommand(
   const imageOption = options.find((opt) => opt.name === 'image');
   const colorsOption = options.find((opt) => opt.name === 'colors');
 
+  // Get translator for validation errors (before deferring)
+  const t = userId
+    ? await createUserTranslator(env.KV, userId, interaction.locale)
+    : createTranslator(discordLocaleToLocaleCode(interaction.locale ?? 'en') ?? 'en');
+
   // Validate image attachment
   if (!imageOption?.value) {
     return Response.json({
       type: 4, // CHANNEL_MESSAGE_WITH_SOURCE
       data: {
-        embeds: [errorEmbed('Missing Image', 'Please attach an image to analyze.')],
+        embeds: [errorEmbed(t.t('common.error'), t.t('matchImage.missingImage'))],
         flags: 64, // Ephemeral
       },
     });
@@ -117,7 +135,7 @@ export async function handleMatchImageCommand(
     return Response.json({
       type: 4,
       data: {
-        embeds: [errorEmbed('Invalid Attachment', 'Could not find the attached image.')],
+        embeds: [errorEmbed(t.t('common.error'), t.t('matchImage.invalidAttachment'))],
         flags: 64,
       },
     });
@@ -129,11 +147,16 @@ export async function handleMatchImageCommand(
     colorCount = Math.max(MIN_COLORS, Math.min(MAX_COLORS, Number(colorsOption.value)));
   }
 
+  // Resolve locale for background processing
+  const locale = userId
+    ? await resolveUserLocale(env.KV, userId, interaction.locale ?? 'en')
+    : (discordLocaleToLocaleCode(interaction.locale ?? 'en') ?? 'en');
+
   // Defer the response (image processing takes time)
   const deferResponse = deferredResponse();
 
   // Process in background
-  ctx.waitUntil(processMatchImageCommand(interaction, env, attachment.url, colorCount));
+  ctx.waitUntil(processMatchImageCommand(interaction, env, attachment.url, colorCount, locale));
 
   return deferResponse;
 }
@@ -145,8 +168,14 @@ async function processMatchImageCommand(
   interaction: DiscordInteraction,
   env: Env,
   imageUrl: string,
-  colorCount: number
+  colorCount: number,
+  locale: LocaleCode
 ): Promise<void> {
+  const t = createTranslator(locale);
+
+  // Initialize xivdyetools-core localization for dye names
+  await initializeLocale(locale);
+
   try {
     // Step 1: Validate and fetch image
     const { buffer } = await validateAndFetchImage(imageUrl);
@@ -163,10 +192,7 @@ async function processMatchImageCommand(
     if (rgbPixels.length === 0) {
       await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
         embeds: [
-          errorEmbed(
-            'No Colors Found',
-            'The image appears to be fully transparent or too small to analyze.'
-          ),
+          errorEmbed(t.t('common.error'), t.t('matchImage.noColors')),
         ],
       });
       return;
@@ -182,16 +208,19 @@ async function processMatchImageCommand(
     if (matches.length === 0) {
       await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
         embeds: [
-          errorEmbed('Extraction Failed', 'Could not extract colors from the image.'),
+          errorEmbed(t.t('common.error'), t.t('matchImage.extractionFailed')),
         ],
       });
       return;
     }
 
-    // Step 5: Convert to PaletteEntry format
+    // Step 5: Convert to PaletteEntry format with localized names
     const entries: PaletteEntry[] = matches.map((match: PaletteMatch) => ({
       extracted: match.extracted,
-      matchedDye: match.matchedDye,
+      matchedDye: {
+        ...match.matchedDye,
+        name: getLocalizedDyeName(match.matchedDye.itemID, match.matchedDye.name),
+      },
       distance: match.distance,
       dominance: match.dominance,
     }));
@@ -199,25 +228,25 @@ async function processMatchImageCommand(
     // Step 6: Generate SVG
     const svg = generatePaletteGrid({
       entries,
-      title: colorCount === 1 ? 'Color Match' : `${colorCount} Color Palette`,
+      title: colorCount === 1 ? t.t('matchImage.colorMatch') : t.t('matchImage.colorPalette', { count: colorCount }),
     });
 
     // Step 7: Render to PNG
     const pngBuffer = await renderSvgToPng(svg, { scale: 2 });
 
     // Step 8: Build description
-    const description = buildMatchDescription(matches);
+    const description = buildMatchDescription(matches, t);
 
     // Step 9: Send response
     await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [
         {
-          title: colorCount === 1 ? 'Closest Dye Match' : `Top ${matches.length} Matching Dyes`,
+          title: colorCount === 1 ? t.t('matchImage.closestMatch') : t.t('matchImage.topMatches', { count: matches.length }),
           description,
           color: parseInt(matches[0].matchedDye.hex.replace('#', ''), 16),
           image: { url: 'attachment://image.png' },
           footer: {
-            text: 'XIV Dye Tools • Color extracted via K-means clustering',
+            text: `${t.t('common.footer')} • ${t.t('matchImage.extractionMethod')}`,
           },
         },
       ],
@@ -231,22 +260,22 @@ async function processMatchImageCommand(
     console.error('Match image command error:', error);
 
     // Determine error message
-    let errorMessage = 'An error occurred while processing the image.';
+    let errorMessage = t.t('matchImage.processingFailed');
     if (error instanceof Error) {
       // Use specific error messages for known issues
       if (error.message.includes('SSRF') || error.message.includes('Discord CDN')) {
-        errorMessage = 'Only images uploaded directly to Discord can be analyzed.';
+        errorMessage = t.t('matchImage.onlyDiscord');
       } else if (error.message.includes('too large')) {
-        errorMessage = error.message;
+        errorMessage = t.t('matchImage.imageTooLarge');
       } else if (error.message.includes('format')) {
-        errorMessage = 'Unsupported image format. Please use PNG, JPEG, GIF, or WebP.';
+        errorMessage = t.t('matchImage.unsupportedFormat');
       } else if (error.message.includes('timeout')) {
-        errorMessage = 'Image download timed out. Please try again.';
+        errorMessage = t.t('matchImage.timeout');
       }
     }
 
     await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
-      embeds: [errorEmbed('Processing Failed', errorMessage)],
+      embeds: [errorEmbed(t.t('common.error'), errorMessage)],
     });
   }
 }
@@ -254,16 +283,20 @@ async function processMatchImageCommand(
 /**
  * Build description text for matches
  */
-function buildMatchDescription(matches: PaletteMatch[]): string {
+function buildMatchDescription(matches: PaletteMatch[], t: Translator): string {
   const lines = matches.map((match, i) => {
     const emoji = getDyeEmoji(match.matchedDye.id);
     const emojiPrefix = emoji ? `${emoji} ` : '';
     const quality = getMatchQuality(match.distance);
-    const qualityBadge = `[${quality.shortLabel}]`;
+    // Use localized quality labels
+    const qualityLabel = t.t(`quality.${quality.shortLabel.toLowerCase()}`);
+    const qualityBadge = `[${qualityLabel.toUpperCase()}]`;
+    // Use localized dye name
+    const localizedName = getLocalizedDyeName(match.matchedDye.itemID, match.matchedDye.name);
 
     // Format: **1.** 🎨 Dalamud Red (#AA1111) [EXCELLENT] - 42%
     return (
-      `**${i + 1}.** ${emojiPrefix}**${match.matchedDye.name}** ` +
+      `**${i + 1}.** ${emojiPrefix}**${localizedName}** ` +
       `(\`${match.matchedDye.hex.toUpperCase()}\`) ${qualityBadge} - ${match.dominance}%`
     );
   });

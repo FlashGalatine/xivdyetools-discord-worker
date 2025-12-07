@@ -33,10 +33,13 @@
     "missingInput": "Bitte gib eine Farbe (Hex-Code oder Farbstoffname) ein.",
     "missingQuery": "Bitte gib einen Suchbegriff ein.",
     "missingName": "Bitte gib einen Farbstoffnamen ein.",
+    "missingSubcommand": "Bitte gib einen Unterbefehl an.",
+    "unknownSubcommand": "Unbekannter Unterbefehl: {name}",
     "noMatchFound": "Keine passenden Farbstoffe in der Datenbank gefunden.",
     "noDyesAvailable": "Keine Farbstoffe in der Datenbank verfügbar.",
     "failedToSave": "Einstellung konnte nicht gespeichert werden. Bitte versuche es später erneut.",
-    "failedToReset": "Einstellung konnte nicht zurückgesetzt werden. Bitte versuche es später erneut."
+    "failedToReset": "Einstellung konnte nicht zurückgesetzt werden. Bitte versuche es später erneut.",
+    "generationFailed": "Beim Erstellen der Visualisierung ist ein Fehler aufgetreten. Bitte versuche es später erneut."
   },
   "quality": {
     "perfect": "Perfekt",
@@ -165,13 +168,25 @@
     "fails": "Nicht bestanden"
   },
   "accessibility": {
-    "title": "Barrierefreiheits-Check",
+    "title": "Farbsicht-Barrierefreiheit",
     "normalVision": "Normale Sicht",
-    "protanopia": "Protanopie (Rotblindheit)",
-    "deuteranopia": "Deuteranopie (Grünblindheit)",
-    "tritanopia": "Tritanopie (Blaublindheit)",
+    "protanopia": "Protanopie",
+    "deuteranopia": "Deuteranopie",
+    "tritanopia": "Tritanopie",
+    "protanopiaDesc": "Verminderte Empfindlichkeit für Rotlicht (~1% der Männer)",
+    "deuteranopiaDesc": "Verminderte Empfindlichkeit für Grünlicht (~1% der Männer)",
+    "tritanopiaDesc": "Verminderte Empfindlichkeit für Blaulicht (selten)",
+    "description": "Diese Visualisierung zeigt, wie der Farbstoff für Menschen mit verschiedenen Arten von Farbsehschwäche erscheint:",
     "simulatedAppearance": "Simuliertes Erscheinungsbild",
-    "contrastAnalysis": "Kontrastanalyse"
+    "simulationMethod": "Brettel 1997 Farbblind-Simulation",
+    "contrastAnalysis": "WCAG-Kontrastanalyse",
+    "contrastTitle": "Kontrastvergleich",
+    "comparing": "Vergleiche {count} Farbstoffe",
+    "matrixDescription": "Die Matrix zeigt WCAG-Kontrastverhältnisse zwischen jedem Farbstoffpaar:",
+    "wcagAAADesc": "Ausgezeichnet für alle Textgrößen",
+    "wcagAADesc": "Akzeptabel für normalen Text",
+    "wcagFailDesc": "Möglicherweise schwer zu unterscheiden",
+    "wcagGuidelines": "WCAG 2.1 Kontrastrichtlinien"
   },
   "favorites": {
     "title": "Deine Favoriten",
@@ -228,6 +243,22 @@
     "commands": "Befehle",
     "links": "Links",
     "poweredBy": "Powered by Cloudflare Workers"
+  },
+  "matchImage": {
+    "missingImage": "Bitte hänge ein Bild zur Analyse an.",
+    "invalidAttachment": "Angehängtes Bild konnte nicht gefunden werden.",
+    "noColors": "Das Bild scheint vollständig transparent oder zu klein für die Analyse zu sein.",
+    "extractionFailed": "Farben konnten nicht aus dem Bild extrahiert werden.",
+    "colorMatch": "Farbabgleich",
+    "colorPalette": "{count}-Farben-Palette",
+    "closestMatch": "Nächste Farbstoff-Übereinstimmung",
+    "topMatches": "Top {count} passende Farbstoffe",
+    "extractionMethod": "Farbe mittels K-Means-Clustering extrahiert",
+    "processingFailed": "Bei der Verarbeitung des Bildes ist ein Fehler aufgetreten.",
+    "onlyDiscord": "Nur direkt auf Discord hochgeladene Bilder können analysiert werden.",
+    "imageTooLarge": "Bild ist zu groß. Bitte verwende ein kleineres Bild.",
+    "unsupportedFormat": "Nicht unterstütztes Bildformat. Bitte verwende PNG, JPEG, GIF oder WebP.",
+    "timeout": "Bild-Download hat zu lange gedauert. Bitte versuche es erneut."
   },
   "buttons": {
     "copyHex": "HEX kopieren",

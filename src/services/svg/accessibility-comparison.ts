@@ -155,7 +155,7 @@ export function generateAccessibilityComparison(
     text(width / 2, PADDING + 24, escapeXml(dyeName), {
       fill: THEME.text,
       fontSize: 22,
-      fontFamily: FONTS.primary,
+      fontFamily: FONTS.header,
       fontWeight: 600,
       textAnchor: 'middle',
     })

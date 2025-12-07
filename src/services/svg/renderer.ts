@@ -14,6 +14,8 @@ import { Resvg, initWasm } from '@resvg/resvg-wasm';
 // @ts-expect-error - WASM imports are handled by wrangler bundler
 import resvgWasm from '@resvg/resvg-wasm/index_bg.wasm';
 
+import { getFontBuffers } from '../fonts';
+
 // Track WASM initialization state
 let wasmInitialized = false;
 let wasmInitPromise: Promise<void> | null = null;
@@ -74,8 +76,10 @@ export async function renderSvgToPng(
       },
       background,
       font: {
-        // Use system fonts that are commonly available
-        defaultFontFamily: 'Arial',
+        // Load bundled font files for text rendering
+        fontBuffers: getFontBuffers(),
+        // Default to Onest (body font) for any unspecified text
+        defaultFontFamily: 'Onest',
       },
     });
 

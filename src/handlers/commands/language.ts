@@ -15,8 +15,8 @@ import {
   setUserLanguagePreference,
   clearUserLanguagePreference,
   discordLocaleToLocaleCode,
-  formatLocaleDisplay,
 } from '../../services/i18n.js';
+import { createUserTranslator, type Translator } from '../../services/bot-i18n.js';
 import type { Env } from '../../types/env.js';
 
 interface DiscordInteraction {
@@ -62,6 +62,9 @@ export async function handleLanguageCommand(
     return ephemeralResponse('Could not identify user.');
   }
 
+  // Get translator for user's current locale
+  const t = await createUserTranslator(env.KV, userId, interaction.locale);
+
   // Extract subcommand
   const options = interaction.data?.options || [];
   const subcommand = options.find((opt) => opt.type === 1); // SUB_COMMAND type
@@ -72,13 +75,13 @@ export async function handleLanguageCommand(
 
   switch (subcommand.name) {
     case 'set':
-      return handleSetLanguage(interaction, env, userId, subcommand.options);
+      return handleSetLanguage(env, userId, t, subcommand.options);
 
     case 'show':
-      return handleShowLanguage(interaction, env, userId);
+      return handleShowLanguage(interaction, env, userId, t);
 
     case 'reset':
-      return handleResetLanguage(env, userId);
+      return handleResetLanguage(env, userId, t);
 
     default:
       return ephemeralResponse(`Unknown subcommand: ${subcommand.name}`);
@@ -89,9 +92,9 @@ export async function handleLanguageCommand(
  * Handle /language set <locale>
  */
 async function handleSetLanguage(
-  interaction: DiscordInteraction,
   env: Env,
   userId: string,
+  t: Translator,
   options?: Array<{ name: string; value?: string | number | boolean }>
 ): Promise<Response> {
   const localeOption = options?.find((opt) => opt.name === 'locale');
@@ -101,7 +104,7 @@ async function handleSetLanguage(
     return Response.json({
       type: 4,
       data: {
-        embeds: [errorEmbed('Missing Language', 'Please specify a language to set.')],
+        embeds: [errorEmbed(t.t('common.error'), t.t('language.missingLanguage'))],
         flags: 64,
       },
     });
@@ -114,8 +117,8 @@ async function handleSetLanguage(
       data: {
         embeds: [
           errorEmbed(
-            'Invalid Language',
-            `"${locale}" is not a supported language.\n\nSupported languages: ${validLocales}`
+            t.t('common.error'),
+            t.t('language.invalidLanguage', { locale, validList: validLocales })
           ),
         ],
         flags: 64,
@@ -130,12 +133,7 @@ async function handleSetLanguage(
     return Response.json({
       type: 4,
       data: {
-        embeds: [
-          errorEmbed(
-            'Failed to Save',
-            'Could not save your language preference. Please try again later.'
-          ),
-        ],
+        embeds: [errorEmbed(t.t('common.error'), t.t('errors.failedToSave'))],
         flags: 64,
       },
     });
@@ -151,9 +149,10 @@ async function handleSetLanguage(
     data: {
       embeds: [
         successEmbed(
-          'Language Updated',
-          `Your language preference has been set to **${displayName}**.\n\n` +
-            'Dye names and bot messages will now use this language when available.'
+          t.t('common.success'),
+          t.t('language.updated', { language: displayName }) +
+            '\n\n' +
+            t.t('language.updateNote')
         ),
       ],
       flags: 64,
@@ -167,7 +166,8 @@ async function handleSetLanguage(
 async function handleShowLanguage(
   interaction: DiscordInteraction,
   env: Env,
-  userId: string
+  userId: string,
+  t: Translator
 ): Promise<Response> {
   // Get user's explicit preference
   const preference = await getUserLanguagePreference(env.KV, userId);
@@ -180,24 +180,35 @@ async function handleShowLanguage(
   const lines: string[] = [];
 
   if (preference) {
-    lines.push(`**Your preference:** ${formatLocaleDisplay(preference)}`);
+    const prefInfo = getLocaleInfo(preference);
+    const prefDisplay = prefInfo
+      ? `${prefInfo.flag} ${prefInfo.name} (${prefInfo.nativeName})`
+      : preference;
+    lines.push(`**${t.t('language.yourPreference')}:** ${prefDisplay}`);
   } else {
-    lines.push('**Your preference:** Not set');
+    lines.push(`**${t.t('language.yourPreference')}:** ${t.t('language.notSet')}`);
   }
 
   if (discordLocale) {
     const discordDisplay = mappedDiscord
-      ? formatLocaleDisplay(mappedDiscord)
-      : `${discordLocale} (unsupported)`;
-    lines.push(`**Discord locale:** ${discordDisplay}`);
+      ? (() => {
+          const info = getLocaleInfo(mappedDiscord);
+          return info ? `${info.flag} ${info.name} (${info.nativeName})` : mappedDiscord;
+        })()
+      : `${discordLocale} (${t.t('language.unsupported')})`;
+    lines.push(`**${t.t('language.discordLocale')}:** ${discordDisplay}`);
   }
 
   // Effective locale
   const effective = preference ?? mappedDiscord ?? 'en';
-  lines.push(`\n**Effective language:** ${formatLocaleDisplay(effective as LocaleCode)}`);
+  const effectiveInfo = getLocaleInfo(effective as LocaleCode);
+  const effectiveDisplay = effectiveInfo
+    ? `${effectiveInfo.flag} ${effectiveInfo.name} (${effectiveInfo.nativeName})`
+    : effective;
+  lines.push(`\n**${t.t('language.effectiveLanguage')}:** ${effectiveDisplay}`);
 
   // Add supported languages list
-  lines.push('\n**Supported languages:**');
+  lines.push(`\n**${t.t('language.supportedLanguages')}:**`);
   for (const locale of SUPPORTED_LOCALES) {
     const marker = locale.code === effective ? ' ✓' : '';
     lines.push(`${locale.flag} \`${locale.code}\` - ${locale.name} (${locale.nativeName})${marker}`);
@@ -206,7 +217,7 @@ async function handleShowLanguage(
   return Response.json({
     type: 4,
     data: {
-      embeds: [infoEmbed('Language Settings', lines.join('\n'))],
+      embeds: [infoEmbed(t.t('language.title'), lines.join('\n'))],
       flags: 64,
     },
   });
@@ -215,19 +226,18 @@ async function handleShowLanguage(
 /**
  * Handle /language reset
  */
-async function handleResetLanguage(env: Env, userId: string): Promise<Response> {
+async function handleResetLanguage(
+  env: Env,
+  userId: string,
+  t: Translator
+): Promise<Response> {
   const success = await clearUserLanguagePreference(env.KV, userId);
 
   if (!success) {
     return Response.json({
       type: 4,
       data: {
-        embeds: [
-          errorEmbed(
-            'Failed to Reset',
-            'Could not clear your language preference. Please try again later.'
-          ),
-        ],
+        embeds: [errorEmbed(t.t('common.error'), t.t('errors.failedToReset'))],
         flags: 64,
       },
     });
@@ -238,9 +248,8 @@ async function handleResetLanguage(env: Env, userId: string): Promise<Response> 
     data: {
       embeds: [
         successEmbed(
-          'Language Reset',
-          'Your language preference has been cleared.\n\n' +
-            "The bot will now use your Discord client's language setting (if supported) or default to English."
+          t.t('common.success'),
+          t.t('language.reset') + '\n\n' + t.t('language.resetNote')
         ),
       ],
       flags: 64,

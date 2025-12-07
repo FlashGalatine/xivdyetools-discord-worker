@@ -22,6 +22,8 @@ import {
 } from '../../services/svg/contrast-matrix.js';
 import { renderSvgToPng } from '../../services/svg/renderer.js';
 import { getDyeEmoji } from '../../services/emoji.js';
+import { createTranslator, createUserTranslator, type Translator } from '../../services/bot-i18n.js';
+import { resolveUserLocale, discordLocaleToLocaleCode, initializeLocale, getLocalizedDyeName, type LocaleCode } from '../../services/i18n.js';
 import type { Env } from '../../types/env.js';
 
 // ============================================================================
@@ -38,6 +40,15 @@ interface DiscordInteraction {
   id: string;
   token: string;
   application_id: string;
+  locale?: string;
+  member?: {
+    user: {
+      id: string;
+    };
+  };
+  user?: {
+    id: string;
+  };
   data?: {
     options?: Array<{
       name: string;
@@ -54,6 +65,7 @@ interface ResolvedDye {
   hex: string;
   name: string;
   id?: number;
+  itemID?: number;
   dye?: Dye;
 }
 
@@ -94,6 +106,7 @@ function resolveDyeInput(input: string): ResolvedDye | null {
       hex,
       name: closest ? closest.name : hex.toUpperCase(),
       id: closest?.id,
+      itemID: closest?.itemID,
       dye: closest ?? undefined,
     };
   }
@@ -107,6 +120,7 @@ function resolveDyeInput(input: string): ResolvedDye | null {
       hex: nonFacewear.hex,
       name: nonFacewear.name,
       id: nonFacewear.id,
+      itemID: nonFacewear.itemID,
       dye: nonFacewear,
     };
   }
@@ -126,6 +140,8 @@ export async function handleAccessibilityCommand(
   env: Env,
   ctx: ExecutionContext
 ): Promise<Response> {
+  const userId = interaction.member?.user?.id ?? interaction.user?.id;
+
   // Extract options
   const options = interaction.data?.options || [];
 
@@ -141,13 +157,18 @@ export async function handleAccessibilityCommand(
   const visionOption = options.find((opt) => opt.name === 'vision');
   const visionFilter = visionOption?.value as VisionType | undefined;
 
+  // Get translator for validation errors (before deferring)
+  const t = userId
+    ? await createUserTranslator(env.KV, userId, interaction.locale)
+    : createTranslator(discordLocaleToLocaleCode(interaction.locale ?? 'en') ?? 'en');
+
   // Validate at least one dye is provided
   if (dyeInputs.length === 0) {
     return Response.json({
       type: 4, // CHANNEL_MESSAGE_WITH_SOURCE
       data: {
         embeds: [
-          errorEmbed('Missing Input', 'Please provide at least one dye (hex code or dye name).'),
+          errorEmbed(t.t('common.error'), t.t('errors.missingInput')),
         ],
         flags: 64, // Ephemeral
       },
@@ -163,11 +184,7 @@ export async function handleAccessibilityCommand(
         type: 4,
         data: {
           embeds: [
-            errorEmbed(
-              'Invalid Color',
-              `Could not resolve "${input.value}" to a color. ` +
-                'Please provide a valid hex code (e.g., #FF0000) or dye name (e.g., "Dalamud Red").'
-            ),
+            errorEmbed(t.t('common.error'), t.t('errors.invalidColor', { input: input.value })),
           ],
           flags: 64,
         },
@@ -176,12 +193,17 @@ export async function handleAccessibilityCommand(
     resolvedDyes.push(resolved);
   }
 
+  // Resolve locale for background processing
+  const locale = userId
+    ? await resolveUserLocale(env.KV, userId, interaction.locale ?? 'en')
+    : (discordLocaleToLocaleCode(interaction.locale ?? 'en') ?? 'en');
+
   // Defer the response (SVG generation takes time)
   const deferResponse = deferredResponse();
 
   // Process in background
   ctx.waitUntil(
-    processAccessibilityCommand(interaction, env, resolvedDyes, visionFilter)
+    processAccessibilityCommand(interaction, env, resolvedDyes, visionFilter, locale)
   );
 
   return deferResponse;
@@ -194,26 +216,28 @@ async function processAccessibilityCommand(
   interaction: DiscordInteraction,
   env: Env,
   dyes: ResolvedDye[],
-  visionFilter?: VisionType
+  visionFilter: VisionType | undefined,
+  locale: LocaleCode
 ): Promise<void> {
+  const t = createTranslator(locale);
+
+  // Initialize xivdyetools-core localization for dye names
+  await initializeLocale(locale);
+
   try {
     if (dyes.length === 1) {
       // Single dye mode: Colorblind simulation
-      await processSingleDyeAccessibility(interaction, env, dyes[0], visionFilter);
+      await processSingleDyeAccessibility(interaction, env, dyes[0], visionFilter, t);
     } else {
       // Multi-dye mode: Contrast matrix
-      await processMultiDyeContrast(interaction, env, dyes);
+      await processMultiDyeContrast(interaction, env, dyes, t);
     }
   } catch (error) {
     console.error('Accessibility command error:', error);
 
     await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [
-        errorEmbed(
-          'Processing Failed',
-          'An error occurred while generating the accessibility visualization. ' +
-            'Please try again later.'
-        ),
+        errorEmbed(t.t('common.error'), t.t('errors.generationFailed')),
       ],
     });
   }
@@ -226,15 +250,21 @@ async function processSingleDyeAccessibility(
   interaction: DiscordInteraction,
   env: Env,
   dye: ResolvedDye,
-  visionFilter?: VisionType
+  visionFilter: VisionType | undefined,
+  t: Translator
 ): Promise<void> {
   // Determine which vision types to show
   const visionTypes = visionFilter ? [visionFilter] : VISION_TYPES;
 
-  // Generate SVG
+  // Get localized dye name
+  const localizedDyeName = dye.itemID
+    ? getLocalizedDyeName(dye.itemID, dye.name)
+    : dye.name;
+
+  // Generate SVG with localized name
   const svg = generateAccessibilityComparison({
     dyeHex: dye.hex,
-    dyeName: dye.name,
+    dyeName: localizedDyeName,
     visionTypes,
   });
 
@@ -246,22 +276,22 @@ async function processSingleDyeAccessibility(
   const emojiPrefix = emoji ? `${emoji} ` : '';
 
   const description =
-    `${emojiPrefix}**${dye.name}** (\`${dye.hex.toUpperCase()}\`)\n\n` +
-    'This visualization shows how the dye appears to people with different types of color vision deficiency:\n\n' +
-    '• **Protanopia** - Reduced sensitivity to red light (~1% of males)\n' +
-    '• **Deuteranopia** - Reduced sensitivity to green light (~1% of males)\n' +
-    '• **Tritanopia** - Reduced sensitivity to blue light (rare)';
+    `${emojiPrefix}**${localizedDyeName}** (\`${dye.hex.toUpperCase()}\`)\n\n` +
+    `${t.t('accessibility.description')}\n\n` +
+    `• **${t.t('accessibility.protanopia')}** - ${t.t('accessibility.protanopiaDesc')}\n` +
+    `• **${t.t('accessibility.deuteranopia')}** - ${t.t('accessibility.deuteranopiaDesc')}\n` +
+    `• **${t.t('accessibility.tritanopia')}** - ${t.t('accessibility.tritanopiaDesc')}`;
 
   // Send response
   await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
     embeds: [
       {
-        title: 'Color Vision Accessibility',
+        title: t.t('accessibility.title'),
         description,
         color: parseInt(dye.hex.replace('#', ''), 16),
         image: { url: 'attachment://image.png' },
         footer: {
-          text: 'XIV Dye Tools • Brettel 1997 colorblind simulation',
+          text: `${t.t('common.footer')} • ${t.t('accessibility.simulationMethod')}`,
         },
       },
     ],
@@ -279,49 +309,51 @@ async function processSingleDyeAccessibility(
 async function processMultiDyeContrast(
   interaction: DiscordInteraction,
   env: Env,
-  dyes: ResolvedDye[]
+  dyes: ResolvedDye[],
+  t: Translator
 ): Promise<void> {
-  // Convert to ContrastDye format
+  // Convert to ContrastDye format with localized names
   const contrastDyes: ContrastDye[] = dyes.map((d) => ({
-    name: d.name,
+    name: d.itemID ? getLocalizedDyeName(d.itemID, d.name) : d.name,
     hex: d.hex,
   }));
 
-  // Generate SVG
+  // Generate SVG with localized names
   const svg = generateContrastMatrix({
     dyes: contrastDyes,
-    title: 'Contrast Comparison',
+    title: t.t('accessibility.contrastTitle'),
   });
 
   // Render to PNG
   const pngBuffer = await renderSvgToPng(svg, { scale: 2 });
 
-  // Build description
+  // Build description with localized names
   const dyeList = dyes
     .map((d) => {
       const emoji = d.id ? getDyeEmoji(d.id) : undefined;
       const emojiPrefix = emoji ? `${emoji} ` : '';
-      return `${emojiPrefix}**${d.name}** (\`${d.hex.toUpperCase()}\`)`;
+      const localizedName = d.itemID ? getLocalizedDyeName(d.itemID, d.name) : d.name;
+      return `${emojiPrefix}**${localizedName}** (\`${d.hex.toUpperCase()}\`)`;
     })
     .join('\n');
 
   const description =
-    `Comparing ${dyes.length} dyes:\n${dyeList}\n\n` +
-    'The matrix shows WCAG contrast ratios between each pair of dyes:\n\n' +
-    '🟢 **AAA** (7:1+) - Excellent for all text sizes\n' +
-    '🟡 **AA** (4.5:1+) - Acceptable for normal text\n' +
-    '🔴 **FAIL** (<4.5:1) - May be difficult to distinguish';
+    `${t.t('accessibility.comparing', { count: dyes.length })}:\n${dyeList}\n\n` +
+    `${t.t('accessibility.matrixDescription')}\n\n` +
+    `🟢 **AAA** (7:1+) - ${t.t('accessibility.wcagAAADesc')}\n` +
+    `🟡 **AA** (4.5:1+) - ${t.t('accessibility.wcagAADesc')}\n` +
+    `🔴 **${t.t('comparison.fails')}** (<4.5:1) - ${t.t('accessibility.wcagFailDesc')}`;
 
   // Send response
   await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
     embeds: [
       {
-        title: 'WCAG Contrast Analysis',
+        title: t.t('accessibility.contrastAnalysis'),
         description,
         color: parseInt(dyes[0].hex.replace('#', ''), 16),
         image: { url: 'attachment://image.png' },
         footer: {
-          text: 'XIV Dye Tools • WCAG 2.1 contrast guidelines',
+          text: `${t.t('common.footer')} • ${t.t('accessibility.wcagGuidelines')}`,
         },
       },
     ],

@@ -12,6 +12,8 @@ import { editOriginalResponse } from '../../utils/discord-api.js';
 import { generateHarmonyWheel, type HarmonyDye } from '../../services/svg/harmony-wheel.js';
 import { renderSvgToPng } from '../../services/svg/renderer.js';
 import { getDyeEmoji } from '../../services/emoji.js';
+import { createUserTranslator, createTranslator, type Translator } from '../../services/bot-i18n.js';
+import { resolveUserLocale, initializeLocale, getLocalizedDyeName, type LocaleCode } from '../../services/i18n.js';
 import type { Env } from '../../types/env.js';
 
 // Initialize DyeService with the database
@@ -34,6 +36,15 @@ interface DiscordInteraction {
   id: string;
   token: string;
   application_id: string;
+  locale?: string;
+  member?: {
+    user: {
+      id: string;
+    };
+  };
+  user?: {
+    id: string;
+  };
   data?: {
     options?: Array<{
       name: string;
@@ -59,7 +70,7 @@ function normalizeHex(hex: string): string {
 /**
  * Resolves color input to a hex value and optional dye info
  */
-function resolveColorInput(input: string): { hex: string; name?: string; id?: number } | null {
+function resolveColorInput(input: string): { hex: string; name?: string; id?: number; itemID?: number } | null {
   // Check if it's a hex color
   if (isValidHex(input)) {
     return { hex: normalizeHex(input) };
@@ -70,7 +81,7 @@ function resolveColorInput(input: string): { hex: string; name?: string; id?: nu
   if (dyes.length > 0) {
     // Take the closest match (first result)
     const dye = dyes[0];
-    return { hex: dye.hex, name: dye.name, id: dye.id };
+    return { hex: dye.hex, name: dye.name, id: dye.id, itemID: dye.itemID };
   }
 
   return null;
@@ -111,6 +122,9 @@ export async function handleHarmonyCommand(
   env: Env,
   ctx: ExecutionContext
 ): Promise<Response> {
+  const userId = interaction.member?.user?.id ?? interaction.user?.id ?? 'unknown';
+  const t = await createUserTranslator(env.KV, userId, interaction.locale);
+
   // Extract options
   const options = interaction.data?.options || [];
   const colorOption = options.find((opt) => opt.name === 'color');
@@ -124,7 +138,7 @@ export async function handleHarmonyCommand(
     return Response.json({
       type: 4, // CHANNEL_MESSAGE_WITH_SOURCE
       data: {
-        embeds: [errorEmbed('Missing Input', 'Please provide a color (hex code or dye name).')],
+        embeds: [errorEmbed(t.t('common.error'), t.t('errors.missingInput'))],
         flags: 64, // Ephemeral
       },
     });
@@ -137,11 +151,7 @@ export async function handleHarmonyCommand(
       type: 4,
       data: {
         embeds: [
-          errorEmbed(
-            'Invalid Color',
-            `Could not resolve "${colorInput}" to a color. ` +
-              'Please provide a valid hex code (e.g., #FF0000) or dye name (e.g., "Dalamud Red").'
-          ),
+          errorEmbed(t.t('common.error'), t.t('errors.invalidColor', { input: colorInput })),
         ],
         flags: 64,
       },
@@ -151,9 +161,12 @@ export async function handleHarmonyCommand(
   // Defer the response (image generation takes time)
   const deferResponse = deferredResponse();
 
+  // Resolve locale for background processing
+  const locale = await resolveUserLocale(env.KV, userId, interaction.locale);
+
   // Process in background
   ctx.waitUntil(
-    processHarmonyCommand(interaction, env, resolved.hex, resolved.name, resolved.id, harmonyType)
+    processHarmonyCommand(interaction, env, resolved.hex, resolved.name, resolved.id, resolved.itemID, harmonyType, locale)
   );
 
   return deferResponse;
@@ -168,8 +181,16 @@ async function processHarmonyCommand(
   baseHex: string,
   baseName: string | undefined,
   baseId: number | undefined,
-  harmonyType: HarmonyType
+  baseItemID: number | undefined,
+  harmonyType: HarmonyType,
+  locale: LocaleCode
 ): Promise<void> {
+  // Create translator for background processing
+  const t = createTranslator(locale);
+
+  // Initialize xivdyetools-core localization for dye names
+  await initializeLocale(locale);
+
   try {
     // Get harmony dyes
     const harmonyDyes = getHarmonyDyes(baseHex, harmonyType);
@@ -177,16 +198,16 @@ async function processHarmonyCommand(
     if (harmonyDyes.length === 0) {
       await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
         embeds: [
-          errorEmbed('No Matches', `No matching dyes found for ${harmonyType} harmony with color ${baseHex}.`),
+          errorEmbed(t.t('common.error'), t.t('errors.noMatchFound')),
         ],
       });
       return;
     }
 
-    // Convert Dye[] to HarmonyDye[]
+    // Convert Dye[] to HarmonyDye[] with localized names
     const dyesForWheel: HarmonyDye[] = harmonyDyes.map((dye) => ({
       id: dye.id,
-      name: dye.name,
+      name: getLocalizedDyeName(dye.itemID, dye.name),
       hex: dye.hex,
       category: dye.category,
     }));
@@ -204,30 +225,38 @@ async function processHarmonyCommand(
     // Render to PNG
     const pngBuffer = await renderSvgToPng(svg, { scale: 2 });
 
-    // Build description text with emojis
+    // Build description text with emojis and localized names
     const dyeList = harmonyDyes
       .map((dye, i) => {
         const emoji = getDyeEmoji(dye.id);
         const emojiPrefix = emoji ? `${emoji} ` : '';
-        return `**${i + 1}.** ${emojiPrefix}${dye.name} (\`${dye.hex.toUpperCase()}\`)`;
+        const localizedName = getLocalizedDyeName(dye.itemID, dye.name);
+        return `**${i + 1}.** ${emojiPrefix}${localizedName} (\`${dye.hex.toUpperCase()}\`)`;
       })
       .join('\n');
 
     // Build base color description with emoji if available
     const baseEmoji = baseId ? getDyeEmoji(baseId) : undefined;
     const baseEmojiPrefix = baseEmoji ? `${baseEmoji} ` : '';
-    const baseColorText = `Base color: ${baseEmojiPrefix}**${baseName || baseHex.toUpperCase()}** (\`${baseHex.toUpperCase()}\`)`;
+    // Localize base name if it's a dye
+    const localizedBaseName = baseItemID && baseName
+      ? getLocalizedDyeName(baseItemID, baseName)
+      : (baseName || baseHex.toUpperCase());
+    const baseColorText = `${t.t('harmony.baseColor')}: ${baseEmojiPrefix}**${localizedBaseName}** (\`${baseHex.toUpperCase()}\`)`;
+
+    // Get localized harmony type
+    const harmonyTitle = getLocalizedHarmonyType(harmonyType, t);
 
     // Send follow-up with image
     await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [
         {
-          title: `${formatHarmonyType(harmonyType)} Harmony`,
+          title: t.t('harmony.title', { type: harmonyTitle }),
           description: `${baseColorText}\n\n${dyeList}`,
           color: parseInt(baseHex.replace('#', ''), 16),
           image: { url: 'attachment://image.png' },
           footer: {
-            text: 'XIV Dye Tools • Cloudflare Workers Edition',
+            text: t.t('common.footer'),
           },
         },
       ],
@@ -244,9 +273,8 @@ async function processHarmonyCommand(
     await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [
         errorEmbed(
-          'Generation Failed',
-          'An error occurred while generating the harmony visualization. ' +
-            'Please try again later.'
+          t.t('common.error'),
+          t.t('errors.generationFailed')
         ),
       ],
     });
@@ -254,7 +282,7 @@ async function processHarmonyCommand(
 }
 
 /**
- * Formats harmony type for display
+ * Formats harmony type for display (English only - used for autocomplete)
  */
 function formatHarmonyType(type: string): string {
   const formats: Record<string, string> = {
@@ -267,6 +295,23 @@ function formatHarmonyType(type: string): string {
     monochromatic: 'Monochromatic',
   };
   return formats[type] || type.charAt(0).toUpperCase() + type.slice(1);
+}
+
+/**
+ * Gets localized harmony type name
+ */
+function getLocalizedHarmonyType(type: string, t: Translator): string {
+  const keyMap: Record<string, string> = {
+    complementary: 'harmony.complementary',
+    analogous: 'harmony.analogous',
+    triadic: 'harmony.triadic',
+    'split-complementary': 'harmony.splitComplementary',
+    tetradic: 'harmony.tetradic',
+    square: 'harmony.square',
+    monochromatic: 'harmony.monochromatic',
+  };
+  const key = keyMap[type];
+  return key ? t.t(key) : formatHarmonyType(type);
 }
 
 /**

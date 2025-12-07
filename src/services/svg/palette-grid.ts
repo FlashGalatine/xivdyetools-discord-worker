@@ -126,7 +126,7 @@ export function generatePaletteGrid(options: PaletteGridOptions): string {
       text(width / 2, PADDING + 20, title, {
         fill: THEME.text,
         fontSize: 20,
-        fontFamily: FONTS.primary,
+        fontFamily: FONTS.header,
         fontWeight: 600,
         textAnchor: 'middle',
       })

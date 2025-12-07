@@ -17,6 +17,8 @@ import {
 } from '../../services/svg/gradient.js';
 import { renderSvgToPng } from '../../services/svg/renderer.js';
 import { getDyeEmoji } from '../../services/emoji.js';
+import { createTranslator, createUserTranslator, type Translator } from '../../services/bot-i18n.js';
+import { resolveUserLocale, discordLocaleToLocaleCode, initializeLocale, getLocalizedDyeName, type LocaleCode } from '../../services/i18n.js';
 import type { Env } from '../../types/env.js';
 
 // Initialize DyeService with the database
@@ -26,6 +28,15 @@ interface DiscordInteraction {
   id: string;
   token: string;
   application_id: string;
+  locale?: string;
+  member?: {
+    user: {
+      id: string;
+    };
+  };
+  user?: {
+    id: string;
+  };
   data?: {
     options?: Array<{
       name: string;
@@ -51,7 +62,7 @@ function normalizeHex(hex: string): string {
 /**
  * Resolves color input to a hex value and optional dye info
  */
-function resolveColorInput(input: string): { hex: string; name?: string; id?: number } | null {
+function resolveColorInput(input: string): { hex: string; name?: string; id?: number; itemID?: number } | null {
   // Check if it's a hex color
   if (isValidHex(input)) {
     return { hex: normalizeHex(input) };
@@ -62,7 +73,7 @@ function resolveColorInput(input: string): { hex: string; name?: string; id?: nu
   const nonFacewearDye = dyes.find((d) => d.category !== 'Facewear');
 
   if (nonFacewearDye) {
-    return { hex: nonFacewearDye.hex, name: nonFacewearDye.name, id: nonFacewearDye.id };
+    return { hex: nonFacewearDye.hex, name: nonFacewearDye.name, id: nonFacewearDye.id, itemID: nonFacewearDye.itemID };
   }
 
   return null;
@@ -71,12 +82,12 @@ function resolveColorInput(input: string): { hex: string; name?: string; id?: nu
 /**
  * Gets match quality description based on color distance
  */
-function getMatchQuality(distance: number): string {
-  if (distance === 0) return 'Perfect';
-  if (distance < 10) return 'Excellent';
-  if (distance < 25) return 'Good';
-  if (distance < 50) return 'Fair';
-  return 'Approximate';
+function getMatchQuality(distance: number, t: Translator): string {
+  if (distance === 0) return t.t('quality.perfect');
+  if (distance < 10) return t.t('quality.excellent');
+  if (distance < 25) return t.t('quality.good');
+  if (distance < 50) return t.t('quality.fair');
+  return t.t('quality.approximate');
 }
 
 /**
@@ -101,6 +112,8 @@ export async function handleMixerCommand(
   env: Env,
   ctx: ExecutionContext
 ): Promise<Response> {
+  const userId = interaction.member?.user?.id ?? interaction.user?.id;
+
   // Extract options
   const options = interaction.data?.options || [];
   const startOption = options.find((opt) => opt.name === 'start_color');
@@ -111,12 +124,17 @@ export async function handleMixerCommand(
   const endInput = endOption?.value as string | undefined;
   const stepCount = (stepsOption?.value as number) || 6;
 
+  // Get translator for validation errors (before deferring)
+  const t = userId
+    ? await createUserTranslator(env.KV, userId, interaction.locale)
+    : createTranslator(discordLocaleToLocaleCode(interaction.locale ?? 'en') ?? 'en');
+
   // Validate required inputs
   if (!startInput || !endInput) {
     return Response.json({
       type: 4, // CHANNEL_MESSAGE_WITH_SOURCE
       data: {
-        embeds: [errorEmbed('Missing Input', 'Please provide both a start and end color.')],
+        embeds: [errorEmbed(t.t('common.error'), t.t('errors.missingInput'))],
         flags: 64, // Ephemeral
       },
     });
@@ -129,11 +147,7 @@ export async function handleMixerCommand(
       type: 4,
       data: {
         embeds: [
-          errorEmbed(
-            'Invalid Start Color',
-            `Could not resolve "${startInput}" to a color. ` +
-              'Please provide a valid hex code (e.g., #FF0000) or dye name (e.g., "Dalamud Red").'
-          ),
+          errorEmbed(t.t('common.error'), t.t('errors.invalidColor', { input: startInput })),
         ],
         flags: 64,
       },
@@ -147,16 +161,17 @@ export async function handleMixerCommand(
       type: 4,
       data: {
         embeds: [
-          errorEmbed(
-            'Invalid End Color',
-            `Could not resolve "${endInput}" to a color. ` +
-              'Please provide a valid hex code (e.g., #0000FF) or dye name (e.g., "Midnight Blue").'
-          ),
+          errorEmbed(t.t('common.error'), t.t('errors.invalidColor', { input: endInput })),
         ],
         flags: 64,
       },
     });
   }
+
+  // Resolve locale for background processing
+  const locale = userId
+    ? await resolveUserLocale(env.KV, userId, interaction.locale ?? 'en')
+    : (discordLocaleToLocaleCode(interaction.locale ?? 'en') ?? 'en');
 
   // Defer the response (image generation takes time)
   const deferResponse = deferredResponse();
@@ -168,7 +183,8 @@ export async function handleMixerCommand(
       env,
       startResolved,
       endResolved,
-      stepCount
+      stepCount,
+      locale
     )
   );
 
@@ -179,6 +195,7 @@ interface ResolvedColor {
   hex: string;
   name?: string;
   id?: number;
+  itemID?: number;
 }
 
 /**
@@ -189,8 +206,14 @@ async function processMixerCommand(
   env: Env,
   startColor: ResolvedColor,
   endColor: ResolvedColor,
-  stepCount: number
+  stepCount: number,
+  locale: LocaleCode
 ): Promise<void> {
+  const t = createTranslator(locale);
+
+  // Initialize xivdyetools-core localization for dye names
+  await initializeLocale(locale);
+
   try {
     // Generate gradient colors
     const gradientHexColors = generateGradientColors(startColor.hex, endColor.hex, stepCount);
@@ -216,9 +239,14 @@ async function processMixerCommand(
 
       const distance = closestDye ? getColorDistance(hex, closestDye.hex) : 999;
 
+      // Get localized name if dye exists
+      const localizedDyeName = closestDye
+        ? getLocalizedDyeName(closestDye.itemID, closestDye.name)
+        : undefined;
+
       gradientSteps.push({
         hex,
-        dyeName: closestDye?.name,
+        dyeName: localizedDyeName,
         dyeId: closestDye?.id,
         dye: closestDye ?? undefined,
         distance,
@@ -239,47 +267,53 @@ async function processMixerCommand(
     const dyeLines = gradientSteps.map((step, i) => {
       const emoji = step.dyeId ? getDyeEmoji(step.dyeId) : undefined;
       const emojiPrefix = emoji ? `${emoji} ` : '';
-      const quality = getMatchQuality(step.distance);
+      const quality = getMatchQuality(step.distance, t);
       const dyeText = step.dyeName
         ? `${emojiPrefix}**${step.dyeName}**`
-        : '_No match_';
+        : `_${t.t('errors.noMatchFound')}_`;
 
       // Label start/end
       let label = '';
-      if (i === 0) label = ' (Start)';
-      else if (i === gradientSteps.length - 1) label = ' (End)';
+      if (i === 0) label = ` (${t.t('mixer.startColor')})`;
+      else if (i === gradientSteps.length - 1) label = ` (${t.t('mixer.endColor')})`;
 
       return `**${i + 1}.** ${dyeText} • \`${step.hex.toUpperCase()}\` • ${quality}${label}`;
     }).join('\n');
 
-    // Build start/end labels
+    // Build start/end labels with localized names
     const startEmoji = startColor.id ? getDyeEmoji(startColor.id) : undefined;
     const endEmoji = endColor.id ? getDyeEmoji(endColor.id) : undefined;
     const startEmojiPrefix = startEmoji ? `${startEmoji} ` : '';
     const endEmojiPrefix = endEmoji ? `${endEmoji} ` : '';
-    const startText = startColor.name
-      ? `${startEmojiPrefix}**${startColor.name}** (\`${startColor.hex.toUpperCase()}\`)`
+    const localizedStartName = startColor.itemID && startColor.name
+      ? getLocalizedDyeName(startColor.itemID, startColor.name)
+      : startColor.name;
+    const localizedEndName = endColor.itemID && endColor.name
+      ? getLocalizedDyeName(endColor.itemID, endColor.name)
+      : endColor.name;
+    const startText = localizedStartName
+      ? `${startEmojiPrefix}**${localizedStartName}** (\`${startColor.hex.toUpperCase()}\`)`
       : `\`${startColor.hex.toUpperCase()}\``;
-    const endText = endColor.name
-      ? `${endEmojiPrefix}**${endColor.name}** (\`${endColor.hex.toUpperCase()}\`)`
+    const endText = localizedEndName
+      ? `${endEmojiPrefix}**${localizedEndName}** (\`${endColor.hex.toUpperCase()}\`)`
       : `\`${endColor.hex.toUpperCase()}\``;
 
     // Send follow-up with image
     await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [
         {
-          title: `Color Gradient • ${stepCount} Steps`,
+          title: `${t.t('mixer.title')} • ${t.t('mixer.steps', { count: stepCount })}`,
           description: [
-            `**From:** ${startText}`,
-            `**To:** ${endText}`,
+            `**${t.t('mixer.startColor')}:** ${startText}`,
+            `**${t.t('mixer.endColor')}:** ${endText}`,
             '',
-            '**Matched Dyes:**',
+            `**${t.t('match.topMatches', { count: stepCount })}:**`,
             dyeLines,
           ].join('\n'),
           color: hexToDiscordColor(startColor.hex),
           image: { url: 'attachment://image.png' },
           footer: {
-            text: 'XIV Dye Tools • Use /dye info <name> for acquisition details',
+            text: `${t.t('common.footer')} • ${t.t('match.useInfoNameHint')}`,
           },
         },
       ],
@@ -295,11 +329,7 @@ async function processMixerCommand(
     // Send error response
     await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [
-        errorEmbed(
-          'Generation Failed',
-          'An error occurred while generating the gradient. ' +
-            'Please try again later.'
-        ),
+        errorEmbed(t.t('common.error'), t.t('errors.generationFailed')),
       ],
     });
   }

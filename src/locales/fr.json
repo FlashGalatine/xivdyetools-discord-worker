@@ -33,10 +33,13 @@
     "missingInput": "Veuillez fournir une couleur (code hexadécimal ou nom de teinture).",
     "missingQuery": "Veuillez fournir un terme de recherche.",
     "missingName": "Veuillez fournir un nom de teinture.",
+    "missingSubcommand": "Veuillez spécifier une sous-commande.",
+    "unknownSubcommand": "Sous-commande inconnue : {name}",
     "noMatchFound": "Aucune teinture correspondante trouvée dans la base de données.",
     "noDyesAvailable": "Aucune teinture disponible dans la base de données.",
     "failedToSave": "Impossible de sauvegarder votre préférence. Veuillez réessayer plus tard.",
-    "failedToReset": "Impossible de réinitialiser votre préférence. Veuillez réessayer plus tard."
+    "failedToReset": "Impossible de réinitialiser votre préférence. Veuillez réessayer plus tard.",
+    "generationFailed": "Une erreur s'est produite lors de la génération de la visualisation. Veuillez réessayer plus tard."
   },
   "quality": {
     "perfect": "Parfait",
@@ -165,13 +168,25 @@
     "fails": "Échoué"
   },
   "accessibility": {
-    "title": "Vérification d'accessibilité",
+    "title": "Accessibilité des couleurs",
     "normalVision": "Vision normale",
-    "protanopia": "Protanopie (daltonisme rouge)",
-    "deuteranopia": "Deutéranopie (daltonisme vert)",
-    "tritanopia": "Tritanopie (daltonisme bleu)",
+    "protanopia": "Protanopie",
+    "deuteranopia": "Deutéranopie",
+    "tritanopia": "Tritanopie",
+    "protanopiaDesc": "Sensibilité réduite à la lumière rouge (~1% des hommes)",
+    "deuteranopiaDesc": "Sensibilité réduite à la lumière verte (~1% des hommes)",
+    "tritanopiaDesc": "Sensibilité réduite à la lumière bleue (rare)",
+    "description": "Cette visualisation montre comment la teinture apparaît aux personnes atteintes de différents types de déficience de la vision des couleurs :",
     "simulatedAppearance": "Apparence simulée",
-    "contrastAnalysis": "Analyse du contraste"
+    "simulationMethod": "Simulation daltonisme Brettel 1997",
+    "contrastAnalysis": "Analyse du contraste WCAG",
+    "contrastTitle": "Comparaison du contraste",
+    "comparing": "Comparaison de {count} teintures",
+    "matrixDescription": "La matrice montre les ratios de contraste WCAG entre chaque paire de teintures :",
+    "wcagAAADesc": "Excellent pour toutes les tailles de texte",
+    "wcagAADesc": "Acceptable pour le texte normal",
+    "wcagFailDesc": "Peut être difficile à distinguer",
+    "wcagGuidelines": "Directives de contraste WCAG 2.1"
   },
   "favorites": {
     "title": "Vos favoris",
@@ -228,6 +243,22 @@
     "commands": "Commandes",
     "links": "Liens",
     "poweredBy": "Propulsé par Cloudflare Workers"
+  },
+  "matchImage": {
+    "missingImage": "Veuillez joindre une image à analyser.",
+    "invalidAttachment": "Impossible de trouver l'image jointe.",
+    "noColors": "L'image semble être entièrement transparente ou trop petite pour être analysée.",
+    "extractionFailed": "Impossible d'extraire les couleurs de l'image.",
+    "colorMatch": "Correspondance de couleur",
+    "colorPalette": "Palette de {count} couleurs",
+    "closestMatch": "Teinture la plus proche",
+    "topMatches": "Top {count} teintures correspondantes",
+    "extractionMethod": "Couleur extraite via clustering K-means",
+    "processingFailed": "Une erreur s'est produite lors du traitement de l'image.",
+    "onlyDiscord": "Seules les images téléchargées directement sur Discord peuvent être analysées.",
+    "imageTooLarge": "L'image est trop grande. Veuillez utiliser une image plus petite.",
+    "unsupportedFormat": "Format d'image non pris en charge. Veuillez utiliser PNG, JPEG, GIF ou WebP.",
+    "timeout": "Le téléchargement de l'image a expiré. Veuillez réessayer."
   },
   "buttons": {
     "copyHex": "Copier HEX",

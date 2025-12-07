@@ -14,6 +14,8 @@ import { DyeService, dyeDatabase, type Dye } from 'xivdyetools-core';
 import { messageResponse, errorEmbed, hexToDiscordColor } from '../../utils/response.js';
 import { getDyeEmoji } from '../../services/emoji.js';
 import { createCopyButtons } from '../buttons/index.js';
+import { createUserTranslator, type Translator } from '../../services/bot-i18n.js';
+import { initializeLocale, getLocalizedDyeName, getLocalizedCategory, resolveUserLocale } from '../../services/i18n.js';
 import type { Env } from '../../types/env.js';
 
 // Initialize DyeService with the database
@@ -23,6 +25,15 @@ interface DiscordInteraction {
   id: string;
   token: string;
   application_id: string;
+  locale?: string;
+  member?: {
+    user: {
+      id: string;
+    };
+  };
+  user?: {
+    id: string;
+  };
   data?: {
     options?: Array<{
       name: string;
@@ -44,27 +55,30 @@ function excludeFacewear(dyes: Dye[]): Dye[] {
 }
 
 /**
- * Formats a dye for display in an embed field
+ * Formats a dye for display in an embed field (with localized name)
  */
 function formatDyeField(dye: Dye, index?: number): { name: string; value: string; inline: boolean } {
   const emoji = getDyeEmoji(dye.id);
   const emojiPrefix = emoji ? `${emoji} ` : '';
   const indexPrefix = index !== undefined ? `**${index + 1}.** ` : '';
+  const localizedName = getLocalizedDyeName(dye.itemID, dye.name);
+  const localizedCategory = getLocalizedCategory(dye.category);
 
   return {
-    name: `${indexPrefix}${emojiPrefix}${dye.name}`,
-    value: `\`${dye.hex.toUpperCase()}\` • ${dye.category}`,
+    name: `${indexPrefix}${emojiPrefix}${localizedName}`,
+    value: `\`${dye.hex.toUpperCase()}\` • ${localizedCategory}`,
     inline: true,
   };
 }
 
 /**
- * Formats a dye for a compact list display
+ * Formats a dye for a compact list display (with localized name)
  */
 function formatDyeListItem(dye: Dye): string {
   const emoji = getDyeEmoji(dye.id);
   const emojiPrefix = emoji ? `${emoji} ` : '';
-  return `${emojiPrefix}**${dye.name}** (\`${dye.hex.toUpperCase()}\`)`;
+  const localizedName = getLocalizedDyeName(dye.itemID, dye.name);
+  return `${emojiPrefix}**${localizedName}** (\`${dye.hex.toUpperCase()}\`)`;
 }
 
 /**
@@ -75,28 +89,35 @@ export async function handleDyeCommand(
   env: Env,
   ctx: ExecutionContext
 ): Promise<Response> {
+  const userId = interaction.member?.user?.id ?? interaction.user?.id ?? 'unknown';
+  const t = await createUserTranslator(env.KV, userId, interaction.locale);
+
+  // Initialize xivdyetools-core localization for dye names
+  const locale = await resolveUserLocale(env.KV, userId, interaction.locale);
+  await initializeLocale(locale);
+
   const options = interaction.data?.options || [];
   const subcommand = options[0];
 
   if (!subcommand) {
     return messageResponse({
-      embeds: [errorEmbed('Invalid Command', 'Please use a subcommand: search, info, list, or random.')],
+      embeds: [errorEmbed(t.t('common.error'), t.t('errors.missingSubcommand'))],
       flags: 64,
     });
   }
 
   switch (subcommand.name) {
     case 'search':
-      return handleSearchSubcommand(subcommand.options);
+      return handleSearchSubcommand(t, subcommand.options);
     case 'info':
-      return handleInfoSubcommand(subcommand.options);
+      return handleInfoSubcommand(t, subcommand.options);
     case 'list':
-      return handleListSubcommand(subcommand.options);
+      return handleListSubcommand(t, subcommand.options);
     case 'random':
-      return handleRandomSubcommand(subcommand.options);
+      return handleRandomSubcommand(t, subcommand.options);
     default:
       return messageResponse({
-        embeds: [errorEmbed('Unknown Subcommand', `Unknown subcommand: ${subcommand.name}`)],
+        embeds: [errorEmbed(t.t('common.error'), t.t('errors.unknownSubcommand', { name: subcommand.name }))],
         flags: 64,
       });
   }
@@ -106,6 +127,7 @@ export async function handleDyeCommand(
  * Handles /dye search <query>
  */
 function handleSearchSubcommand(
+  t: Translator,
   options?: Array<{ name: string; value?: string | number | boolean }>
 ): Response {
   const queryOption = options?.find((opt) => opt.name === 'query');
@@ -113,7 +135,7 @@ function handleSearchSubcommand(
 
   if (!query) {
     return messageResponse({
-      embeds: [errorEmbed('Missing Query', 'Please provide a search term.')],
+      embeds: [errorEmbed(t.t('common.error'), t.t('errors.missingQuery'))],
       flags: 64,
     });
   }
@@ -126,10 +148,9 @@ function handleSearchSubcommand(
     return messageResponse({
       embeds: [
         {
-          title: 'No Results',
-          description: `No dyes found matching "${query}".`,
+          title: t.t('dye.search.noResults', { query }),
+          description: t.t('dye.search.tryDifferent'),
           color: 0x808080,
-          footer: { text: 'Try a different search term' },
         },
       ],
     });
@@ -139,15 +160,20 @@ function handleSearchSubcommand(
   const displayResults = results.slice(0, 10);
   const dyeList = displayResults.map(formatDyeListItem).join('\n');
 
-  const moreText = results.length > 10 ? `\n\n*...and ${results.length - 10} more results*` : '';
+  const moreText = results.length > 10 ? `\n\n*${t.t('dye.search.moreResults', { count: results.length - 10 })}*` : '';
+
+  // Use singular or plural form
+  const foundText = results.length === 1
+    ? t.t('dye.search.foundCount', { count: results.length })
+    : t.t('dye.search.foundCountPlural', { count: results.length });
 
   return messageResponse({
     embeds: [
       {
-        title: `Search Results for "${query}"`,
-        description: `Found ${results.length} dye${results.length !== 1 ? 's' : ''}:\n\n${dyeList}${moreText}`,
+        title: t.t('dye.search.resultsTitle', { query }),
+        description: `${foundText}\n\n${dyeList}${moreText}`,
         color: displayResults[0] ? hexToDiscordColor(displayResults[0].hex) : 0x5865f2,
-        footer: { text: 'Use /dye info <name> for detailed information' },
+        footer: { text: t.t('dye.search.useInfoHint') },
       },
     ],
   });
@@ -157,6 +183,7 @@ function handleSearchSubcommand(
  * Handles /dye info <name>
  */
 function handleInfoSubcommand(
+  t: Translator,
   options?: Array<{ name: string; value?: string | number | boolean }>
 ): Response {
   const nameOption = options?.find((opt) => opt.name === 'name');
@@ -164,7 +191,7 @@ function handleInfoSubcommand(
 
   if (!name) {
     return messageResponse({
-      embeds: [errorEmbed('Missing Name', 'Please provide a dye name.')],
+      embeds: [errorEmbed(t.t('common.error'), t.t('errors.missingName'))],
       flags: 64,
     });
   }
@@ -176,7 +203,7 @@ function handleInfoSubcommand(
   if (!dye) {
     return messageResponse({
       embeds: [
-        errorEmbed('Dye Not Found', `Could not find a dye named "${name}".`),
+        errorEmbed(t.t('common.error'), t.t('errors.dyeNotFound', { name })),
       ],
       flags: 64,
     });
@@ -186,17 +213,21 @@ function handleInfoSubcommand(
   const emoji = getDyeEmoji(dye.id);
   const emojiPrefix = emoji ? `${emoji} ` : '';
 
+  // Get localized dye name and category
+  const localizedDyeName = getLocalizedDyeName(dye.itemID, dye.name);
+  const localizedCategory = getLocalizedCategory(dye.category);
+
   // Build detailed info embed
   const fields = [
-    { name: 'Hex Color', value: `\`${dye.hex.toUpperCase()}\``, inline: true },
-    { name: 'Category', value: dye.category, inline: true },
-    { name: 'Item ID', value: `\`${dye.id}\``, inline: true },
+    { name: t.t('common.hexColor'), value: `\`${dye.hex.toUpperCase()}\``, inline: true },
+    { name: t.t('common.category'), value: localizedCategory, inline: true },
+    { name: t.t('common.itemId'), value: `\`${dye.id}\``, inline: true },
   ];
 
   // Add RGB values
   const rgb = dye.rgb;
   fields.push({
-    name: 'RGB',
+    name: t.t('common.rgb'),
     value: `\`rgb(${rgb.r}, ${rgb.g}, ${rgb.b})\``,
     inline: true,
   });
@@ -204,7 +235,7 @@ function handleInfoSubcommand(
   // Add HSV values
   const hsv = dye.hsv;
   fields.push({
-    name: 'HSV',
+    name: t.t('common.hsv'),
     value: `\`${Math.round(hsv.h)}°, ${Math.round(hsv.s)}%, ${Math.round(hsv.v)}%\``,
     inline: true,
   });
@@ -219,11 +250,11 @@ function handleInfoSubcommand(
   return messageResponse({
     embeds: [
       {
-        title: `${emojiPrefix}${dye.name}`,
-        description: `Detailed information for this ${dye.category} dye.`,
+        title: `${emojiPrefix}${localizedDyeName}`,
+        description: t.t('dye.info.detailedInfo', { category: localizedCategory }),
         color: hexToDiscordColor(dye.hex),
         fields,
-        footer: { text: 'XIV Dye Tools' },
+        footer: { text: t.t('common.footer') },
       },
     ],
     components: [copyButtons],
@@ -234,6 +265,7 @@ function handleInfoSubcommand(
  * Handles /dye list [category]
  */
 function handleListSubcommand(
+  t: Translator,
   options?: Array<{ name: string; value?: string | number | boolean }>
 ): Response {
   const categoryOption = options?.find((opt) => opt.name === 'category');
@@ -251,7 +283,7 @@ function handleListSubcommand(
     if (categoryDyes.length === 0) {
       return messageResponse({
         embeds: [
-          errorEmbed('No Dyes Found', `No dyes found in the "${category}" category.`),
+          errorEmbed(t.t('common.error'), t.t('dye.list.noDyesInCategory', { category })),
         ],
         flags: 64,
       });
@@ -259,14 +291,15 @@ function handleListSubcommand(
 
     // Format list
     const dyeList = categoryDyes.map(formatDyeListItem).join('\n');
+    const localizedCategoryName = getLocalizedCategory(category);
 
     return messageResponse({
       embeds: [
         {
-          title: `${category} Dyes`,
-          description: `${categoryDyes.length} dyes in this category:\n\n${dyeList}`,
+          title: t.t('dye.list.categoryTitle', { category: localizedCategoryName }),
+          description: `${t.t('dye.list.dyesInCategory', { count: categoryDyes.length })}\n\n${dyeList}`,
           color: categoryDyes[0] ? hexToDiscordColor(categoryDyes[0].hex) : 0x5865f2,
-          footer: { text: 'Use /dye info <name> for detailed information' },
+          footer: { text: t.t('dye.search.useInfoHint') },
         },
       ],
     });
@@ -280,16 +313,16 @@ function handleListSubcommand(
   }
 
   const categoryList = Array.from(categories.entries())
-    .map(([cat, count]) => `**${cat}**: ${count} dyes`)
+    .map(([cat, count]) => `**${getLocalizedCategory(cat)}**: ${count} ${t.t('common.dyes')}`)
     .join('\n');
 
   return messageResponse({
     embeds: [
       {
-        title: 'Dye Categories',
-        description: `There are ${allDyes.length} dyes across ${categories.size} categories:\n\n${categoryList}`,
+        title: t.t('dye.list.categoriesTitle'),
+        description: `${t.t('dye.list.categorySummary', { total: allDyes.length, count: categories.size })}\n\n${categoryList}`,
         color: 0x5865f2,
-        footer: { text: 'Use /dye list <category> to see dyes in a category' },
+        footer: { text: t.t('dye.list.useListHint') },
       },
     ],
   });
@@ -301,6 +334,7 @@ function handleListSubcommand(
  * Optional: unique_categories limits to 1 dye per category
  */
 function handleRandomSubcommand(
+  t: Translator,
   options?: Array<{ name: string; value?: string | number | boolean }>
 ): Response {
   // Check for unique_categories option
@@ -312,7 +346,7 @@ function handleRandomSubcommand(
 
   if (allDyes.length === 0) {
     return messageResponse({
-      embeds: [errorEmbed('No Dyes Available', 'No dyes available in the database.')],
+      embeds: [errorEmbed(t.t('common.error'), t.t('errors.noDyesAvailable'))],
       flags: 64,
     });
   }
@@ -354,12 +388,14 @@ function handleRandomSubcommand(
     }
   }
 
-  // Format the dyes
+  // Format the dyes with localized names
   const dyeList = selectedDyes
     .map((dye, i) => {
       const emoji = getDyeEmoji(dye.id);
       const emojiPrefix = emoji ? `${emoji} ` : '';
-      return `**${i + 1}.** ${emojiPrefix}**${dye.name}** (\`${dye.hex.toUpperCase()}\`) • ${dye.category}`;
+      const localizedName = getLocalizedDyeName(dye.itemID, dye.name);
+      const localizedCategory = getLocalizedCategory(dye.category);
+      return `**${i + 1}.** ${emojiPrefix}**${localizedName}** (\`${dye.hex.toUpperCase()}\`) • ${localizedCategory}`;
     })
     .join('\n');
 
@@ -367,10 +403,10 @@ function handleRandomSubcommand(
   const embedColor = selectedDyes[0] ? hexToDiscordColor(selectedDyes[0].hex) : 0x5865f2;
 
   // Build title and description based on mode
-  const title = uniqueCategories ? 'Random Dyes (1 per category)' : 'Random Dyes';
+  const title = uniqueCategories ? t.t('dye.random.titleUnique') : t.t('dye.random.title');
   const description = uniqueCategories
-    ? `Here are ${selectedDyes.length} randomly selected dyes, one from each category:\n\n${dyeList}`
-    : `Here are ${selectedDyes.length} randomly selected dyes:\n\n${dyeList}`;
+    ? `${t.t('dye.random.descriptionUnique', { count: selectedDyes.length })}\n\n${dyeList}`
+    : `${t.t('dye.random.description', { count: selectedDyes.length })}\n\n${dyeList}`;
 
   return messageResponse({
     embeds: [
@@ -378,7 +414,7 @@ function handleRandomSubcommand(
         title,
         description,
         color: embedColor,
-        footer: { text: 'Use /dye info <name> for detailed information • Run again for different dyes!' },
+        footer: { text: `${t.t('dye.search.useInfoHint')} • ${t.t('dye.random.runAgainHint')}` },
       },
     ],
   });

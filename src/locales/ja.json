@@ -33,10 +33,13 @@
     "missingInput": "色（16進数コードまたはカララント名）を入力してください。",
     "missingQuery": "検索キーワードを入力してください。",
     "missingName": "カララント名を入力してください。",
+    "missingSubcommand": "サブコマンドを指定してください。",
+    "unknownSubcommand": "不明なサブコマンド：{name}",
     "noMatchFound": "データベースに一致するカララントが見つかりませんでした。",
     "noDyesAvailable": "データベースにカララントがありません。",
     "failedToSave": "設定を保存できませんでした。後でもう一度お試しください。",
-    "failedToReset": "設定をリセットできませんでした。後でもう一度お試しください。"
+    "failedToReset": "設定をリセットできませんでした。後でもう一度お試しください。",
+    "generationFailed": "可視化の生成中にエラーが発生しました。後でもう一度お試しください。"
   },
   "quality": {
     "perfect": "完璧",
@@ -165,13 +168,25 @@
     "fails": "不合格"
   },
   "accessibility": {
-    "title": "アクセシビリティチェック",
+    "title": "色覚アクセシビリティ",
     "normalVision": "通常の視覚",
-    "protanopia": "1型色覚（赤色盲）",
-    "deuteranopia": "2型色覚（緑色盲）",
-    "tritanopia": "3型色覚（青色盲）",
+    "protanopia": "1型色覚",
+    "deuteranopia": "2型色覚",
+    "tritanopia": "3型色覚",
+    "protanopiaDesc": "赤色光への感度低下（男性の約1%）",
+    "deuteranopiaDesc": "緑色光への感度低下（男性の約1%）",
+    "tritanopiaDesc": "青色光への感度低下（稀）",
+    "description": "この画像は、色覚異常を持つ人々にカララントがどのように見えるかを示しています：",
     "simulatedAppearance": "シミュレーション表示",
-    "contrastAnalysis": "コントラスト分析"
+    "simulationMethod": "Brettel 1997色覚シミュレーション",
+    "contrastAnalysis": "WCAGコントラスト分析",
+    "contrastTitle": "コントラスト比較",
+    "comparing": "{count}つのカララントを比較中",
+    "matrixDescription": "マトリックスは各カララント間のWCAGコントラスト比を表示しています：",
+    "wcagAAADesc": "すべてのテキストサイズに最適",
+    "wcagAADesc": "通常のテキストに許容可能",
+    "wcagFailDesc": "区別しにくい可能性があります",
+    "wcagGuidelines": "WCAG 2.1コントラストガイドライン"
   },
   "favorites": {
     "title": "お気に入り",
@@ -228,6 +243,22 @@
     "commands": "コマンド",
     "links": "リンク",
     "poweredBy": "Cloudflare Workersで動作中"
+  },
+  "matchImage": {
+    "missingImage": "分析する画像を添付してください。",
+    "invalidAttachment": "添付された画像が見つかりませんでした。",
+    "noColors": "画像が完全に透明か、分析には小さすぎるようです。",
+    "extractionFailed": "画像から色を抽出できませんでした。",
+    "colorMatch": "色のマッチング",
+    "colorPalette": "{count}色パレット",
+    "closestMatch": "最も近いカララント",
+    "topMatches": "上位{count}件のマッチング",
+    "extractionMethod": "K-meansクラスタリングによる色抽出",
+    "processingFailed": "画像の処理中にエラーが発生しました。",
+    "onlyDiscord": "Discordに直接アップロードされた画像のみ分析できます。",
+    "imageTooLarge": "画像が大きすぎます。より小さい画像を使用してください。",
+    "unsupportedFormat": "サポートされていない画像形式です。PNG、JPEG、GIF、またはWebPを使用してください。",
+    "timeout": "画像のダウンロードがタイムアウトしました。もう一度お試しください。"
   },
   "buttons": {
     "copyHex": "HEXをコピー",

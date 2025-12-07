@@ -15,6 +15,8 @@ import {
   MAX_FAVORITES,
 } from '../../services/user-storage.js';
 import { getDyeEmoji } from '../../services/emoji.js';
+import { createUserTranslator, type Translator } from '../../services/bot-i18n.js';
+import { resolveUserLocale, initializeLocale, getLocalizedDyeName, getLocalizedCategory } from '../../services/i18n.js';
 import type { Env } from '../../types/env.js';
 
 // Initialize DyeService
@@ -24,6 +26,7 @@ interface DiscordInteraction {
   id: string;
   token: string;
   application_id: string;
+  locale?: string;
   member?: {
     user: {
       id: string;
@@ -84,29 +87,36 @@ export async function handleFavoritesCommand(
     return ephemeralResponse('Could not identify user.');
   }
 
+  // Get translator for user's locale
+  const t = await createUserTranslator(env.KV, userId, interaction.locale);
+
+  // Initialize xivdyetools-core localization for dye names
+  const locale = await resolveUserLocale(env.KV, userId, interaction.locale);
+  await initializeLocale(locale);
+
   // Extract subcommand
   const options = interaction.data?.options || [];
   const subcommand = options.find((opt) => opt.type === 1); // SUB_COMMAND type
 
   if (!subcommand) {
-    return ephemeralResponse('Please specify a subcommand: `add`, `remove`, `list`, or `clear`.');
+    return ephemeralResponse(t.t('errors.missingSubcommand'));
   }
 
   switch (subcommand.name) {
     case 'add':
-      return handleAddFavorite(env, userId, subcommand.options);
+      return handleAddFavorite(env, userId, t, subcommand.options);
 
     case 'remove':
-      return handleRemoveFavorite(env, userId, subcommand.options);
+      return handleRemoveFavorite(env, userId, t, subcommand.options);
 
     case 'list':
-      return handleListFavorites(env, userId);
+      return handleListFavorites(env, userId, t);
 
     case 'clear':
-      return handleClearFavorites(env, userId);
+      return handleClearFavorites(env, userId, t);
 
     default:
-      return ephemeralResponse(`Unknown subcommand: ${subcommand.name}`);
+      return ephemeralResponse(t.t('errors.unknownSubcommand', { name: subcommand.name }));
   }
 }
 
@@ -116,6 +126,7 @@ export async function handleFavoritesCommand(
 async function handleAddFavorite(
   env: Env,
   userId: string,
+  t: Translator,
   options?: Array<{ name: string; value?: string | number | boolean }>
 ): Promise<Response> {
   const dyeOption = options?.find((opt) => opt.name === 'dye');
@@ -125,7 +136,7 @@ async function handleAddFavorite(
     return Response.json({
       type: 4,
       data: {
-        embeds: [errorEmbed('Missing Dye', 'Please specify a dye to add.')],
+        embeds: [errorEmbed(t.t('common.error'), t.t('errors.missingName'))],
         flags: 64,
       },
     });
@@ -138,11 +149,7 @@ async function handleAddFavorite(
       type: 4,
       data: {
         embeds: [
-          errorEmbed(
-            'Dye Not Found',
-            `Could not find a dye matching "${dyeInput}".\n\n` +
-              'Please enter a valid dye name or hex color.'
-          ),
+          errorEmbed(t.t('common.error'), t.t('errors.dyeNotFound', { name: dyeInput })),
         ],
         flags: 64,
       },
@@ -152,6 +159,9 @@ async function handleAddFavorite(
   // Add to favorites
   const result = await addFavorite(env.KV, userId, dye.id);
 
+  // Get localized dye name
+  const localizedName = getLocalizedDyeName(dye.itemID, dye.name);
+
   if (!result.success) {
     switch (result.reason) {
       case 'alreadyExists':
@@ -159,10 +169,7 @@ async function handleAddFavorite(
           type: 4,
           data: {
             embeds: [
-              infoEmbed(
-                'Already a Favorite',
-                `**${dye.name}** is already in your favorites.`
-              ),
+              infoEmbed(t.t('common.error'), t.t('favorites.alreadyFavorite', { name: localizedName })),
             ],
             flags: 64,
           },
@@ -173,11 +180,7 @@ async function handleAddFavorite(
           type: 4,
           data: {
             embeds: [
-              errorEmbed(
-                'Favorites Full',
-                `You've reached the maximum of ${MAX_FAVORITES} favorites.\n\n` +
-                  'Use `/favorites remove` to make room for new ones.'
-              ),
+              errorEmbed(t.t('common.error'), t.t('favorites.limitReached', { max: MAX_FAVORITES })),
             ],
             flags: 64,
           },
@@ -188,10 +191,7 @@ async function handleAddFavorite(
           type: 4,
           data: {
             embeds: [
-              errorEmbed(
-                'Failed to Add',
-                'Could not add the dye to your favorites. Please try again later.'
-              ),
+              errorEmbed(t.t('common.error'), t.t('errors.failedToSave')),
             ],
             flags: 64,
           },
@@ -206,10 +206,7 @@ async function handleAddFavorite(
     type: 4,
     data: {
       embeds: [
-        successEmbed(
-          'Favorite Added',
-          `${emojiStr}**${dye.name}** (\`${dye.hex.toUpperCase()}\`) has been added to your favorites.`
-        ),
+        successEmbed(t.t('common.success'), `${emojiStr}${t.t('favorites.added', { name: localizedName })}`),
       ],
       flags: 64,
     },
@@ -222,6 +219,7 @@ async function handleAddFavorite(
 async function handleRemoveFavorite(
   env: Env,
   userId: string,
+  t: Translator,
   options?: Array<{ name: string; value?: string | number | boolean }>
 ): Promise<Response> {
   const dyeOption = options?.find((opt) => opt.name === 'dye');
@@ -231,7 +229,7 @@ async function handleRemoveFavorite(
     return Response.json({
       type: 4,
       data: {
-        embeds: [errorEmbed('Missing Dye', 'Please specify a dye to remove.')],
+        embeds: [errorEmbed(t.t('common.error'), t.t('errors.missingName'))],
         flags: 64,
       },
     });
@@ -244,7 +242,7 @@ async function handleRemoveFavorite(
       type: 4,
       data: {
         embeds: [
-          errorEmbed('Dye Not Found', `Could not find a dye matching "${dyeInput}".`),
+          errorEmbed(t.t('common.error'), t.t('errors.dyeNotFound', { name: dyeInput })),
         ],
         flags: 64,
       },
@@ -254,15 +252,15 @@ async function handleRemoveFavorite(
   // Remove from favorites
   const removed = await removeFavorite(env.KV, userId, dye.id);
 
+  // Get localized dye name
+  const localizedName = getLocalizedDyeName(dye.itemID, dye.name);
+
   if (!removed) {
     return Response.json({
       type: 4,
       data: {
         embeds: [
-          infoEmbed(
-            'Not a Favorite',
-            `**${dye.name}** is not in your favorites.`
-          ),
+          infoEmbed(t.t('common.error'), t.t('favorites.notInFavorites', { name: localizedName })),
         ],
         flags: 64,
       },
@@ -276,10 +274,7 @@ async function handleRemoveFavorite(
     type: 4,
     data: {
       embeds: [
-        successEmbed(
-          'Favorite Removed',
-          `${emojiStr}**${dye.name}** has been removed from your favorites.`
-        ),
+        successEmbed(t.t('common.success'), `${emojiStr}${t.t('favorites.removed', { name: localizedName })}`),
       ],
       flags: 64,
     },
@@ -289,7 +284,7 @@ async function handleRemoveFavorite(
 /**
  * Handle /favorites list
  */
-async function handleListFavorites(env: Env, userId: string): Promise<Response> {
+async function handleListFavorites(env: Env, userId: string, t: Translator): Promise<Response> {
   const favoriteIds = await getFavorites(env.KV, userId);
 
   if (favoriteIds.length === 0) {
@@ -298,9 +293,8 @@ async function handleListFavorites(env: Env, userId: string): Promise<Response> 
       data: {
         embeds: [
           infoEmbed(
-            'No Favorites',
-            "You don't have any favorite dyes yet.\n\n" +
-              'Use `/favorites add <dye>` to add some!'
+            t.t('favorites.title'),
+            `${t.t('favorites.empty')}\n\n${t.t('favorites.addHint')}`
           ),
         ],
         flags: 64,
@@ -313,21 +307,23 @@ async function handleListFavorites(env: Env, userId: string): Promise<Response> 
     .map((id) => dyeService.getDyeById(id))
     .filter((dye): dye is Dye => dye !== null);
 
-  // Build list with emojis
+  // Build list with emojis and localized names
   const dyeList = dyes.map((dye, index) => {
     const emoji = getDyeEmoji(dye.id);
     const emojiStr = emoji ? `${emoji} ` : '';
-    return `${index + 1}. ${emojiStr}**${dye.name}** (\`${dye.hex.toUpperCase()}\`) - ${dye.category}`;
+    const localizedName = getLocalizedDyeName(dye.itemID, dye.name);
+    const localizedCategory = getLocalizedCategory(dye.category);
+    return `${index + 1}. ${emojiStr}**${localizedName}** (\`${dye.hex.toUpperCase()}\`) - ${localizedCategory}`;
   });
 
-  // Group by category for summary
+  // Group by category for summary with localized names
   const categoryCount = dyes.reduce((acc, dye) => {
     acc[dye.category] = (acc[dye.category] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
 
   const categorySummary = Object.entries(categoryCount)
-    .map(([cat, count]) => `${cat}: ${count}`)
+    .map(([cat, count]) => `${getLocalizedCategory(cat)}: ${count}`)
     .join(' • ');
 
   return Response.json({
@@ -335,7 +331,7 @@ async function handleListFavorites(env: Env, userId: string): Promise<Response> 
     data: {
       embeds: [
         {
-          title: `Your Favorites (${dyes.length}/${MAX_FAVORITES})`,
+          title: `${t.t('favorites.title')} (${t.t('favorites.count', { count: dyes.length, max: MAX_FAVORITES })})`,
           description: dyeList.join('\n'),
           color: 0x5865f2,
           footer: {
@@ -351,7 +347,7 @@ async function handleListFavorites(env: Env, userId: string): Promise<Response> 
 /**
  * Handle /favorites clear
  */
-async function handleClearFavorites(env: Env, userId: string): Promise<Response> {
+async function handleClearFavorites(env: Env, userId: string, t: Translator): Promise<Response> {
   // Get current count for confirmation message
   const favorites = await getFavorites(env.KV, userId);
   const count = favorites.length;
@@ -361,10 +357,7 @@ async function handleClearFavorites(env: Env, userId: string): Promise<Response>
       type: 4,
       data: {
         embeds: [
-          infoEmbed(
-            'No Favorites',
-            "You don't have any favorites to clear."
-          ),
+          infoEmbed(t.t('favorites.title'), t.t('favorites.empty')),
         ],
         flags: 64,
       },
@@ -378,10 +371,7 @@ async function handleClearFavorites(env: Env, userId: string): Promise<Response>
       type: 4,
       data: {
         embeds: [
-          errorEmbed(
-            'Failed to Clear',
-            'Could not clear your favorites. Please try again later.'
-          ),
+          errorEmbed(t.t('common.error'), t.t('errors.failedToReset')),
         ],
         flags: 64,
       },
@@ -392,10 +382,7 @@ async function handleClearFavorites(env: Env, userId: string): Promise<Response>
     type: 4,
     data: {
       embeds: [
-        successEmbed(
-          'Favorites Cleared',
-          `Successfully removed ${count} dye${count !== 1 ? 's' : ''} from your favorites.`
-        ),
+        successEmbed(t.t('common.success'), t.t('favorites.cleared')),
       ],
       flags: 64,
     },

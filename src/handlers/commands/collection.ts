@@ -21,6 +21,8 @@ import {
   type Collection,
 } from '../../services/user-storage.js';
 import { getDyeEmoji } from '../../services/emoji.js';
+import { createUserTranslator, createTranslator, type Translator } from '../../services/bot-i18n.js';
+import { discordLocaleToLocaleCode, resolveUserLocale, initializeLocale, getLocalizedDyeName } from '../../services/i18n.js';
 import type { Env } from '../../types/env.js';
 
 // Initialize DyeService
@@ -30,6 +32,7 @@ interface DiscordInteraction {
   id: string;
   token: string;
   application_id: string;
+  locale?: string;
   member?: {
     user: {
       id: string;
@@ -85,43 +88,50 @@ export async function handleCollectionCommand(
   const userId = interaction.member?.user?.id ?? interaction.user?.id;
 
   if (!userId) {
-    return ephemeralResponse('Could not identify user.');
+    const locale = discordLocaleToLocaleCode(interaction.locale ?? 'en') ?? 'en';
+    const t = createTranslator(locale);
+    return ephemeralResponse(t.t('errors.userNotFound'));
   }
+
+  // Get translator for user's locale
+  const t = await createUserTranslator(env.KV, userId, interaction.locale);
+
+  // Initialize xivdyetools-core localization for dye names
+  const locale = await resolveUserLocale(env.KV, userId, interaction.locale);
+  await initializeLocale(locale);
 
   // Extract subcommand
   const options = interaction.data?.options || [];
   const subcommand = options.find((opt) => opt.type === 1);
 
   if (!subcommand) {
-    return ephemeralResponse(
-      'Please specify a subcommand: `create`, `delete`, `add`, `remove`, `show`, `list`, or `rename`.'
-    );
+    return ephemeralResponse(t.t('errors.missingSubcommand'));
   }
 
   switch (subcommand.name) {
     case 'create':
-      return handleCreate(env, userId, subcommand.options);
+      return handleCreate(env, userId, t, subcommand.options);
 
     case 'delete':
-      return handleDelete(env, userId, subcommand.options);
+      return handleDelete(env, userId, t, subcommand.options);
 
     case 'add':
-      return handleAdd(env, userId, subcommand.options);
+      return handleAdd(env, userId, t, subcommand.options);
 
     case 'remove':
-      return handleRemove(env, userId, subcommand.options);
+      return handleRemove(env, userId, t, subcommand.options);
 
     case 'show':
-      return handleShow(env, userId, subcommand.options);
+      return handleShow(env, userId, t, subcommand.options);
 
     case 'list':
-      return handleList(env, userId);
+      return handleList(env, userId, t);
 
     case 'rename':
-      return handleRename(env, userId, subcommand.options);
+      return handleRename(env, userId, t, subcommand.options);
 
     default:
-      return ephemeralResponse(`Unknown subcommand: ${subcommand.name}`);
+      return ephemeralResponse(t.t('errors.unknownSubcommand', { name: subcommand.name }));
   }
 }
 
@@ -131,6 +141,7 @@ export async function handleCollectionCommand(
 async function handleCreate(
   env: Env,
   userId: string,
+  t: Translator,
   options?: Array<{ name: string; value?: string | number | boolean }>
 ): Promise<Response> {
   const nameOption = options?.find((opt) => opt.name === 'name');
@@ -143,7 +154,7 @@ async function handleCreate(
     return Response.json({
       type: 4,
       data: {
-        embeds: [errorEmbed('Missing Name', 'Please specify a name for the collection.')],
+        embeds: [errorEmbed(t.t('common.error'), t.t('errors.missingName'))],
         flags: 64,
       },
     });
@@ -159,8 +170,8 @@ async function handleCreate(
           data: {
             embeds: [
               errorEmbed(
-                'Name Too Long',
-                `Collection names must be ${MAX_COLLECTION_NAME_LENGTH} characters or less.`
+                t.t('common.error'),
+                t.t('collection.nameTooLong', { max: MAX_COLLECTION_NAME_LENGTH })
               ),
             ],
             flags: 64,
@@ -172,7 +183,7 @@ async function handleCreate(
           type: 4,
           data: {
             embeds: [
-              errorEmbed('Already Exists', `A collection named "${name}" already exists.`),
+              errorEmbed(t.t('common.error'), t.t('collection.alreadyExists', { name })),
             ],
             flags: 64,
           },
@@ -184,9 +195,8 @@ async function handleCreate(
           data: {
             embeds: [
               errorEmbed(
-                'Collection Limit',
-                `You've reached the maximum of ${MAX_COLLECTIONS} collections.\n\n` +
-                  'Use `/collection delete` to remove one first.'
+                t.t('common.error'),
+                t.t('collection.limitReached', { max: MAX_COLLECTIONS })
               ),
             ],
             flags: 64,
@@ -197,7 +207,7 @@ async function handleCreate(
         return Response.json({
           type: 4,
           data: {
-            embeds: [errorEmbed('Error', 'Could not create collection. Please try again.')],
+            embeds: [errorEmbed(t.t('common.error'), t.t('errors.failedToSave'))],
             flags: 64,
           },
         });
@@ -211,9 +221,9 @@ async function handleCreate(
     data: {
       embeds: [
         successEmbed(
-          'Collection Created',
-          `Created new collection: **${name}**${descText}\n\n` +
-            `Use \`/collection add ${name} <dye>\` to add dyes.`
+          t.t('common.success'),
+          `${t.t('collection.created', { name })}${descText}\n\n` +
+            t.t('collection.addDyeHint', { name })
         ),
       ],
       flags: 64,
@@ -227,6 +237,7 @@ async function handleCreate(
 async function handleDelete(
   env: Env,
   userId: string,
+  t: Translator,
   options?: Array<{ name: string; value?: string | number | boolean }>
 ): Promise<Response> {
   const nameOption = options?.find((opt) => opt.name === 'name');
@@ -236,7 +247,7 @@ async function handleDelete(
     return Response.json({
       type: 4,
       data: {
-        embeds: [errorEmbed('Missing Name', 'Please specify the collection to delete.')],
+        embeds: [errorEmbed(t.t('common.error'), t.t('errors.missingName'))],
         flags: 64,
       },
     });
@@ -249,7 +260,7 @@ async function handleDelete(
       type: 4,
       data: {
         embeds: [
-          errorEmbed('Not Found', `Could not find a collection named "${name}".`),
+          errorEmbed(t.t('common.error'), t.t('collection.notFound', { name })),
         ],
         flags: 64,
       },
@@ -259,7 +270,7 @@ async function handleDelete(
   return Response.json({
     type: 4,
     data: {
-      embeds: [successEmbed('Collection Deleted', `Deleted collection: **${name}**`)],
+      embeds: [successEmbed(t.t('common.success'), t.t('collection.deleted', { name }))],
       flags: 64,
     },
   });
@@ -271,6 +282,7 @@ async function handleDelete(
 async function handleAdd(
   env: Env,
   userId: string,
+  t: Translator,
   options?: Array<{ name: string; value?: string | number | boolean }>
 ): Promise<Response> {
   const nameOption = options?.find((opt) => opt.name === 'name');
@@ -284,7 +296,7 @@ async function handleAdd(
       type: 4,
       data: {
         embeds: [
-          errorEmbed('Missing Input', 'Please specify both collection name and dye.'),
+          errorEmbed(t.t('common.error'), t.t('errors.missingInput')),
         ],
         flags: 64,
       },
@@ -298,7 +310,7 @@ async function handleAdd(
       type: 4,
       data: {
         embeds: [
-          errorEmbed('Dye Not Found', `Could not find a dye matching "${dyeInput}".`),
+          errorEmbed(t.t('common.error'), t.t('errors.dyeNotFound', { name: dyeInput })),
         ],
         flags: 64,
       },
@@ -307,6 +319,9 @@ async function handleAdd(
 
   const result = await addDyeToCollection(env.KV, userId, name, dye.id);
 
+  // Get localized dye name
+  const localizedDyeName = getLocalizedDyeName(dye.itemID, dye.name);
+
   if (!result.success) {
     switch (result.reason) {
       case 'notFound':
@@ -314,7 +329,7 @@ async function handleAdd(
           type: 4,
           data: {
             embeds: [
-              errorEmbed('Collection Not Found', `Could not find a collection named "${name}".`),
+              errorEmbed(t.t('common.error'), t.t('collection.notFound', { name })),
             ],
             flags: 64,
           },
@@ -326,8 +341,8 @@ async function handleAdd(
           data: {
             embeds: [
               infoEmbed(
-                'Already in Collection',
-                `**${dye.name}** is already in the collection "${name}".`
+                t.t('common.dye'),
+                t.t('collection.dyeAlreadyInCollection', { dye: localizedDyeName, collection: name })
               ),
             ],
             flags: 64,
@@ -340,8 +355,8 @@ async function handleAdd(
           data: {
             embeds: [
               errorEmbed(
-                'Collection Full',
-                `This collection has reached the maximum of ${MAX_DYES_PER_COLLECTION} dyes.`
+                t.t('common.error'),
+                t.t('collection.dyeLimitReached', { max: MAX_DYES_PER_COLLECTION })
               ),
             ],
             flags: 64,
@@ -352,7 +367,7 @@ async function handleAdd(
         return Response.json({
           type: 4,
           data: {
-            embeds: [errorEmbed('Error', 'Could not add dye. Please try again.')],
+            embeds: [errorEmbed(t.t('common.error'), t.t('errors.failedToSave'))],
             flags: 64,
           },
         });
@@ -367,8 +382,8 @@ async function handleAdd(
     data: {
       embeds: [
         successEmbed(
-          'Dye Added',
-          `Added ${emojiStr}**${dye.name}** to collection "${name}".`
+          t.t('common.success'),
+          `${emojiStr}${t.t('collection.dyeAdded', { dye: localizedDyeName, collection: name })}`
         ),
       ],
       flags: 64,
@@ -382,6 +397,7 @@ async function handleAdd(
 async function handleRemove(
   env: Env,
   userId: string,
+  t: Translator,
   options?: Array<{ name: string; value?: string | number | boolean }>
 ): Promise<Response> {
   const nameOption = options?.find((opt) => opt.name === 'name');
@@ -395,7 +411,7 @@ async function handleRemove(
       type: 4,
       data: {
         embeds: [
-          errorEmbed('Missing Input', 'Please specify both collection name and dye.'),
+          errorEmbed(t.t('common.error'), t.t('errors.missingInput')),
         ],
         flags: 64,
       },
@@ -409,7 +425,7 @@ async function handleRemove(
       type: 4,
       data: {
         embeds: [
-          errorEmbed('Dye Not Found', `Could not find a dye matching "${dyeInput}".`),
+          errorEmbed(t.t('common.error'), t.t('errors.dyeNotFound', { name: dyeInput })),
         ],
         flags: 64,
       },
@@ -418,14 +434,17 @@ async function handleRemove(
 
   const removed = await removeDyeFromCollection(env.KV, userId, name, dye.id);
 
+  // Get localized dye name
+  const localizedDyeName = getLocalizedDyeName(dye.itemID, dye.name);
+
   if (!removed) {
     return Response.json({
       type: 4,
       data: {
         embeds: [
           infoEmbed(
-            'Not in Collection',
-            `**${dye.name}** is not in the collection "${name}" (or collection doesn't exist).`
+            t.t('common.dye'),
+            t.t('collection.dyeNotInCollection', { dye: localizedDyeName, collection: name })
           ),
         ],
         flags: 64,
@@ -441,8 +460,8 @@ async function handleRemove(
     data: {
       embeds: [
         successEmbed(
-          'Dye Removed',
-          `Removed ${emojiStr}**${dye.name}** from collection "${name}".`
+          t.t('common.success'),
+          `${emojiStr}${t.t('collection.dyeRemoved', { dye: localizedDyeName, collection: name })}`
         ),
       ],
       flags: 64,
@@ -456,6 +475,7 @@ async function handleRemove(
 async function handleShow(
   env: Env,
   userId: string,
+  t: Translator,
   options?: Array<{ name: string; value?: string | number | boolean }>
 ): Promise<Response> {
   const nameOption = options?.find((opt) => opt.name === 'name');
@@ -465,7 +485,7 @@ async function handleShow(
     return Response.json({
       type: 4,
       data: {
-        embeds: [errorEmbed('Missing Name', 'Please specify the collection to show.')],
+        embeds: [errorEmbed(t.t('common.error'), t.t('errors.missingName'))],
         flags: 64,
       },
     });
@@ -478,7 +498,7 @@ async function handleShow(
       type: 4,
       data: {
         embeds: [
-          errorEmbed('Not Found', `Could not find a collection named "${name}".`),
+          errorEmbed(t.t('common.error'), t.t('collection.notFound', { name })),
         ],
         flags: 64,
       },
@@ -493,8 +513,8 @@ async function handleShow(
           infoEmbed(
             collection.name,
             `${collection.description ? `*${collection.description}*\n\n` : ''}` +
-              'This collection is empty.\n\n' +
-              `Use \`/collection add ${collection.name} <dye>\` to add dyes.`
+              `${t.t('collection.collectionEmpty')}\n\n` +
+              t.t('collection.addDyeHint', { name: collection.name })
           ),
         ],
         flags: 64,
@@ -507,11 +527,12 @@ async function handleShow(
     .map((id) => dyeService.getDyeById(id))
     .filter((dye): dye is Dye => dye !== null);
 
-  // Build list
+  // Build list with localized names
   const dyeList = dyes.map((dye, index) => {
     const emoji = getDyeEmoji(dye.id);
     const emojiStr = emoji ? `${emoji} ` : '';
-    return `${index + 1}. ${emojiStr}**${dye.name}** (\`${dye.hex.toUpperCase()}\`)`;
+    const localizedName = getLocalizedDyeName(dye.itemID, dye.name);
+    return `${index + 1}. ${emojiStr}**${localizedName}** (\`${dye.hex.toUpperCase()}\`)`;
   });
 
   const description =
@@ -527,7 +548,7 @@ async function handleShow(
           description,
           color: dyes.length > 0 ? parseInt(dyes[0].hex.replace('#', ''), 16) : 0x5865f2,
           footer: {
-            text: `Created: ${new Date(collection.createdAt).toLocaleDateString()}`,
+            text: `${t.t('common.createdAt')}: ${new Date(collection.createdAt).toLocaleDateString()}`,
           },
         },
       ],
@@ -539,7 +560,7 @@ async function handleShow(
 /**
  * Handle /collection list
  */
-async function handleList(env: Env, userId: string): Promise<Response> {
+async function handleList(env: Env, userId: string, t: Translator): Promise<Response> {
   const collections = await getCollections(env.KV, userId);
 
   if (collections.length === 0) {
@@ -548,9 +569,8 @@ async function handleList(env: Env, userId: string): Promise<Response> {
       data: {
         embeds: [
           infoEmbed(
-            'No Collections',
-            "You don't have any collections yet.\n\n" +
-              'Use `/collection create <name>` to create one!'
+            t.t('collection.title'),
+            `${t.t('collection.empty')}\n\n${t.t('collection.createHint')}`
           ),
         ],
         flags: 64,
@@ -562,7 +582,8 @@ async function handleList(env: Env, userId: string): Promise<Response> {
   const collectionList = collections.map((c, index) => {
     const dyeCount = c.dyes.length;
     const desc = c.description ? ` - *${c.description.substring(0, 30)}${c.description.length > 30 ? '...' : ''}*` : '';
-    return `${index + 1}. **${c.name}** (${dyeCount} dye${dyeCount !== 1 ? 's' : ''})${desc}`;
+    const dyeWord = dyeCount === 1 ? t.t('common.dye') : t.t('common.dyes');
+    return `${index + 1}. **${c.name}** (${dyeCount} ${dyeWord})${desc}`;
   });
 
   return Response.json({
@@ -570,11 +591,11 @@ async function handleList(env: Env, userId: string): Promise<Response> {
     data: {
       embeds: [
         {
-          title: `Your Collections (${collections.length}/${MAX_COLLECTIONS})`,
+          title: `${t.t('collection.title')} (${collections.length}/${MAX_COLLECTIONS})`,
           description: collectionList.join('\n'),
           color: 0x5865f2,
           footer: {
-            text: 'Use /collection show <name> to view a collection',
+            text: t.t('collection.showHint'),
           },
         },
       ],
@@ -589,6 +610,7 @@ async function handleList(env: Env, userId: string): Promise<Response> {
 async function handleRename(
   env: Env,
   userId: string,
+  t: Translator,
   options?: Array<{ name: string; value?: string | number | boolean }>
 ): Promise<Response> {
   const nameOption = options?.find((opt) => opt.name === 'name');
@@ -602,7 +624,7 @@ async function handleRename(
       type: 4,
       data: {
         embeds: [
-          errorEmbed('Missing Input', 'Please specify both current name and new name.'),
+          errorEmbed(t.t('common.error'), t.t('errors.missingInput')),
         ],
         flags: 64,
       },
@@ -619,8 +641,8 @@ async function handleRename(
           data: {
             embeds: [
               errorEmbed(
-                'Name Too Long',
-                `Collection names must be ${MAX_COLLECTION_NAME_LENGTH} characters or less.`
+                t.t('common.error'),
+                t.t('collection.nameTooLong', { max: MAX_COLLECTION_NAME_LENGTH })
               ),
             ],
             flags: 64,
@@ -632,7 +654,7 @@ async function handleRename(
           type: 4,
           data: {
             embeds: [
-              errorEmbed('Not Found', `Could not find a collection named "${name}".`),
+              errorEmbed(t.t('common.error'), t.t('collection.notFound', { name })),
             ],
             flags: 64,
           },
@@ -643,7 +665,7 @@ async function handleRename(
           type: 4,
           data: {
             embeds: [
-              errorEmbed('Name Taken', `A collection named "${newName}" already exists.`),
+              errorEmbed(t.t('common.error'), t.t('collection.alreadyExists', { name: newName })),
             ],
             flags: 64,
           },
@@ -653,7 +675,7 @@ async function handleRename(
         return Response.json({
           type: 4,
           data: {
-            embeds: [errorEmbed('Error', 'Could not rename collection. Please try again.')],
+            embeds: [errorEmbed(t.t('common.error'), t.t('errors.failedToSave'))],
             flags: 64,
           },
         });
@@ -665,8 +687,8 @@ async function handleRename(
     data: {
       embeds: [
         successEmbed(
-          'Collection Renamed',
-          `Renamed collection from **${name}** to **${newName}**.`
+          t.t('common.success'),
+          t.t('collection.renamed', { oldName: name, newName })
         ),
       ],
       flags: 64,

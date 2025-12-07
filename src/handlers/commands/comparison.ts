@@ -11,6 +11,8 @@ import { editOriginalResponse } from '../../utils/discord-api.js';
 import { generateComparisonGrid } from '../../services/svg/comparison-grid.js';
 import { renderSvgToPng } from '../../services/svg/renderer.js';
 import { getDyeEmoji } from '../../services/emoji.js';
+import { createUserTranslator, createTranslator, type Translator } from '../../services/bot-i18n.js';
+import { resolveUserLocale, initializeLocale, getLocalizedDyeName, type LocaleCode } from '../../services/i18n.js';
 import type { Env } from '../../types/env.js';
 
 // Initialize DyeService with the database
@@ -20,6 +22,15 @@ interface DiscordInteraction {
   id: string;
   token: string;
   application_id: string;
+  locale?: string;
+  member?: {
+    user: {
+      id: string;
+    };
+  };
+  user?: {
+    id: string;
+  };
   data?: {
     options?: Array<{
       name: string;
@@ -78,6 +89,9 @@ export async function handleComparisonCommand(
   env: Env,
   ctx: ExecutionContext
 ): Promise<Response> {
+  const userId = interaction.member?.user?.id ?? interaction.user?.id ?? 'unknown';
+  const t = await createUserTranslator(env.KV, userId, interaction.locale);
+
   // Extract options
   const options = interaction.data?.options || [];
   const dye1Input = options.find((opt) => opt.name === 'dye1')?.value as string | undefined;
@@ -90,7 +104,7 @@ export async function handleComparisonCommand(
     return Response.json({
       type: 4, // CHANNEL_MESSAGE_WITH_SOURCE
       data: {
-        embeds: [errorEmbed('Missing Input', 'Please provide at least two dyes to compare.')],
+        embeds: [errorEmbed(t.t('common.error'), t.t('errors.missingInput'))],
         flags: 64, // Ephemeral
       },
     });
@@ -117,11 +131,7 @@ export async function handleComparisonCommand(
       type: 4,
       data: {
         embeds: [
-          errorEmbed(
-            'Invalid Input',
-            `Could not resolve ${failedInputs} to a dye or color. ` +
-              'Please provide valid hex codes (e.g., #FF0000) or dye names (e.g., "Dalamud Red").'
-          ),
+          errorEmbed(t.t('common.error'), t.t('errors.invalidColor', { input: failedInputs })),
         ],
         flags: 64,
       },
@@ -134,8 +144,11 @@ export async function handleComparisonCommand(
   // Defer the response (image generation takes time)
   const deferResponse = deferredResponse();
 
+  // Resolve locale for background processing
+  const locale = await resolveUserLocale(env.KV, userId, interaction.locale);
+
   // Process in background
-  ctx.waitUntil(processComparisonCommand(interaction, env, dyes));
+  ctx.waitUntil(processComparisonCommand(interaction, env, dyes, locale));
 
   return deferResponse;
 }
@@ -146,12 +159,24 @@ export async function handleComparisonCommand(
 async function processComparisonCommand(
   interaction: DiscordInteraction,
   env: Env,
-  dyes: Dye[]
+  dyes: Dye[],
+  locale: LocaleCode
 ): Promise<void> {
+  const t = createTranslator(locale);
+
+  // Initialize xivdyetools-core localization for dye names
+  await initializeLocale(locale);
+
   try {
-    // Generate SVG
+    // Build dyes with localized names for SVG
+    const dyesWithLocalizedNames = dyes.map((dye) => ({
+      ...dye,
+      name: getLocalizedDyeName(dye.itemID, dye.name),
+    }));
+
+    // Generate SVG with localized names
     const svg = generateComparisonGrid({
-      dyes,
+      dyes: dyesWithLocalizedNames,
       width: 800,
       showHsv: true,
     });
@@ -159,12 +184,13 @@ async function processComparisonCommand(
     // Render to PNG
     const pngBuffer = await renderSvgToPng(svg, { scale: 2 });
 
-    // Build description with dye list and emojis
+    // Build description with dye list and emojis (using localized names)
     const dyeList = dyes
       .map((dye, i) => {
         const emoji = getDyeEmoji(dye.id);
         const emojiPrefix = emoji ? `${emoji} ` : '';
-        return `**${i + 1}.** ${emojiPrefix}${dye.name} (\`${dye.hex.toUpperCase()}\`)`;
+        const localizedName = getLocalizedDyeName(dye.itemID, dye.name);
+        return `**${i + 1}.** ${emojiPrefix}${localizedName} (\`${dye.hex.toUpperCase()}\`)`;
       })
       .join('\n');
 
@@ -175,12 +201,12 @@ async function processComparisonCommand(
     await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [
         {
-          title: `Comparing ${dyes.length} Dyes`,
+          title: `${t.t('comparison.title')} (${dyes.length})`,
           description: dyeList,
           color: embedColor,
           image: { url: 'attachment://image.png' },
           footer: {
-            text: 'XIV Dye Tools • Color distance uses RGB Euclidean distance',
+            text: t.t('common.footer'),
           },
         },
       ],
@@ -196,11 +222,7 @@ async function processComparisonCommand(
     // Send error response
     await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [
-        errorEmbed(
-          'Generation Failed',
-          'An error occurred while generating the comparison visualization. ' +
-            'Please try again later.'
-        ),
+        errorEmbed(t.t('common.error'), t.t('errors.generationFailed')),
       ],
     });
   }

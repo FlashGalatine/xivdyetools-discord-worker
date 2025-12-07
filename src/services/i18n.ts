@@ -193,3 +193,33 @@ export function formatLocaleDisplay(locale: LocaleCode): string {
   if (!info) return locale;
   return `${info.flag} ${info.name} (${info.nativeName})`;
 }
+
+/**
+ * Get localized dye name from xivdyetools-core
+ *
+ * @param itemID - The dye's item ID (e.g., 5729)
+ * @param fallbackName - Fallback name if localization fails
+ * @returns Localized name or fallback
+ */
+export function getLocalizedDyeName(itemID: number, fallbackName: string): string {
+  try {
+    const localizedName = LocalizationService.getDyeName(itemID);
+    return localizedName ?? fallbackName;
+  } catch {
+    return fallbackName;
+  }
+}
+
+/**
+ * Get localized category name from xivdyetools-core
+ *
+ * @param category - The category key (e.g., "Reds", "Blues")
+ * @returns Localized category name
+ */
+export function getLocalizedCategory(category: string): string {
+  try {
+    return LocalizationService.getCategory(category);
+  } catch {
+    return category;
+  }
+}

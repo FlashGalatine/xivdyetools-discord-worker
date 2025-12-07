@@ -9,6 +9,8 @@ import { DyeService, dyeDatabase, ColorService, type Dye } from 'xivdyetools-cor
 import { messageResponse, errorEmbed, hexToDiscordColor } from '../../utils/response.js';
 import { getDyeEmoji } from '../../services/emoji.js';
 import { createCopyButtons } from '../buttons/index.js';
+import { createUserTranslator, type Translator } from '../../services/bot-i18n.js';
+import { initializeLocale, getLocalizedDyeName, resolveUserLocale } from '../../services/i18n.js';
 import type { Env } from '../../types/env.js';
 
 // Initialize DyeService with the database
@@ -18,6 +20,15 @@ interface DiscordInteraction {
   id: string;
   token: string;
   application_id: string;
+  locale?: string;
+  member?: {
+    user: {
+      id: string;
+    };
+  };
+  user?: {
+    id: string;
+  };
   data?: {
     options?: Array<{
       name: string;
@@ -84,12 +95,12 @@ function getColorDistance(hex1: string, hex2: string): number {
 /**
  * Gets match quality emoji and label based on color distance
  */
-function getMatchQuality(distance: number): { emoji: string; label: string } {
-  if (distance === 0) return { emoji: '🎯', label: 'Perfect' };
-  if (distance < 10) return { emoji: '✨', label: 'Excellent' };
-  if (distance < 25) return { emoji: '👍', label: 'Good' };
-  if (distance < 50) return { emoji: '⚠️', label: 'Fair' };
-  return { emoji: '🔍', label: 'Approximate' };
+function getMatchQuality(distance: number, t: Translator): { emoji: string; label: string } {
+  if (distance === 0) return { emoji: '🎯', label: t.t('quality.perfect') };
+  if (distance < 10) return { emoji: '✨', label: t.t('quality.excellent') };
+  if (distance < 25) return { emoji: '👍', label: t.t('quality.good') };
+  if (distance < 50) return { emoji: '⚠️', label: t.t('quality.fair') };
+  return { emoji: '🔍', label: t.t('quality.approximate') };
 }
 
 /**
@@ -117,6 +128,13 @@ export async function handleMatchCommand(
   env: Env,
   ctx: ExecutionContext
 ): Promise<Response> {
+  const userId = interaction.member?.user?.id ?? interaction.user?.id ?? 'unknown';
+  const t = await createUserTranslator(env.KV, userId, interaction.locale);
+
+  // Initialize xivdyetools-core localization for dye names
+  const locale = await resolveUserLocale(env.KV, userId, interaction.locale);
+  await initializeLocale(locale);
+
   // Extract options
   const options = interaction.data?.options || [];
   const colorOption = options.find((opt) => opt.name === 'color');
@@ -128,7 +146,7 @@ export async function handleMatchCommand(
   // Validate required input
   if (!colorInput) {
     return messageResponse({
-      embeds: [errorEmbed('Missing Input', 'Please provide a color (hex code or dye name).')],
+      embeds: [errorEmbed(t.t('common.error'), t.t('errors.missingInput'))],
       flags: 64,
     });
   }
@@ -138,11 +156,7 @@ export async function handleMatchCommand(
   if (!resolved) {
     return messageResponse({
       embeds: [
-        errorEmbed(
-          'Invalid Color',
-          `Could not resolve "${colorInput}" to a color.\n\n` +
-            'Please provide a valid hex code (e.g., `#FF0000`) or dye name (e.g., `Dalamud Red`).'
-        ),
+        errorEmbed(t.t('common.error'), t.t('errors.invalidColor', { input: colorInput })),
       ],
       flags: 64,
     });
@@ -179,7 +193,7 @@ export async function handleMatchCommand(
   if (matches.length === 0) {
     return messageResponse({
       embeds: [
-        errorEmbed('No Match Found', 'Could not find any matching dyes in the database.'),
+        errorEmbed(t.t('common.error'), t.t('errors.noMatchFound')),
       ],
       flags: 64,
     });
@@ -187,9 +201,9 @@ export async function handleMatchCommand(
 
   // Build response based on single or multiple matches
   if (matchCount === 1) {
-    return buildSingleMatchResponse(targetHex, matches[0], resolved.fromDye);
+    return buildSingleMatchResponse(targetHex, matches[0], t, resolved.fromDye);
   } else {
-    return buildMultiMatchResponse(targetHex, matches, resolved.fromDye);
+    return buildMultiMatchResponse(targetHex, matches, t, resolved.fromDye);
   }
 }
 
@@ -199,30 +213,33 @@ export async function handleMatchCommand(
 function buildSingleMatchResponse(
   targetHex: string,
   match: { dye: Dye; distance: number },
+  t: Translator,
   fromDye?: Dye
 ): Response {
   const { dye, distance } = match;
-  const quality = getMatchQuality(distance);
+  const quality = getMatchQuality(distance, t);
   const emoji = getDyeEmoji(dye.id);
   const emojiPrefix = emoji ? `${emoji} ` : '';
 
   // Build input color description
   let inputDesc = `**Hex:** \`${targetHex.toUpperCase()}\`\n`;
-  inputDesc += `**RGB:** \`${formatRgb(targetHex)}\`\n`;
-  inputDesc += `**HSV:** \`${formatHsv(targetHex)}\``;
+  inputDesc += `**${t.t('common.rgb')}:** \`${formatRgb(targetHex)}\`\n`;
+  inputDesc += `**${t.t('common.hsv')}:** \`${formatHsv(targetHex)}\``;
 
   if (fromDye) {
     const fromEmoji = getDyeEmoji(fromDye.id);
     const fromEmojiPrefix = fromEmoji ? `${fromEmoji} ` : '';
-    inputDesc = `${fromEmojiPrefix}**${fromDye.name}**\n${inputDesc}`;
+    const fromDyeName = getLocalizedDyeName(fromDye.itemID, fromDye.name);
+    inputDesc = `${fromEmojiPrefix}**${fromDyeName}**\n${inputDesc}`;
   }
 
-  // Build match description
-  let matchDesc = `${emojiPrefix}**${dye.name}**\n`;
+  // Build match description with localized dye name
+  const localizedDyeName = getLocalizedDyeName(dye.itemID, dye.name);
+  let matchDesc = `${emojiPrefix}**${localizedDyeName}**\n`;
   matchDesc += `**Hex:** \`${dye.hex.toUpperCase()}\`\n`;
-  matchDesc += `**RGB:** \`${formatRgb(dye.hex)}\`\n`;
-  matchDesc += `**HSV:** \`${formatHsv(dye.hex)}\`\n`;
-  matchDesc += `**Category:** ${dye.category}`;
+  matchDesc += `**${t.t('common.rgb')}:** \`${formatRgb(dye.hex)}\`\n`;
+  matchDesc += `**${t.t('common.hsv')}:** \`${formatHsv(dye.hex)}\`\n`;
+  matchDesc += `**${t.t('common.category')}:** ${dye.category}`;
 
   // Create copy buttons for the matched dye
   const rgb = ColorService.hexToRgb(dye.hex);
@@ -236,27 +253,27 @@ function buildSingleMatchResponse(
   return messageResponse({
     embeds: [
       {
-        title: `${quality.emoji} Dye Match: ${dye.name}`,
+        title: `${quality.emoji} ${t.t('match.title', { name: localizedDyeName })}`,
         color: hexToDiscordColor(dye.hex),
         fields: [
           {
-            name: '🎨 Input Color',
+            name: `🎨 ${t.t('common.inputColor')}`,
             value: inputDesc,
             inline: true,
           },
           {
-            name: '🧪 Closest Dye',
+            name: `🧪 ${t.t('common.closestDye')}`,
             value: matchDesc,
             inline: true,
           },
           {
-            name: '📊 Match Quality',
-            value: `**Distance:** ${distance.toFixed(2)}\n**Quality:** ${quality.label}`,
+            name: `📊 ${t.t('common.matchQuality')}`,
+            value: `**${t.t('common.distance')}:** ${distance.toFixed(2)}\n**${t.t('common.quality')}:** ${quality.label}`,
             inline: true,
           },
         ],
         footer: {
-          text: 'XIV Dye Tools • Use /dye info for acquisition details',
+          text: `${t.t('common.footer')} • ${t.t('match.useInfoHint')}`,
         },
       },
     ],
@@ -270,31 +287,34 @@ function buildSingleMatchResponse(
 function buildMultiMatchResponse(
   targetHex: string,
   matches: Array<{ dye: Dye; distance: number }>,
+  t: Translator,
   fromDye?: Dye
 ): Response {
-  // Build input description
-  let inputText = fromDye
-    ? `**${fromDye.name}** (\`${targetHex.toUpperCase()}\`)`
+  // Build input description with localized name
+  const fromDyeName = fromDye ? getLocalizedDyeName(fromDye.itemID, fromDye.name) : null;
+  let inputText = fromDyeName
+    ? `**${fromDyeName}** (\`${targetHex.toUpperCase()}\`)`
     : `\`${targetHex.toUpperCase()}\``;
 
-  // Build matches list
+  // Build matches list with localized names
   const matchLines = matches.map((match, i) => {
     const { dye, distance } = match;
-    const quality = getMatchQuality(distance);
+    const quality = getMatchQuality(distance, t);
     const emoji = getDyeEmoji(dye.id);
     const emojiPrefix = emoji ? `${emoji} ` : '';
+    const localizedName = getLocalizedDyeName(dye.itemID, dye.name);
 
-    return `**${i + 1}.** ${emojiPrefix}**${dye.name}** • \`${dye.hex.toUpperCase()}\` • ${quality.emoji} ${quality.label} (Δ ${distance.toFixed(1)})`;
+    return `**${i + 1}.** ${emojiPrefix}**${localizedName}** • \`${dye.hex.toUpperCase()}\` • ${quality.emoji} ${quality.label} (Δ ${distance.toFixed(1)})`;
   }).join('\n');
 
   return messageResponse({
     embeds: [
       {
-        title: `🎨 Top ${matches.length} Dye Matches`,
-        description: `Finding closest matches for ${inputText}\n\n${matchLines}`,
+        title: `🎨 ${t.t('match.topMatches', { count: matches.length })}`,
+        description: `${t.t('match.findingMatches', { input: inputText })}\n\n${matchLines}`,
         color: hexToDiscordColor(matches[0].dye.hex),
         footer: {
-          text: 'XIV Dye Tools • Use /dye info <name> for acquisition details',
+          text: `${t.t('common.footer')} • ${t.t('match.useInfoNameHint')}`,
         },
       },
     ],

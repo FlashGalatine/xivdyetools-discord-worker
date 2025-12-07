@@ -169,7 +169,7 @@ export function generateContrastMatrix(options: ContrastMatrixOptions): string {
       text(width / 2, PADDING + 24, escapeXml(title), {
         fill: THEME.text,
         fontSize: 20,
-        fontFamily: FONTS.primary,
+        fontFamily: FONTS.header,
         fontWeight: 600,
         textAnchor: 'middle',
       })

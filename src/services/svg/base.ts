@@ -243,9 +243,15 @@ export const THEME = {
 } as const;
 
 /**
- * Font stack for consistent typography
+ * Font families for consistent typography.
+ * These names match the bundled font files loaded by the renderer.
+ *
+ * - header: Space Grotesk (variable 300-700) - titles, headers
+ * - primary: Onest (variable 100-900) - body text, labels
+ * - mono: Habibi (regular only) - hex codes, monospace-like text
  */
 export const FONTS = {
-  primary: 'Arial, Helvetica, sans-serif',
-  mono: 'Consolas, Monaco, monospace',
+  header: 'Space Grotesk',
+  primary: 'Onest',
+  mono: 'Habibi',
 } as const;

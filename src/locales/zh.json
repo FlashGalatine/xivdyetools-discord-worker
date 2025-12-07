@@ -33,10 +33,13 @@
     "missingInput": "请提供颜色（十六进制代码或染剂名称）。",
     "missingQuery": "请提供搜索词。",
     "missingName": "请提供染剂名称。",
+    "missingSubcommand": "请指定子命令。",
+    "unknownSubcommand": "未知子命令：{name}",
     "noMatchFound": "在数据库中找不到匹配的染剂。",
     "noDyesAvailable": "数据库中没有可用的染剂。",
     "failedToSave": "无法保存您的偏好设置。请稍后重试。",
-    "failedToReset": "无法重置您的偏好设置。请稍后重试。"
+    "failedToReset": "无法重置您的偏好设置。请稍后重试。",
+    "generationFailed": "生成可视化时发生错误。请稍后重试。"
   },
   "quality": {
     "perfect": "完美",
@@ -165,13 +168,25 @@
     "fails": "未通过"
   },
   "accessibility": {
-    "title": "无障碍检查",
+    "title": "色觉无障碍",
     "normalVision": "正常视力",
     "protanopia": "红色盲",
     "deuteranopia": "绿色盲",
     "tritanopia": "蓝色盲",
+    "protanopiaDesc": "对红光敏感度降低（约1%男性）",
+    "deuteranopiaDesc": "对绿光敏感度降低（约1%男性）",
+    "tritanopiaDesc": "对蓝光敏感度降低（罕见）",
+    "description": "此可视化展示了染剂对不同类型色觉障碍人群的外观：",
     "simulatedAppearance": "模拟外观",
-    "contrastAnalysis": "对比度分析"
+    "simulationMethod": "Brettel 1997 色盲模拟",
+    "contrastAnalysis": "WCAG 对比度分析",
+    "contrastTitle": "对比度比较",
+    "comparing": "正在比较 {count} 个染剂",
+    "matrixDescription": "矩阵显示了每对染剂之间的 WCAG 对比度：",
+    "wcagAAADesc": "适用于所有文字大小",
+    "wcagAADesc": "适用于普通文字",
+    "wcagFailDesc": "可能难以区分",
+    "wcagGuidelines": "WCAG 2.1 对比度指南"
   },
   "favorites": {
     "title": "您的收藏",
@@ -228,6 +243,22 @@
     "commands": "命令",
     "links": "链接",
     "poweredBy": "由 Cloudflare Workers 提供支持"
+  },
+  "matchImage": {
+    "missingImage": "请附加一张图片进行分析。",
+    "invalidAttachment": "找不到附加的图片。",
+    "noColors": "图片似乎完全透明或太小无法分析。",
+    "extractionFailed": "无法从图片中提取颜色。",
+    "colorMatch": "颜色匹配",
+    "colorPalette": "{count} 色调色板",
+    "closestMatch": "最接近的染剂",
+    "topMatches": "前 {count} 个匹配染剂",
+    "extractionMethod": "通过 K-means 聚类提取颜色",
+    "processingFailed": "处理图片时发生错误。",
+    "onlyDiscord": "只能分析直接上传到 Discord 的图片。",
+    "imageTooLarge": "图片太大。请使用较小的图片。",
+    "unsupportedFormat": "不支持的图片格式。请使用 PNG、JPEG、GIF 或 WebP。",
+    "timeout": "图片下载超时。请重试。"
   },
   "buttons": {
     "copyHex": "复制HEX",

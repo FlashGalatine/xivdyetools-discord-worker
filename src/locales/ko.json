@@ -33,10 +33,13 @@
     "missingInput": "색상(16진수 코드 또는 염료 이름)을 입력해 주세요.",
     "missingQuery": "검색어를 입력해 주세요.",
     "missingName": "염료 이름을 입력해 주세요.",
+    "missingSubcommand": "하위 명령어를 지정해 주세요.",
+    "unknownSubcommand": "알 수 없는 하위 명령어: {name}",
     "noMatchFound": "데이터베이스에서 일치하는 염료를 찾을 수 없습니다.",
     "noDyesAvailable": "데이터베이스에 염료가 없습니다.",
     "failedToSave": "설정을 저장할 수 없습니다. 나중에 다시 시도해 주세요.",
-    "failedToReset": "설정을 초기화할 수 없습니다. 나중에 다시 시도해 주세요."
+    "failedToReset": "설정을 초기화할 수 없습니다. 나중에 다시 시도해 주세요.",
+    "generationFailed": "시각화를 생성하는 중 오류가 발생했습니다. 나중에 다시 시도해 주세요."
   },
   "quality": {
     "perfect": "완벽",
@@ -165,13 +168,25 @@
     "fails": "실패"
   },
   "accessibility": {
-    "title": "접근성 검사",
+    "title": "색각 접근성",
     "normalVision": "정상 시력",
     "protanopia": "적색맹",
     "deuteranopia": "녹색맹",
     "tritanopia": "청색맹",
+    "protanopiaDesc": "빨간빛에 대한 감도 저하 (남성의 ~1%)",
+    "deuteranopiaDesc": "초록빛에 대한 감도 저하 (남성의 ~1%)",
+    "tritanopiaDesc": "파란빛에 대한 감도 저하 (드묾)",
+    "description": "이 시각화는 다양한 유형의 색각 이상을 가진 사람들에게 염료가 어떻게 보이는지 보여줍니다:",
     "simulatedAppearance": "시뮬레이션 모습",
-    "contrastAnalysis": "대비 분석"
+    "simulationMethod": "Brettel 1997 색맹 시뮬레이션",
+    "contrastAnalysis": "WCAG 대비 분석",
+    "contrastTitle": "대비 비교",
+    "comparing": "{count}개의 염료 비교 중",
+    "matrixDescription": "매트릭스는 각 염료 쌍 간의 WCAG 대비율을 보여줍니다:",
+    "wcagAAADesc": "모든 텍스트 크기에 최적",
+    "wcagAADesc": "일반 텍스트에 적합",
+    "wcagFailDesc": "구별하기 어려울 수 있음",
+    "wcagGuidelines": "WCAG 2.1 대비 가이드라인"
   },
   "favorites": {
     "title": "즐겨찾기",
@@ -228,6 +243,22 @@
     "commands": "명령어",
     "links": "링크",
     "poweredBy": "Cloudflare Workers 기반"
+  },
+  "matchImage": {
+    "missingImage": "분석할 이미지를 첨부해 주세요.",
+    "invalidAttachment": "첨부된 이미지를 찾을 수 없습니다.",
+    "noColors": "이미지가 완전히 투명하거나 분석하기에 너무 작은 것 같습니다.",
+    "extractionFailed": "이미지에서 색상을 추출할 수 없습니다.",
+    "colorMatch": "색상 매칭",
+    "colorPalette": "{count}색 팔레트",
+    "closestMatch": "가장 가까운 염료",
+    "topMatches": "상위 {count}개 매칭 염료",
+    "extractionMethod": "K-means 클러스터링으로 색상 추출",
+    "processingFailed": "이미지 처리 중 오류가 발생했습니다.",
+    "onlyDiscord": "Discord에 직접 업로드된 이미지만 분석할 수 있습니다.",
+    "imageTooLarge": "이미지가 너무 큽니다. 더 작은 이미지를 사용해 주세요.",
+    "unsupportedFormat": "지원되지 않는 이미지 형식입니다. PNG, JPEG, GIF 또는 WebP를 사용해 주세요.",
+    "timeout": "이미지 다운로드 시간이 초과되었습니다. 다시 시도해 주세요."
   },
   "buttons": {
     "copyHex": "HEX 복사",

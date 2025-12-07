@@ -228,7 +228,7 @@ export function generateComparisonGrid(options: ComparisonGridOptions): string {
     text(width / 2, PADDING + 24, 'Dye Comparison', {
       fill: THEME.text,
       fontSize: 22,
-      fontFamily: FONTS.primary,
+      fontFamily: FONTS.header,
       fontWeight: 600,
       textAnchor: 'middle',
     })
