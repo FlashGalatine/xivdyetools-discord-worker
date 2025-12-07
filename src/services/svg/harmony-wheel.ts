@@ -2,7 +2,10 @@
  * Harmony Wheel SVG Generator
  *
  * Generates a color harmony wheel visualization showing the base color
- * and its harmonious dye matches arranged in a circular pattern.
+ * and its harmonious dye matches positioned at their actual hue angles.
+ *
+ * Colors are positioned on the wheel based on their HSV hue value,
+ * matching the traditional color wheel representation (like 1.x version).
  */
 
 import {
@@ -11,7 +14,7 @@ import {
   circle,
   line,
   text,
-  escapeXml,
+  hexToRgb,
   getContrastTextColor,
   THEME,
   FONTS,
@@ -25,7 +28,7 @@ export interface HarmonyDye {
 }
 
 export interface HarmonyWheelOptions {
-  /** Base color hex (center of wheel) */
+  /** Base color hex */
   baseColor: string;
   /** Name of the base color/dye */
   baseName?: string;
@@ -40,7 +43,45 @@ export interface HarmonyWheelOptions {
 }
 
 /**
+ * Converts RGB to HSV and returns the hue (0-360)
+ */
+function rgbToHue(r: number, g: number, b: number): number {
+  r /= 255;
+  g /= 255;
+  b /= 255;
+
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const delta = max - min;
+
+  let hue = 0;
+
+  if (delta === 0) {
+    hue = 0; // Achromatic (gray)
+  } else if (max === r) {
+    hue = 60 * (((g - b) / delta) % 6);
+  } else if (max === g) {
+    hue = 60 * ((b - r) / delta + 2);
+  } else {
+    hue = 60 * ((r - g) / delta + 4);
+  }
+
+  if (hue < 0) hue += 360;
+
+  return hue;
+}
+
+/**
+ * Gets the hue angle from a hex color
+ */
+function getHueFromHex(hex: string): number {
+  const { r, g, b } = hexToRgb(hex);
+  return rgbToHue(r, g, b);
+}
+
+/**
  * Generates a harmony wheel SVG showing color relationships
+ * Colors are positioned at their actual hue angles on the wheel
  */
 export function generateHarmonyWheel(options: HarmonyWheelOptions): string {
   const {
@@ -48,153 +89,78 @@ export function generateHarmonyWheel(options: HarmonyWheelOptions): string {
     baseName,
     harmonyType,
     dyes,
-    width = 500,
-    height = 500,
+    width = 400,
+    height = 400,
   } = options;
 
   const centerX = width / 2;
-  const centerY = height / 2 - 20; // Shift up to make room for legend
-  const outerRadius = Math.min(width, height) / 2 - 80;
-  const innerRadius = outerRadius - 60;
+  const centerY = height / 2;
+  const wheelRadius = Math.min(width, height) / 2 - 40;
+  const markerRadius = 18;
 
   const elements: string[] = [];
 
   // Background
   elements.push(rect(0, 0, width, height, THEME.background, { rx: 12 }));
 
-  // Title
-  elements.push(
-    text(centerX, 30, `${formatHarmonyType(harmonyType)} Harmony`, {
-      fill: THEME.text,
-      fontSize: 20,
-      fontFamily: FONTS.primary,
-      fontWeight: 'bold',
-      textAnchor: 'middle',
-    })
-  );
+  // Generate the filled color wheel (like 1.x)
+  elements.push(generateFilledColorWheel(centerX, centerY, wheelRadius));
 
-  // Hue ring (decorative background)
-  elements.push(generateHueRing(centerX, centerY, outerRadius + 15, 8));
-
-  // Outer circle (border)
+  // Dark center circle
   elements.push(
-    circle(centerX, centerY, outerRadius, 'none', {
-      stroke: THEME.border,
-      strokeWidth: 2,
-    })
-  );
-
-  // Inner circle (border)
-  elements.push(
-    circle(centerX, centerY, innerRadius, THEME.backgroundLight, {
+    circle(centerX, centerY, wheelRadius * 0.35, THEME.background, {
       stroke: THEME.border,
       strokeWidth: 1,
     })
   );
 
-  // Dye markers around the wheel
-  const angleStep = 360 / dyes.length;
-  dyes.forEach((dye, index) => {
-    const angle = index * angleStep - 90; // Start from top
-    const radians = (angle * Math.PI) / 180;
-    const markerRadius = (outerRadius + innerRadius) / 2;
+  // Get base color hue for positioning
+  const baseHue = getHueFromHex(baseColor);
 
-    const x = centerX + Math.cos(radians) * markerRadius;
-    const y = centerY + Math.sin(radians) * markerRadius;
+  // Draw connecting lines from center to each marker
+  // Base color line
+  const baseAngle = baseHue - 90; // -90 to start from top
+  const baseRad = (baseAngle * Math.PI) / 180;
+  const baseX = centerX + Math.cos(baseRad) * wheelRadius * 0.7;
+  const baseY = centerY + Math.sin(baseRad) * wheelRadius * 0.7;
 
-    // Connecting line to center
+  elements.push(
+    line(centerX, centerY, baseX, baseY, '#ffffff', 2, { opacity: 0.6 })
+  );
+
+  // Harmony dye lines and markers
+  dyes.forEach((dye) => {
+    const dyeHue = getHueFromHex(dye.hex);
+    const dyeAngle = dyeHue - 90;
+    const dyeRad = (dyeAngle * Math.PI) / 180;
+    const dyeX = centerX + Math.cos(dyeRad) * wheelRadius * 0.7;
+    const dyeY = centerY + Math.sin(dyeRad) * wheelRadius * 0.7;
+
     elements.push(
-      line(centerX, centerY, x, y, dye.hex, 2, { opacity: 0.4 })
-    );
-
-    // Dye marker circle
-    elements.push(
-      circle(x, y, 28, dye.hex, {
-        stroke: '#ffffff',
-        strokeWidth: 3,
-      })
-    );
-
-    // Dye number label
-    elements.push(
-      text(x, y, `${index + 1}`, {
-        fill: getContrastTextColor(dye.hex),
-        fontSize: 14,
-        fontFamily: FONTS.primary,
-        fontWeight: 'bold',
-        textAnchor: 'middle',
-        dominantBaseline: 'middle',
-      })
+      line(centerX, centerY, dyeX, dyeY, '#ffffff', 2, { opacity: 0.6 })
     );
   });
 
-  // Center circle with base color
+  // Draw base color marker (on the wheel at its hue position)
   elements.push(
-    circle(centerX, centerY, 35, baseColor, {
+    circle(baseX, baseY, markerRadius + 2, baseColor, {
       stroke: '#ffffff',
-      strokeWidth: 4,
+      strokeWidth: 3,
     })
   );
 
-  // Base color label
-  if (baseName) {
+  // Draw harmony dye markers at their hue positions
+  dyes.forEach((dye) => {
+    const dyeHue = getHueFromHex(dye.hex);
+    const dyeAngle = dyeHue - 90;
+    const dyeRad = (dyeAngle * Math.PI) / 180;
+    const dyeX = centerX + Math.cos(dyeRad) * wheelRadius * 0.7;
+    const dyeY = centerY + Math.sin(dyeRad) * wheelRadius * 0.7;
+
     elements.push(
-      text(centerX, centerY + 55, baseName, {
-        fill: THEME.textMuted,
-        fontSize: 11,
-        fontFamily: FONTS.primary,
-        textAnchor: 'middle',
-      })
-    );
-  }
-
-  // Legend at the bottom
-  const legendY = height - 80;
-  const legendItemWidth = Math.min(120, (width - 40) / dyes.length);
-  const legendStartX = (width - legendItemWidth * dyes.length) / 2;
-
-  dyes.forEach((dye, index) => {
-    const itemX = legendStartX + index * legendItemWidth + legendItemWidth / 2;
-
-    // Color swatch
-    elements.push(
-      rect(itemX - 15, legendY, 30, 20, dye.hex, {
-        rx: 4,
-        stroke: THEME.border,
-        strokeWidth: 1,
-      })
-    );
-
-    // Number
-    elements.push(
-      text(itemX, legendY + 13, `${index + 1}`, {
-        fill: getContrastTextColor(dye.hex),
-        fontSize: 12,
-        fontFamily: FONTS.primary,
-        fontWeight: 'bold',
-        textAnchor: 'middle',
-        dominantBaseline: 'middle',
-      })
-    );
-
-    // Dye name (truncated if needed)
-    const displayName = truncateName(dye.name, 14);
-    elements.push(
-      text(itemX, legendY + 38, displayName, {
-        fill: THEME.text,
-        fontSize: 10,
-        fontFamily: FONTS.primary,
-        textAnchor: 'middle',
-      })
-    );
-
-    // Hex code
-    elements.push(
-      text(itemX, legendY + 52, dye.hex.toUpperCase(), {
-        fill: THEME.textMuted,
-        fontSize: 9,
-        fontFamily: FONTS.mono,
-        textAnchor: 'middle',
+      circle(dyeX, dyeY, markerRadius, dye.hex, {
+        stroke: '#ffffff',
+        strokeWidth: 3,
       })
     );
   });
@@ -203,37 +169,44 @@ export function generateHarmonyWheel(options: HarmonyWheelOptions): string {
 }
 
 /**
- * Generates a decorative hue ring around the wheel
+ * Generates a filled color wheel with continuous gradient (like 1.x)
  */
-function generateHueRing(
+function generateFilledColorWheel(
   cx: number,
   cy: number,
-  radius: number,
-  strokeWidth: number
+  radius: number
 ): string {
   const segments: string[] = [];
-  const segmentCount = 36;
+  const segmentCount = 72; // More segments for smoother gradient
   const segmentAngle = 360 / segmentCount;
+  const innerRadius = radius * 0.35;
 
   for (let i = 0; i < segmentCount; i++) {
     const startAngle = i * segmentAngle;
+    const endAngle = startAngle + segmentAngle + 0.5; // Slight overlap to prevent gaps
     const hue = startAngle;
 
-    // Calculate arc endpoints
+    // Calculate arc points
     const startRad = ((startAngle - 90) * Math.PI) / 180;
-    const endRad = ((startAngle + segmentAngle - 90) * Math.PI) / 180;
+    const endRad = ((endAngle - 90) * Math.PI) / 180;
 
-    const x1 = cx + radius * Math.cos(startRad);
-    const y1 = cy + radius * Math.sin(startRad);
-    const x2 = cx + radius * Math.cos(endRad);
-    const y2 = cy + radius * Math.sin(endRad);
+    // Outer arc points
+    const ox1 = cx + radius * Math.cos(startRad);
+    const oy1 = cy + radius * Math.sin(startRad);
+    const ox2 = cx + radius * Math.cos(endRad);
+    const oy2 = cy + radius * Math.sin(endRad);
+
+    // Inner arc points
+    const ix1 = cx + innerRadius * Math.cos(startRad);
+    const iy1 = cy + innerRadius * Math.sin(startRad);
+    const ix2 = cx + innerRadius * Math.cos(endRad);
+    const iy2 = cy + innerRadius * Math.sin(endRad);
+
+    // Create wedge path
+    const path = `M ${ix1} ${iy1} L ${ox1} ${oy1} A ${radius} ${radius} 0 0 1 ${ox2} ${oy2} L ${ix2} ${iy2} A ${innerRadius} ${innerRadius} 0 0 0 ${ix1} ${iy1} Z`;
 
     segments.push(
-      `<path d="M ${x1} ${y1} A ${radius} ${radius} 0 0 1 ${x2} ${y2}"
-             fill="none"
-             stroke="hsl(${hue}, 70%, 50%)"
-             stroke-width="${strokeWidth}"
-             opacity="0.6"/>`
+      `<path d="${path}" fill="hsl(${hue}, 100%, 50%)" stroke="none"/>`
     );
   }
 

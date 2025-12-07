@@ -188,14 +188,14 @@ async function processHarmonyCommand(
       category: dye.category,
     }));
 
-    // Generate SVG
+    // Generate SVG (400x400 matches 1.x style)
     const svg = generateHarmonyWheel({
       baseColor: baseHex,
       baseName: baseName || baseHex.toUpperCase(),
       harmonyType,
       dyes: dyesForWheel,
-      width: 600,
-      height: 600,
+      width: 400,
+      height: 400,
     });
 
     // Render to PNG
