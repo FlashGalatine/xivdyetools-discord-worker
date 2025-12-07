@@ -3,18 +3,20 @@
  *
  * Uses resvg-wasm to convert SVG strings to PNG images.
  * This is necessary because Discord displays PNG images better than SVG.
+ *
+ * IMPORTANT: Cloudflare Workers requires static WASM imports.
+ * Dynamic WebAssembly.instantiate() is disallowed by the runtime.
  */
 
 import { Resvg, initWasm } from '@resvg/resvg-wasm';
 
+// Static WASM import - wrangler bundles this at build time
+// @ts-expect-error - WASM imports are handled by wrangler bundler
+import resvgWasm from '@resvg/resvg-wasm/index_bg.wasm';
+
 // Track WASM initialization state
 let wasmInitialized = false;
 let wasmInitPromise: Promise<void> | null = null;
-
-// WASM binary URL from jsDelivr CDN
-// Using a specific version for stability - matches the npm package version
-const RESVG_WASM_URL =
-  'https://cdn.jsdelivr.net/npm/@resvg/resvg-wasm@2.6.2/index_bg.wasm';
 
 /**
  * Initializes the WASM module.
@@ -31,14 +33,9 @@ export async function initRenderer(): Promise<void> {
 
   wasmInitPromise = (async () => {
     try {
-      // Fetch WASM binary from CDN
-      const response = await fetch(RESVG_WASM_URL);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch WASM: ${response.status} ${response.statusText}`);
-      }
-
-      const wasmBuffer = await response.arrayBuffer();
-      await initWasm(wasmBuffer);
+      // Initialize with the statically imported WASM module
+      // In Cloudflare Workers, this is a WebAssembly.Module instance
+      await initWasm(resvgWasm);
       wasmInitialized = true;
       console.log('resvg-wasm initialized successfully');
     } catch (error) {
