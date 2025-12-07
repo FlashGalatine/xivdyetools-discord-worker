@@ -142,6 +142,14 @@ const commands = [
         name: 'random',
         description: 'Show 5 randomly selected dyes',
         type: OptionType.SUB_COMMAND,
+        options: [
+          {
+            name: 'unique_categories',
+            description: 'Limit to 1 dye per category (default: false)',
+            type: OptionType.BOOLEAN,
+            required: false,
+          },
+        ],
       },
     ],
   },

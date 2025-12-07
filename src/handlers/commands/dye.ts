@@ -92,7 +92,7 @@ export async function handleDyeCommand(
     case 'list':
       return handleListSubcommand(subcommand.options);
     case 'random':
-      return handleRandomSubcommand();
+      return handleRandomSubcommand(subcommand.options);
     default:
       return messageResponse({
         embeds: [errorEmbed('Unknown Subcommand', `Unknown subcommand: ${subcommand.name}`)],
@@ -289,8 +289,15 @@ function handleListSubcommand(
 /**
  * Handles /dye random
  * Shows 5 randomly selected non-Facewear dyes
+ * Optional: unique_categories limits to 1 dye per category
  */
-function handleRandomSubcommand(): Response {
+function handleRandomSubcommand(
+  options?: Array<{ name: string; value?: string | number | boolean }>
+): Response {
+  // Check for unique_categories option
+  const uniqueCategoriesOption = options?.find((opt) => opt.name === 'unique_categories');
+  const uniqueCategories = uniqueCategoriesOption?.value === true;
+
   // Get all non-Facewear dyes
   const allDyes = excludeFacewear(dyeService.getAllDyes());
 
@@ -301,16 +308,40 @@ function handleRandomSubcommand(): Response {
     });
   }
 
-  // Randomly select 5 dyes (or fewer if not enough)
-  const count = Math.min(5, allDyes.length);
-  const selectedDyes: Dye[] = [];
-  const usedIndices = new Set<number>();
+  let selectedDyes: Dye[];
 
-  while (selectedDyes.length < count) {
-    const index = Math.floor(Math.random() * allDyes.length);
-    if (!usedIndices.has(index)) {
-      usedIndices.add(index);
-      selectedDyes.push(allDyes[index]);
+  if (uniqueCategories) {
+    // Group dyes by category, then pick one random dye from each category
+    const dyesByCategory = new Map<string, Dye[]>();
+    for (const dye of allDyes) {
+      const existing = dyesByCategory.get(dye.category) || [];
+      existing.push(dye);
+      dyesByCategory.set(dye.category, existing);
+    }
+
+    // Get all categories and shuffle them
+    const categories = Array.from(dyesByCategory.keys());
+    shuffleArray(categories);
+
+    // Pick one random dye from each category (up to 5)
+    selectedDyes = [];
+    for (const category of categories.slice(0, 5)) {
+      const categoryDyes = dyesByCategory.get(category)!;
+      const randomDye = categoryDyes[Math.floor(Math.random() * categoryDyes.length)];
+      selectedDyes.push(randomDye);
+    }
+  } else {
+    // Original behavior: randomly select 5 dyes (or fewer if not enough)
+    const count = Math.min(5, allDyes.length);
+    selectedDyes = [];
+    const usedIndices = new Set<number>();
+
+    while (selectedDyes.length < count) {
+      const index = Math.floor(Math.random() * allDyes.length);
+      if (!usedIndices.has(index)) {
+        usedIndices.add(index);
+        selectedDyes.push(allDyes[index]);
+      }
     }
   }
 
@@ -326,14 +357,31 @@ function handleRandomSubcommand(): Response {
   // Use the first dye's color for the embed
   const embedColor = selectedDyes[0] ? hexToDiscordColor(selectedDyes[0].hex) : 0x5865f2;
 
+  // Build title and description based on mode
+  const title = uniqueCategories ? 'Random Dyes (1 per category)' : 'Random Dyes';
+  const description = uniqueCategories
+    ? `Here are ${selectedDyes.length} randomly selected dyes, one from each category:\n\n${dyeList}`
+    : `Here are ${selectedDyes.length} randomly selected dyes:\n\n${dyeList}`;
+
   return messageResponse({
     embeds: [
       {
-        title: 'Random Dyes',
-        description: `Here are ${count} randomly selected dyes:\n\n${dyeList}`,
+        title,
+        description,
         color: embedColor,
         footer: { text: 'Use /dye info <name> for detailed information • Run again for different dyes!' },
       },
     ],
   });
+}
+
+/**
+ * Fisher-Yates shuffle algorithm
+ * Shuffles array in place
+ */
+function shuffleArray<T>(array: T[]): void {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
 }
