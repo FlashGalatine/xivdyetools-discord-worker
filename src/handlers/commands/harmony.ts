@@ -85,17 +85,21 @@ function excludeFacewear(dyes: Dye[]): Dye[] {
 
 /**
  * Gets harmony dyes based on the harmony type
+ * Requests extra results for types with count parameters to account for Facewear filtering
  */
 function getHarmonyDyes(hex: string, type: HarmonyType): Dye[] {
   let dyes: Dye[];
+  let targetCount: number | undefined;
 
   switch (type) {
     case 'triadic':
       dyes = dyeService.findTriadicDyes(hex);
+      targetCount = 3;
       break;
     case 'complementary': {
       const comp = dyeService.findComplementaryPair(hex);
       dyes = comp ? [comp] : [];
+      targetCount = 1;
       break;
     }
     case 'analogous':
@@ -103,22 +107,35 @@ function getHarmonyDyes(hex: string, type: HarmonyType): Dye[] {
       break;
     case 'split-complementary':
       dyes = dyeService.findSplitComplementaryDyes(hex);
+      targetCount = 2;
       break;
     case 'tetradic':
       dyes = dyeService.findTetradicDyes(hex);
+      targetCount = 4;
       break;
     case 'square':
       dyes = dyeService.findSquareDyes(hex);
+      targetCount = 4;
       break;
     case 'monochromatic':
-      dyes = dyeService.findMonochromaticDyes(hex, 5);
+      // Request extra to account for Facewear filtering
+      dyes = dyeService.findMonochromaticDyes(hex, 10);
+      targetCount = 5;
       break;
     default:
       dyes = dyeService.findTriadicDyes(hex);
+      targetCount = 3;
   }
 
   // Filter out Facewear dyes (generic names like "Red", "Blue")
-  return excludeFacewear(dyes);
+  const filtered = excludeFacewear(dyes);
+
+  // For types with target counts, trim to expected size
+  if (targetCount && filtered.length > targetCount) {
+    return filtered.slice(0, targetCount);
+  }
+
+  return filtered;
 }
 
 /**
