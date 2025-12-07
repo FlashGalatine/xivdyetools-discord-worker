@@ -60,6 +60,9 @@ export interface Env {
 
   /** D1 Database for user data and presets */
   DB: D1Database;
+
+  /** Service Binding to Presets API Worker (for Worker-to-Worker communication) */
+  PRESETS_API?: Fetcher;
 }
 
 /**

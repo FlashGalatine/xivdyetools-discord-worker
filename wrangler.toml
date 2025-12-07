@@ -38,6 +38,15 @@ database_name = "xivdyetools-presets"
 database_id = "e17d68a1-5a44-4c88-b02b-07d053cbe321"
 
 # ============================================================================
+# Service Binding to Preset API Worker
+# This enables Worker-to-Worker communication without going through public URL
+# Avoids Cloudflare error 1042 (Worker fetch to different worker)
+# ============================================================================
+[[services]]
+binding = "PRESETS_API"
+service = "xivdyetools-worker"
+
+# ============================================================================
 # Environment Variables (non-sensitive)
 # ============================================================================
 [vars]
@@ -72,3 +81,8 @@ name = "xivdyetools-discord-worker"
 # Production Discord Application ID
 DISCORD_CLIENT_ID = "1433508594426445878"
 PRESETS_API_URL = "https://xivdyetools-worker.ashejunius.workers.dev"
+
+# Service binding is inherited from root config, but can be overridden here if needed
+# [[env.production.services]]
+# binding = "PRESETS_API"
+# service = "xivdyetools-worker"

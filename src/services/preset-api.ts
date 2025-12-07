@@ -4,6 +4,9 @@
  * Functional module for communicating with the xivdyetools-worker preset API.
  * All functions are stateless and take environment as a parameter.
  *
+ * Uses Cloudflare Service Bindings for Worker-to-Worker communication when available,
+ * which avoids error 1042 (Worker fetch to different worker on same account).
+ *
  * @module services/preset-api
  */
 
@@ -28,6 +31,10 @@ import {
 /**
  * Make an authenticated request to the preset API
  *
+ * Uses Service Binding (env.PRESETS_API) when available for direct Worker-to-Worker
+ * communication. Falls back to external URL (env.PRESETS_API_URL) if binding is not
+ * configured (useful for local development).
+ *
  * @param env - Environment bindings
  * @param method - HTTP method
  * @param path - API path (e.g., '/api/v1/presets')
@@ -45,15 +52,19 @@ async function request<T>(
     userName?: string;
   } = {}
 ): Promise<T> {
-  if (!env.PRESETS_API_URL || !env.BOT_API_SECRET) {
+  // Require either service binding or URL-based configuration
+  if (!env.PRESETS_API && (!env.PRESETS_API_URL || !env.BOT_API_SECRET)) {
     throw new PresetAPIError(503, 'Preset API not configured');
   }
 
-  const url = `${env.PRESETS_API_URL}${path}`;
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    Authorization: `Bearer ${env.BOT_API_SECRET}`,
   };
+
+  // Add auth header if using URL-based fetch (service binding uses internal auth)
+  if (env.BOT_API_SECRET) {
+    headers['Authorization'] = `Bearer ${env.BOT_API_SECRET}`;
+  }
 
   // Add user context headers for authenticated operations
   if (options.userDiscordId) {
@@ -64,11 +75,27 @@ async function request<T>(
   }
 
   try {
-    const response = await fetch(url, {
-      method,
-      headers,
-      body: options.body ? JSON.stringify(options.body) : undefined,
-    });
+    let response: Response;
+
+    if (env.PRESETS_API) {
+      // Use Service Binding for Worker-to-Worker communication
+      // This avoids Cloudflare error 1042
+      response = await env.PRESETS_API.fetch(
+        new Request(`https://internal${path}`, {
+          method,
+          headers,
+          body: options.body ? JSON.stringify(options.body) : undefined,
+        })
+      );
+    } else {
+      // Fall back to external URL (for local dev or if service binding not configured)
+      const url = `${env.PRESETS_API_URL}${path}`;
+      response = await fetch(url, {
+        method,
+        headers,
+        body: options.body ? JSON.stringify(options.body) : undefined,
+      });
+    }
 
     const data = (await response.json()) as T & { message?: string; error?: string };
 
@@ -97,9 +124,13 @@ async function request<T>(
 
 /**
  * Check if the preset API is configured and available
+ *
+ * Returns true if either:
+ * - Service Binding (PRESETS_API) is configured (preferred)
+ * - External URL (PRESETS_API_URL) and auth secret (BOT_API_SECRET) are set
  */
 export function isApiEnabled(env: Env): boolean {
-  return Boolean(env.PRESETS_API_URL && env.BOT_API_SECRET);
+  return Boolean(env.PRESETS_API || (env.PRESETS_API_URL && env.BOT_API_SECRET));
 }
 
 /**
