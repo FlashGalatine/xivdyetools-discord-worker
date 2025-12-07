@@ -91,8 +91,7 @@ app.post('/webhooks/preset-submission', async (c) => {
   const { preset } = payload;
   console.log(`Received preset webhook: ${preset.name} (${preset.id}) from ${preset.source}`);
 
-  // Only pending presets go to moderation channel
-  // Approved/rejected notifications are sent by the moderation button handlers after action is taken
+  // Pending presets go to moderation channel with approve/reject buttons
   if (preset.status === 'pending' && env.MODERATION_CHANNEL_ID) {
     await sendMessage(env.DISCORD_TOKEN, env.MODERATION_CHANNEL_ID, {
       embeds: [
@@ -130,6 +129,28 @@ app.post('/webhooks/preset-submission', async (c) => {
               custom_id: `preset_reject_${preset.id}`,
             },
           ],
+        },
+      ],
+    });
+  }
+
+  // Auto-approved presets go directly to submission log channel
+  if (preset.status === 'approved' && env.SUBMISSION_LOG_CHANNEL_ID) {
+    await sendMessage(env.DISCORD_TOKEN, env.SUBMISSION_LOG_CHANNEL_ID, {
+      embeds: [
+        {
+          title: '🟢 New Preset Published',
+          description: `**${preset.name}**\n\n${preset.description}`,
+          color: STATUS_DISPLAY.approved.color,
+          fields: [
+            { name: 'Category', value: preset.category_id, inline: true },
+            { name: 'Author', value: preset.author_name || 'Unknown', inline: true },
+            { name: 'Source', value: preset.source === 'web' ? 'Web App' : 'Discord', inline: true },
+            { name: 'Dyes', value: preset.dyes.join(', '), inline: false },
+            ...(preset.tags.length > 0 ? [{ name: 'Tags', value: preset.tags.join(', '), inline: false }] : []),
+          ],
+          footer: { text: `ID: ${preset.id} • Auto-approved` },
+          timestamp: preset.created_at,
         },
       ],
     });
