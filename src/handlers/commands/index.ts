@@ -9,4 +9,5 @@ export { handleDyeCommand } from './dye.js';
 export { handleMixerCommand } from './mixer.js';
 export { handleMatchCommand } from './match.js';
 export { handleMatchImageCommand } from './match-image.js';
+export { handleAccessibilityCommand } from './accessibility.js';
 export { handleManualCommand } from './manual.js';
