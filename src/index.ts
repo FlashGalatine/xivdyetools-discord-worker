@@ -13,6 +13,7 @@ import type { Env, InteractionType as IType } from './types/env.js';
 import { InteractionType, InteractionResponseType } from './types/env.js';
 import { verifyDiscordRequest, unauthorizedResponse, badRequestResponse } from './utils/verify.js';
 import { pongResponse, ephemeralResponse, messageResponse } from './utils/response.js';
+import { handleHarmonyCommand } from './handlers/commands/index.js';
 
 // Create Hono app with environment type
 const app = new Hono<{ Bindings: Env }>();
@@ -132,6 +133,9 @@ async function handleCommand(
           },
         }],
       });
+
+    case 'harmony':
+      return handleHarmonyCommand(interaction, env, ctx);
 
     default:
       // Command not yet implemented
