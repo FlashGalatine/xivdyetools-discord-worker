@@ -1,0 +1,237 @@
+{
+  "meta": {
+    "locale": "en",
+    "name": "English",
+    "nativeName": "English",
+    "flag": "🇺🇸"
+  },
+  "common": {
+    "dye": "Dye",
+    "dyes": "Dyes",
+    "color": "Color",
+    "category": "Category",
+    "hexColor": "Hex Color",
+    "rgb": "RGB",
+    "hsv": "HSV",
+    "itemId": "Item ID",
+    "distance": "Distance",
+    "quality": "Quality",
+    "footer": "XIV Dye Tools",
+    "error": "Error",
+    "success": "Success",
+    "inputColor": "Input Color",
+    "closestDye": "Closest Dye",
+    "matchQuality": "Match Quality",
+    "createdAt": "Created",
+    "marketBoard": "Market Board"
+  },
+  "errors": {
+    "userNotFound": "Could not identify user.",
+    "dyeNotFound": "Could not find a dye named \"{name}\".",
+    "colorNotFound": "Could not find a dye matching \"{input}\".",
+    "invalidColor": "Could not resolve \"{input}\" to a color.\n\nPlease provide a valid hex code (e.g., `#FF0000`) or dye name (e.g., `Dalamud Red`).",
+    "missingInput": "Please provide a color (hex code or dye name).",
+    "missingQuery": "Please provide a search term.",
+    "missingName": "Please provide a dye name.",
+    "noMatchFound": "Could not find any matching dyes in the database.",
+    "noDyesAvailable": "No dyes available in the database.",
+    "failedToSave": "Could not save your preference. Please try again later.",
+    "failedToReset": "Could not clear your preference. Please try again later."
+  },
+  "quality": {
+    "perfect": "Perfect",
+    "excellent": "Excellent",
+    "good": "Good",
+    "fair": "Fair",
+    "approximate": "Approximate"
+  },
+  "manual": {
+    "title": "XIV Dye Tools Manual",
+    "welcome": "Welcome to **XIV Dye Tools**! This bot helps you explore and match FFXIV dye colors.",
+    "commandsIntro": "Below you'll find all available commands organized by category.",
+    "autocompleteNote": "All commands support **autocomplete** for dye names!",
+    "colorMatching": "Color Matching",
+    "dyeInformation": "Dye Information",
+    "botInformation": "Bot Information",
+    "tipsResources": "Tips & Resources",
+    "match": {
+      "name": "`/match <color> [count]`",
+      "description": "Find the closest FFXIV dye to any color.\n• Accepts hex codes (`#FF0000`) or dye names\n• Optional: show up to 10 closest matches"
+    },
+    "harmony": {
+      "name": "`/harmony <color> [type]`",
+      "description": "Generate harmonious dye combinations.\n• Types: Complementary, Analogous, Triadic, Split-Complementary, Tetradic, Square, Monochromatic\n• Creates a visual color wheel"
+    },
+    "mixer": {
+      "name": "`/mixer <start> <end> [steps]`",
+      "description": "Create a color gradient between two colors.\n• Shows matched dyes for each gradient step\n• Configurable step count (2-10)"
+    },
+    "dyeSearch": {
+      "name": "`/dye search <query>`",
+      "description": "Search for dyes by name.\n• Fuzzy matching finds partial matches\n• Shows hex codes and categories"
+    },
+    "dyeInfo": {
+      "name": "`/dye info <name>`",
+      "description": "Get detailed information about a specific dye.\n• Shows hex, RGB, HSV values\n• Displays category and item ID"
+    },
+    "dyeList": {
+      "name": "`/dye list [category]`",
+      "description": "List all dyes or filter by category.\n• Categories: Reds, Browns, Yellows, Greens, Blues, Purples, Neutral, Special"
+    },
+    "dyeRandom": {
+      "name": "`/dye random [unique_categories]`",
+      "description": "Show 5 randomly selected dyes.\n• Option to limit to 1 dye per category"
+    },
+    "about": {
+      "name": "`/about`",
+      "description": "Show bot information, version, and links."
+    },
+    "manualCmd": {
+      "name": "`/manual`",
+      "description": "Show this help guide."
+    },
+    "tips": {
+      "autocomplete": "**Autocomplete:** Start typing a dye name and suggestions will appear!",
+      "hexColors": "**Hex Colors:** Use standard web format like `#FF0000` (red) or `#5865F2` (blurple)",
+      "dyeNames": "**Dye Names:** Type partial names - \"dala\" will find \"Dalamud Red\"",
+      "facewearExcluded": "**Facewear Excluded:** Generic Facewear dyes (like \"Red\", \"Blue\") are excluded from results",
+      "links": "**Links:**"
+    }
+  },
+  "dye": {
+    "search": {
+      "noResults": "No dyes found matching \"{query}\".",
+      "tryDifferent": "Try a different search term",
+      "resultsTitle": "Search Results for \"{query}\"",
+      "foundCount": "Found {count} dye:",
+      "foundCountPlural": "Found {count} dyes:",
+      "moreResults": "...and {count} more results",
+      "useInfoHint": "Use /dye info <name> for detailed information"
+    },
+    "info": {
+      "detailedInfo": "Detailed information for this {category} dye."
+    },
+    "list": {
+      "noDyesInCategory": "No dyes found in the \"{category}\" category.",
+      "categoryTitle": "{category} Dyes",
+      "dyesInCategory": "{count} dyes in this category:",
+      "categoriesTitle": "Dye Categories",
+      "categorySummary": "There are {total} dyes across {count} categories:",
+      "useListHint": "Use /dye list <category> to see dyes in a category"
+    },
+    "random": {
+      "title": "Random Dyes",
+      "titleUnique": "Random Dyes (1 per category)",
+      "description": "Here are {count} randomly selected dyes:",
+      "descriptionUnique": "Here are {count} randomly selected dyes, one from each category:",
+      "runAgainHint": "Run again for different dyes!"
+    }
+  },
+  "match": {
+    "title": "Dye Match: {name}",
+    "topMatches": "Top {count} Dye Matches",
+    "findingMatches": "Finding closest matches for {input}",
+    "useInfoHint": "Use /dye info for acquisition details",
+    "useInfoNameHint": "Use /dye info <name> for acquisition details"
+  },
+  "harmony": {
+    "title": "{type} Harmony",
+    "baseColor": "Base Color",
+    "harmonyColors": "Harmony Colors",
+    "complementary": "Complementary",
+    "analogous": "Analogous",
+    "triadic": "Triadic",
+    "splitComplementary": "Split-Complementary",
+    "tetradic": "Tetradic",
+    "square": "Square",
+    "monochromatic": "Monochromatic"
+  },
+  "mixer": {
+    "title": "Color Gradient",
+    "startColor": "Start",
+    "endColor": "End",
+    "steps": "{count} Steps",
+    "gradientFrom": "Gradient from {start} to {end}"
+  },
+  "comparison": {
+    "title": "Dye Comparison",
+    "colorDistance": "Color Distance",
+    "contrastRatio": "Contrast Ratio",
+    "mostSimilar": "Most Similar",
+    "mostDifferent": "Most Different",
+    "wcagAA": "WCAG AA",
+    "wcagAAA": "WCAG AAA",
+    "passes": "Pass",
+    "fails": "Fail"
+  },
+  "accessibility": {
+    "title": "Accessibility Check",
+    "normalVision": "Normal Vision",
+    "protanopia": "Protanopia (Red-Blind)",
+    "deuteranopia": "Deuteranopia (Green-Blind)",
+    "tritanopia": "Tritanopia (Blue-Blind)",
+    "simulatedAppearance": "Simulated Appearance",
+    "contrastAnalysis": "Contrast Analysis"
+  },
+  "favorites": {
+    "title": "Your Favorites",
+    "empty": "You don't have any favorite dyes yet.",
+    "addHint": "Use `/favorites add <dye>` to add some!",
+    "added": "Added **{name}** to your favorites.",
+    "removed": "Removed **{name}** from your favorites.",
+    "cleared": "Cleared all your favorite dyes.",
+    "alreadyFavorite": "**{name}** is already in your favorites.",
+    "notInFavorites": "**{name}** is not in your favorites.",
+    "limitReached": "You've reached the maximum of {max} favorites.\n\nRemove one with `/favorites remove` first.",
+    "count": "{count}/{max} favorites"
+  },
+  "collection": {
+    "title": "Your Collections",
+    "empty": "You don't have any collections yet.",
+    "createHint": "Use `/collection create <name>` to create one!",
+    "created": "Created new collection: **{name}**",
+    "deleted": "Deleted collection: **{name}**",
+    "renamed": "Renamed collection from **{oldName}** to **{newName}**.",
+    "dyeAdded": "Added **{dye}** to collection \"{collection}\".",
+    "dyeRemoved": "Removed **{dye}** from collection \"{collection}\".",
+    "addDyeHint": "Use `/collection add {name} <dye>` to add dyes.",
+    "showHint": "Use /collection show <name> to view a collection",
+    "collectionEmpty": "This collection is empty.",
+    "alreadyExists": "A collection named \"{name}\" already exists.",
+    "notFound": "Could not find a collection named \"{name}\".",
+    "nameTooLong": "Collection names must be {max} characters or less.",
+    "limitReached": "You've reached the maximum of {max} collections.\n\nUse `/collection delete` to remove one first.",
+    "dyeLimitReached": "This collection has reached the maximum of {max} dyes.",
+    "dyeAlreadyInCollection": "**{dye}** is already in the collection \"{collection}\".",
+    "dyeNotInCollection": "**{dye}** is not in the collection \"{collection}\" (or collection doesn't exist).",
+    "count": "{count}/{max} collections"
+  },
+  "language": {
+    "title": "Language Settings",
+    "updated": "Your language preference has been set to **{language}**.",
+    "updateNote": "Dye names and bot messages will now use this language when available.",
+    "reset": "Your language preference has been cleared.",
+    "resetNote": "The bot will now use your Discord client's language setting (if supported) or default to English.",
+    "yourPreference": "Your preference",
+    "notSet": "Not set",
+    "discordLocale": "Discord locale",
+    "unsupported": "unsupported",
+    "effectiveLanguage": "Effective language",
+    "supportedLanguages": "Supported languages",
+    "missingLanguage": "Please specify a language to set.",
+    "invalidLanguage": "\"{locale}\" is not a supported language.\n\nSupported languages: {validList}"
+  },
+  "about": {
+    "title": "XIV Dye Tools Bot",
+    "version": "Version",
+    "description": "A Discord bot for FFXIV dye color exploration and matching.",
+    "commands": "Commands",
+    "links": "Links",
+    "poweredBy": "Powered by Cloudflare Workers"
+  },
+  "buttons": {
+    "copyHex": "Copy HEX",
+    "copyRgb": "Copy RGB",
+    "copyHsv": "Copy HSV"
+  }
+}

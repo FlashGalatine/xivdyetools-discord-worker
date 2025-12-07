@@ -7,11 +7,21 @@
  */
 
 import type { Env } from '../../types/env.js';
+import { createUserTranslator, type Translator } from '../../services/bot-i18n.js';
 
 interface DiscordInteraction {
   id: string;
   token: string;
   application_id: string;
+  locale?: string;
+  member?: {
+    user: {
+      id: string;
+    };
+  };
+  user?: {
+    id: string;
+  };
 }
 
 // Discord embed color constants
@@ -25,44 +35,40 @@ const COLORS = {
 } as const;
 
 /**
- * Handles the /manual command
+ * Build embeds using translated strings
  */
-export async function handleManualCommand(
-  interaction: DiscordInteraction,
-  env: Env,
-  ctx: ExecutionContext
-): Promise<Response> {
-  const embeds = [
+function buildEmbeds(t: Translator) {
+  return [
     // Overview
     {
-      title: '📖 XIV Dye Tools Manual',
+      title: `📖 ${t.t('manual.title')}`,
       description: [
-        'Welcome to **XIV Dye Tools**! This bot helps you explore and match FFXIV dye colors.',
+        t.t('manual.welcome'),
         '',
-        'Below you\'ll find all available commands organized by category.',
-        'All commands support **autocomplete** for dye names!',
+        t.t('manual.commandsIntro'),
+        t.t('manual.autocompleteNote'),
       ].join('\n'),
       color: COLORS.blurple,
     },
 
     // Color Matching Tools
     {
-      title: '🎨 Color Matching',
+      title: `🎨 ${t.t('manual.colorMatching')}`,
       color: COLORS.green,
       fields: [
         {
-          name: '`/match <color> [count]`',
-          value: 'Find the closest FFXIV dye to any color.\n• Accepts hex codes (`#FF0000`) or dye names\n• Optional: show up to 10 closest matches',
+          name: t.t('manual.match.name'),
+          value: t.t('manual.match.description'),
           inline: false,
         },
         {
-          name: '`/harmony <color> [type]`',
-          value: 'Generate harmonious dye combinations.\n• Types: Complementary, Analogous, Triadic, Split-Complementary, Tetradic, Square, Monochromatic\n• Creates a visual color wheel',
+          name: t.t('manual.harmony.name'),
+          value: t.t('manual.harmony.description'),
           inline: false,
         },
         {
-          name: '`/mixer <start> <end> [steps]`',
-          value: 'Create a color gradient between two colors.\n• Shows matched dyes for each gradient step\n• Configurable step count (2-10)',
+          name: t.t('manual.mixer.name'),
+          value: t.t('manual.mixer.description'),
           inline: false,
         },
       ],
@@ -70,27 +76,27 @@ export async function handleManualCommand(
 
     // Dye Information
     {
-      title: '🧪 Dye Information',
+      title: `🧪 ${t.t('manual.dyeInformation')}`,
       color: COLORS.yellow,
       fields: [
         {
-          name: '`/dye search <query>`',
-          value: 'Search for dyes by name.\n• Fuzzy matching finds partial matches\n• Shows hex codes and categories',
+          name: t.t('manual.dyeSearch.name'),
+          value: t.t('manual.dyeSearch.description'),
           inline: false,
         },
         {
-          name: '`/dye info <name>`',
-          value: 'Get detailed information about a specific dye.\n• Shows hex, RGB, HSV values\n• Displays category and item ID',
+          name: t.t('manual.dyeInfo.name'),
+          value: t.t('manual.dyeInfo.description'),
           inline: false,
         },
         {
-          name: '`/dye list [category]`',
-          value: 'List all dyes or filter by category.\n• Categories: Reds, Browns, Yellows, Greens, Blues, Purples, Neutral, Special',
+          name: t.t('manual.dyeList.name'),
+          value: t.t('manual.dyeList.description'),
           inline: false,
         },
         {
-          name: '`/dye random [unique_categories]`',
-          value: 'Show 5 randomly selected dyes.\n• Option to limit to 1 dye per category',
+          name: t.t('manual.dyeRandom.name'),
+          value: t.t('manual.dyeRandom.description'),
           inline: false,
         },
       ],
@@ -98,17 +104,17 @@ export async function handleManualCommand(
 
     // Bot Information
     {
-      title: 'ℹ️ Bot Information',
+      title: `ℹ️ ${t.t('manual.botInformation')}`,
       color: COLORS.fuchsia,
       fields: [
         {
-          name: '`/about`',
-          value: 'Show bot information, version, and links.',
+          name: t.t('manual.about.name'),
+          value: t.t('manual.about.description'),
           inline: true,
         },
         {
-          name: '`/manual`',
-          value: 'Show this help guide.',
+          name: t.t('manual.manualCmd.name'),
+          value: t.t('manual.manualCmd.description'),
           inline: true,
         },
       ],
@@ -116,24 +122,41 @@ export async function handleManualCommand(
 
     // Tips & Resources
     {
-      title: '💡 Tips & Resources',
+      title: `💡 ${t.t('manual.tipsResources')}`,
       color: COLORS.blue,
       description: [
-        '**Autocomplete:** Start typing a dye name and suggestions will appear!',
+        t.t('manual.tips.autocomplete'),
         '',
-        '**Hex Colors:** Use standard web format like `#FF0000` (red) or `#5865F2` (blurple)',
+        t.t('manual.tips.hexColors'),
         '',
-        '**Dye Names:** Type partial names - "dala" will find "Dalamud Red"',
+        t.t('manual.tips.dyeNames'),
         '',
-        '**Facewear Excluded:** Generic Facewear dyes (like "Red", "Blue") are excluded from results',
+        t.t('manual.tips.facewearExcluded'),
         '',
-        '**Links:**',
+        t.t('manual.tips.links'),
         '• [Web App](https://xivdyetools.projectgalatine.com/)',
         '• [Support Server](https://discord.gg/5VUSKTZCe5)',
         '• [Patreon](https://patreon.com/ProjectGalatine)',
       ].join('\n'),
     },
   ];
+}
+
+/**
+ * Handles the /manual command
+ */
+export async function handleManualCommand(
+  interaction: DiscordInteraction,
+  env: Env,
+  ctx: ExecutionContext
+): Promise<Response> {
+  const userId = interaction.member?.user?.id ?? interaction.user?.id ?? 'unknown';
+
+  // Get translator for user's locale
+  const t = await createUserTranslator(env.KV, userId, interaction.locale);
+
+  // Build localized embeds
+  const embeds = buildEmbeds(t);
 
   return Response.json({
     type: 4, // CHANNEL_MESSAGE_WITH_SOURCE

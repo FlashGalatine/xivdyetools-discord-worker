@@ -1,0 +1,237 @@
+{
+  "meta": {
+    "locale": "ja",
+    "name": "Japanese",
+    "nativeName": "日本語",
+    "flag": "🇯🇵"
+  },
+  "common": {
+    "dye": "カララント",
+    "dyes": "カララント",
+    "color": "色",
+    "category": "カテゴリ",
+    "hexColor": "16進数カラー",
+    "rgb": "RGB",
+    "hsv": "HSV",
+    "itemId": "アイテムID",
+    "distance": "距離",
+    "quality": "品質",
+    "footer": "XIV Dye Tools",
+    "error": "エラー",
+    "success": "成功",
+    "inputColor": "入力色",
+    "closestDye": "最も近いカララント",
+    "matchQuality": "マッチ品質",
+    "createdAt": "作成日",
+    "marketBoard": "マーケットボード"
+  },
+  "errors": {
+    "userNotFound": "ユーザーを識別できませんでした。",
+    "dyeNotFound": "「{name}」という名前のカララントが見つかりませんでした。",
+    "colorNotFound": "「{input}」に一致するカララントが見つかりませんでした。",
+    "invalidColor": "「{input}」を色として解釈できませんでした。\n\n有効な16進数コード（例：`#FF0000`）またはカララント名（例：`ダラガブレッド`）を入力してください。",
+    "missingInput": "色（16進数コードまたはカララント名）を入力してください。",
+    "missingQuery": "検索キーワードを入力してください。",
+    "missingName": "カララント名を入力してください。",
+    "noMatchFound": "データベースに一致するカララントが見つかりませんでした。",
+    "noDyesAvailable": "データベースにカララントがありません。",
+    "failedToSave": "設定を保存できませんでした。後でもう一度お試しください。",
+    "failedToReset": "設定をリセットできませんでした。後でもう一度お試しください。"
+  },
+  "quality": {
+    "perfect": "完璧",
+    "excellent": "優秀",
+    "good": "良好",
+    "fair": "まずまず",
+    "approximate": "おおよそ"
+  },
+  "manual": {
+    "title": "XIV Dye Tools マニュアル",
+    "welcome": "**XIV Dye Tools**へようこそ！このボットはFFXIVのカララント色の探索とマッチングをお手伝いします。",
+    "commandsIntro": "以下にカテゴリ別のすべてのコマンドをご紹介します。",
+    "autocompleteNote": "すべてのコマンドでカララント名の**オートコンプリート**が使えます！",
+    "colorMatching": "カラーマッチング",
+    "dyeInformation": "カララント情報",
+    "botInformation": "ボット情報",
+    "tipsResources": "ヒントとリソース",
+    "match": {
+      "name": "`/match <色> [件数]`",
+      "description": "任意の色に最も近いFFXIVカララントを検索します。\n• 16進数コード（`#FF0000`）またはカララント名を使用できます\n• オプション：最大10件のマッチを表示"
+    },
+    "harmony": {
+      "name": "`/harmony <色> [タイプ]`",
+      "description": "調和のとれたカララントの組み合わせを生成します。\n• タイプ：補色、類似色、トライアド、スプリット補色、テトラード、スクエア、モノクロマティック\n• カラーホイールを視覚的に作成"
+    },
+    "mixer": {
+      "name": "`/mixer <開始> <終了> [ステップ数]`",
+      "description": "2色間のカラーグラデーションを作成します。\n• 各グラデーションステップに対応するカララントを表示\n• ステップ数を設定可能（2〜10）"
+    },
+    "dyeSearch": {
+      "name": "`/dye search <検索語>`",
+      "description": "名前でカララントを検索します。\n• あいまい検索で部分一致を検出\n• 16進数コードとカテゴリを表示"
+    },
+    "dyeInfo": {
+      "name": "`/dye info <名前>`",
+      "description": "特定のカララントの詳細情報を取得します。\n• 16進数、RGB、HSV値を表示\n• カテゴリとアイテムIDを表示"
+    },
+    "dyeList": {
+      "name": "`/dye list [カテゴリ]`",
+      "description": "すべてのカララントを一覧表示、またはカテゴリでフィルタリングします。\n• カテゴリ：レッド系、ブラウン系、イエロー系、グリーン系、ブルー系、パープル系、ニュートラル、スペシャル"
+    },
+    "dyeRandom": {
+      "name": "`/dye random [unique_categories]`",
+      "description": "ランダムに5つのカララントを表示します。\n• カテゴリごとに1つのカララントに制限するオプション"
+    },
+    "about": {
+      "name": "`/about`",
+      "description": "ボット情報、バージョン、リンクを表示します。"
+    },
+    "manualCmd": {
+      "name": "`/manual`",
+      "description": "このヘルプガイドを表示します。"
+    },
+    "tips": {
+      "autocomplete": "**オートコンプリート：** カララント名を入力し始めると候補が表示されます！",
+      "hexColors": "**16進数カラー：** `#FF0000`（赤）や`#5865F2`（ブラープル）などの標準的なWeb形式を使用します",
+      "dyeNames": "**カララント名：** 部分的な名前を入力してください -「ダラ」で「ダラガブレッド」が見つかります",
+      "facewearExcluded": "**フェイスウェア除外：** 一般的なフェイスウェアカララント（「レッド」「ブルー」など）は結果から除外されます",
+      "links": "**リンク：**"
+    }
+  },
+  "dye": {
+    "search": {
+      "noResults": "「{query}」に一致するカララントが見つかりませんでした。",
+      "tryDifferent": "別の検索キーワードをお試しください",
+      "resultsTitle": "「{query}」の検索結果",
+      "foundCount": "{count}件のカララントが見つかりました：",
+      "foundCountPlural": "{count}件のカララントが見つかりました：",
+      "moreResults": "...他{count}件の結果",
+      "useInfoHint": "/dye info <名前> で詳細情報を確認できます"
+    },
+    "info": {
+      "detailedInfo": "この{category}カララントの詳細情報です。"
+    },
+    "list": {
+      "noDyesInCategory": "「{category}」カテゴリにカララントが見つかりませんでした。",
+      "categoryTitle": "{category}系カララント",
+      "dyesInCategory": "このカテゴリには{count}件のカララントがあります：",
+      "categoriesTitle": "カララントカテゴリ",
+      "categorySummary": "{count}カテゴリで{total}件のカララントがあります：",
+      "useListHint": "/dye list <カテゴリ> でカテゴリ別のカララントを表示できます"
+    },
+    "random": {
+      "title": "ランダムカララント",
+      "titleUnique": "ランダムカララント（カテゴリごとに1つ）",
+      "description": "ランダムに選ばれた{count}件のカララント：",
+      "descriptionUnique": "各カテゴリから1つずつランダムに選ばれた{count}件のカララント：",
+      "runAgainHint": "もう一度実行すると別のカララントが表示されます！"
+    }
+  },
+  "match": {
+    "title": "カララントマッチ：{name}",
+    "topMatches": "上位{count}件のカララントマッチ",
+    "findingMatches": "{input}に最も近いマッチを検索中",
+    "useInfoHint": "/dye info で入手方法の詳細を確認できます",
+    "useInfoNameHint": "/dye info <名前> で入手方法の詳細を確認できます"
+  },
+  "harmony": {
+    "title": "{type}ハーモニー",
+    "baseColor": "ベースカラー",
+    "harmonyColors": "ハーモニーカラー",
+    "complementary": "補色",
+    "analogous": "類似色",
+    "triadic": "トライアド",
+    "splitComplementary": "スプリット補色",
+    "tetradic": "テトラード",
+    "square": "スクエア",
+    "monochromatic": "モノクロマティック"
+  },
+  "mixer": {
+    "title": "カラーグラデーション",
+    "startColor": "開始",
+    "endColor": "終了",
+    "steps": "{count}ステップ",
+    "gradientFrom": "{start}から{end}へのグラデーション"
+  },
+  "comparison": {
+    "title": "カララント比較",
+    "colorDistance": "色距離",
+    "contrastRatio": "コントラスト比",
+    "mostSimilar": "最も類似",
+    "mostDifferent": "最も異なる",
+    "wcagAA": "WCAG AA",
+    "wcagAAA": "WCAG AAA",
+    "passes": "合格",
+    "fails": "不合格"
+  },
+  "accessibility": {
+    "title": "アクセシビリティチェック",
+    "normalVision": "通常の視覚",
+    "protanopia": "1型色覚（赤色盲）",
+    "deuteranopia": "2型色覚（緑色盲）",
+    "tritanopia": "3型色覚（青色盲）",
+    "simulatedAppearance": "シミュレーション表示",
+    "contrastAnalysis": "コントラスト分析"
+  },
+  "favorites": {
+    "title": "お気に入り",
+    "empty": "お気に入りのカララントがまだありません。",
+    "addHint": "`/favorites add <カララント>` で追加してください！",
+    "added": "**{name}**をお気に入りに追加しました。",
+    "removed": "**{name}**をお気に入りから削除しました。",
+    "cleared": "すべてのお気に入りカララントをクリアしました。",
+    "alreadyFavorite": "**{name}**は既にお気に入りに登録されています。",
+    "notInFavorites": "**{name}**はお気に入りに登録されていません。",
+    "limitReached": "お気に入りの上限（{max}件）に達しました。\n\n`/favorites remove` で削除してから追加してください。",
+    "count": "お気に入り {count}/{max}件"
+  },
+  "collection": {
+    "title": "コレクション",
+    "empty": "コレクションがまだありません。",
+    "createHint": "`/collection create <名前>` で作成してください！",
+    "created": "新しいコレクションを作成しました：**{name}**",
+    "deleted": "コレクションを削除しました：**{name}**",
+    "renamed": "コレクション名を**{oldName}**から**{newName}**に変更しました。",
+    "dyeAdded": "**{dye}**をコレクション「{collection}」に追加しました。",
+    "dyeRemoved": "**{dye}**をコレクション「{collection}」から削除しました。",
+    "addDyeHint": "`/collection add {name} <カララント>` でカララントを追加できます。",
+    "showHint": "/collection show <名前> でコレクションを表示できます",
+    "collectionEmpty": "このコレクションは空です。",
+    "alreadyExists": "「{name}」という名前のコレクションは既に存在します。",
+    "notFound": "「{name}」という名前のコレクションが見つかりませんでした。",
+    "nameTooLong": "コレクション名は{max}文字以下にしてください。",
+    "limitReached": "コレクションの上限（{max}件）に達しました。\n\n`/collection delete` で削除してから作成してください。",
+    "dyeLimitReached": "このコレクションはカララントの上限（{max}件）に達しました。",
+    "dyeAlreadyInCollection": "**{dye}**は既にコレクション「{collection}」に登録されています。",
+    "dyeNotInCollection": "**{dye}**はコレクション「{collection}」に登録されていません（またはコレクションが存在しません）。",
+    "count": "コレクション {count}/{max}件"
+  },
+  "language": {
+    "title": "言語設定",
+    "updated": "言語設定を**{language}**に変更しました。",
+    "updateNote": "カララント名とボットメッセージがこの言語で表示されます（対応している場合）。",
+    "reset": "言語設定をリセットしました。",
+    "resetNote": "ボットはDiscordクライアントの言語設定を使用します（対応している場合）。対応していない場合は英語がデフォルトになります。",
+    "yourPreference": "設定言語",
+    "notSet": "未設定",
+    "discordLocale": "Discordロケール",
+    "unsupported": "未対応",
+    "effectiveLanguage": "有効な言語",
+    "supportedLanguages": "対応言語",
+    "missingLanguage": "言語を指定してください。",
+    "invalidLanguage": "「{locale}」は対応していない言語です。\n\n対応言語：{validList}"
+  },
+  "about": {
+    "title": "XIV Dye Tools Bot",
+    "version": "バージョン",
+    "description": "FFXIVのカララント色の探索とマッチングのためのDiscordボットです。",
+    "commands": "コマンド",
+    "links": "リンク",
+    "poweredBy": "Cloudflare Workersで動作中"
+  },
+  "buttons": {
+    "copyHex": "HEXをコピー",
+    "copyRgb": "RGBをコピー",
+    "copyHsv": "HSVをコピー"
+  }
+}

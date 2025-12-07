@@ -1,0 +1,237 @@
+{
+  "meta": {
+    "locale": "zh",
+    "name": "Chinese",
+    "nativeName": "中文",
+    "flag": "🇨🇳"
+  },
+  "common": {
+    "dye": "染剂",
+    "dyes": "染剂",
+    "color": "颜色",
+    "category": "分类",
+    "hexColor": "十六进制颜色",
+    "rgb": "RGB",
+    "hsv": "HSV",
+    "itemId": "物品ID",
+    "distance": "距离",
+    "quality": "质量",
+    "footer": "XIV Dye Tools",
+    "error": "错误",
+    "success": "成功",
+    "inputColor": "输入颜色",
+    "closestDye": "最接近的染剂",
+    "matchQuality": "匹配质量",
+    "createdAt": "创建于",
+    "marketBoard": "市场布告板"
+  },
+  "errors": {
+    "userNotFound": "无法识别用户。",
+    "dyeNotFound": "找不到名为「{name}」的染剂。",
+    "colorNotFound": "找不到与「{input}」匹配的染剂。",
+    "invalidColor": "无法将「{input}」解析为颜色。\n\n请提供有效的十六进制代码（例如：`#FF0000`）或染剂名称（例如：`达拉加布红`）。",
+    "missingInput": "请提供颜色（十六进制代码或染剂名称）。",
+    "missingQuery": "请提供搜索词。",
+    "missingName": "请提供染剂名称。",
+    "noMatchFound": "在数据库中找不到匹配的染剂。",
+    "noDyesAvailable": "数据库中没有可用的染剂。",
+    "failedToSave": "无法保存您的偏好设置。请稍后重试。",
+    "failedToReset": "无法重置您的偏好设置。请稍后重试。"
+  },
+  "quality": {
+    "perfect": "完美",
+    "excellent": "优秀",
+    "good": "良好",
+    "fair": "一般",
+    "approximate": "近似"
+  },
+  "manual": {
+    "title": "XIV Dye Tools 使用手册",
+    "welcome": "欢迎使用 **XIV Dye Tools**！这个机器人可以帮助您探索和匹配FFXIV染剂颜色。",
+    "commandsIntro": "下面是按类别整理的所有可用命令。",
+    "autocompleteNote": "所有命令都支持染剂名称**自动补全**！",
+    "colorMatching": "颜色匹配",
+    "dyeInformation": "染剂信息",
+    "botInformation": "机器人信息",
+    "tipsResources": "技巧与资源",
+    "match": {
+      "name": "`/match <颜色> [数量]`",
+      "description": "查找与任何颜色最接近的FFXIV染剂。\n• 接受十六进制代码（`#FF0000`）或染剂名称\n• 可选：显示最多10个匹配结果"
+    },
+    "harmony": {
+      "name": "`/harmony <颜色> [类型]`",
+      "description": "生成和谐的染剂组合。\n• 类型：互补色、类似色、三色、分裂互补、四色、正方形、单色\n• 创建可视化色轮"
+    },
+    "mixer": {
+      "name": "`/mixer <起始> <结束> [步骤]`",
+      "description": "在两种颜色之间创建渐变。\n• 显示每个渐变步骤的匹配染剂\n• 可配置步骤数（2-10）"
+    },
+    "dyeSearch": {
+      "name": "`/dye search <搜索词>`",
+      "description": "按名称搜索染剂。\n• 模糊匹配可找到部分匹配\n• 显示十六进制代码和分类"
+    },
+    "dyeInfo": {
+      "name": "`/dye info <名称>`",
+      "description": "获取特定染剂的详细信息。\n• 显示Hex、RGB、HSV值\n• 显示分类和物品ID"
+    },
+    "dyeList": {
+      "name": "`/dye list [分类]`",
+      "description": "列出所有染剂或按分类筛选。\n• 分类：红色、棕色、黄色、绿色、蓝色、紫色、中性色、特殊"
+    },
+    "dyeRandom": {
+      "name": "`/dye random [unique_categories]`",
+      "description": "显示5个随机选择的染剂。\n• 可选择每个分类限制1个染剂"
+    },
+    "about": {
+      "name": "`/about`",
+      "description": "显示机器人信息、版本和链接。"
+    },
+    "manualCmd": {
+      "name": "`/manual`",
+      "description": "显示此帮助指南。"
+    },
+    "tips": {
+      "autocomplete": "**自动补全：** 开始输入染剂名称，建议将自动显示！",
+      "hexColors": "**十六进制颜色：** 使用标准网页格式如 `#FF0000`（红色）或 `#5865F2`（蓝紫色）",
+      "dyeNames": "**染剂名称：** 输入部分名称 - 「达拉」可以找到「达拉加布红」",
+      "facewearExcluded": "**排除面部装备：** 通用面部装备染剂（如「红色」、「蓝色」）将从结果中排除",
+      "links": "**链接：**"
+    }
+  },
+  "dye": {
+    "search": {
+      "noResults": "找不到与「{query}」匹配的染剂。",
+      "tryDifferent": "请尝试其他搜索词",
+      "resultsTitle": "「{query}」的搜索结果",
+      "foundCount": "找到 {count} 种染剂：",
+      "foundCountPlural": "找到 {count} 种染剂：",
+      "moreResults": "...还有 {count} 个结果",
+      "useInfoHint": "使用 /dye info <名称> 查看详细信息"
+    },
+    "info": {
+      "detailedInfo": "这种{category}染剂的详细信息。"
+    },
+    "list": {
+      "noDyesInCategory": "在「{category}」分类中找不到染剂。",
+      "categoryTitle": "{category}染剂",
+      "dyesInCategory": "此分类中有 {count} 种染剂：",
+      "categoriesTitle": "染剂分类",
+      "categorySummary": "{count} 个分类中共有 {total} 种染剂：",
+      "useListHint": "使用 /dye list <分类> 查看某个分类的染剂"
+    },
+    "random": {
+      "title": "随机染剂",
+      "titleUnique": "随机染剂（每个分类1个）",
+      "description": "这里是 {count} 种随机选择的染剂：",
+      "descriptionUnique": "这里是来自每个分类的 {count} 种随机选择的染剂：",
+      "runAgainHint": "再次运行可获取不同的染剂！"
+    }
+  },
+  "match": {
+    "title": "染剂匹配：{name}",
+    "topMatches": "前 {count} 个染剂匹配",
+    "findingMatches": "正在为 {input} 查找最接近的匹配",
+    "useInfoHint": "使用 /dye info 查看获取方式",
+    "useInfoNameHint": "使用 /dye info <名称> 查看获取方式"
+  },
+  "harmony": {
+    "title": "{type}和谐",
+    "baseColor": "基础色",
+    "harmonyColors": "和谐色",
+    "complementary": "互补色",
+    "analogous": "类似色",
+    "triadic": "三色",
+    "splitComplementary": "分裂互补",
+    "tetradic": "四色",
+    "square": "正方形",
+    "monochromatic": "单色"
+  },
+  "mixer": {
+    "title": "颜色渐变",
+    "startColor": "起始",
+    "endColor": "结束",
+    "steps": "{count} 步",
+    "gradientFrom": "从 {start} 到 {end} 的渐变"
+  },
+  "comparison": {
+    "title": "染剂比较",
+    "colorDistance": "颜色距离",
+    "contrastRatio": "对比度",
+    "mostSimilar": "最相似",
+    "mostDifferent": "最不同",
+    "wcagAA": "WCAG AA",
+    "wcagAAA": "WCAG AAA",
+    "passes": "通过",
+    "fails": "未通过"
+  },
+  "accessibility": {
+    "title": "无障碍检查",
+    "normalVision": "正常视力",
+    "protanopia": "红色盲",
+    "deuteranopia": "绿色盲",
+    "tritanopia": "蓝色盲",
+    "simulatedAppearance": "模拟外观",
+    "contrastAnalysis": "对比度分析"
+  },
+  "favorites": {
+    "title": "您的收藏",
+    "empty": "您还没有收藏任何染剂。",
+    "addHint": "使用 `/favorites add <染剂>` 添加！",
+    "added": "已将 **{name}** 添加到您的收藏。",
+    "removed": "已将 **{name}** 从您的收藏中移除。",
+    "cleared": "已清除所有收藏的染剂。",
+    "alreadyFavorite": "**{name}** 已经在您的收藏中。",
+    "notInFavorites": "**{name}** 不在您的收藏中。",
+    "limitReached": "您已达到 {max} 个收藏的上限。\n\n请先使用 `/favorites remove` 移除一个。",
+    "count": "收藏 {count}/{max}"
+  },
+  "collection": {
+    "title": "您的合集",
+    "empty": "您还没有创建任何合集。",
+    "createHint": "使用 `/collection create <名称>` 创建一个！",
+    "created": "已创建新合集：**{name}**",
+    "deleted": "已删除合集：**{name}**",
+    "renamed": "已将合集从 **{oldName}** 重命名为 **{newName}**。",
+    "dyeAdded": "已将 **{dye}** 添加到合集「{collection}」。",
+    "dyeRemoved": "已将 **{dye}** 从合集「{collection}」移除。",
+    "addDyeHint": "使用 `/collection add {name} <染剂>` 添加染剂。",
+    "showHint": "使用 /collection show <名称> 查看合集",
+    "collectionEmpty": "此合集为空。",
+    "alreadyExists": "名为「{name}」的合集已存在。",
+    "notFound": "找不到名为「{name}」的合集。",
+    "nameTooLong": "合集名称必须在 {max} 个字符以内。",
+    "limitReached": "您已达到 {max} 个合集的上限。\n\n请先使用 `/collection delete` 删除一个。",
+    "dyeLimitReached": "此合集已达到 {max} 个染剂的上限。",
+    "dyeAlreadyInCollection": "**{dye}** 已经在合集「{collection}」中。",
+    "dyeNotInCollection": "**{dye}** 不在合集「{collection}」中（或合集不存在）。",
+    "count": "合集 {count}/{max}"
+  },
+  "language": {
+    "title": "语言设置",
+    "updated": "您的语言偏好已设置为 **{language}**。",
+    "updateNote": "染剂名称和机器人消息现在将使用此语言显示（如果可用）。",
+    "reset": "您的语言偏好已重置。",
+    "resetNote": "机器人现在将使用您的Discord客户端语言设置（如果支持），否则默认使用英语。",
+    "yourPreference": "您的偏好",
+    "notSet": "未设置",
+    "discordLocale": "Discord语言",
+    "unsupported": "不支持",
+    "effectiveLanguage": "当前语言",
+    "supportedLanguages": "支持的语言",
+    "missingLanguage": "请指定语言。",
+    "invalidLanguage": "「{locale}」不是支持的语言。\n\n支持的语言：{validList}"
+  },
+  "about": {
+    "title": "XIV Dye Tools 机器人",
+    "version": "版本",
+    "description": "用于探索和匹配FFXIV染剂颜色的Discord机器人。",
+    "commands": "命令",
+    "links": "链接",
+    "poweredBy": "由 Cloudflare Workers 提供支持"
+  },
+  "buttons": {
+    "copyHex": "复制HEX",
+    "copyRgb": "复制RGB",
+    "copyHsv": "复制HSV"
+  }
+}

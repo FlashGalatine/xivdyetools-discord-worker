@@ -1,0 +1,237 @@
+{
+  "meta": {
+    "locale": "de",
+    "name": "German",
+    "nativeName": "Deutsch",
+    "flag": "🇩🇪"
+  },
+  "common": {
+    "dye": "Farbstoff",
+    "dyes": "Farbstoffe",
+    "color": "Farbe",
+    "category": "Kategorie",
+    "hexColor": "Hex-Farbe",
+    "rgb": "RGB",
+    "hsv": "HSV",
+    "itemId": "Gegenstands-ID",
+    "distance": "Abstand",
+    "quality": "Qualität",
+    "footer": "XIV Dye Tools",
+    "error": "Fehler",
+    "success": "Erfolg",
+    "inputColor": "Eingabefarbe",
+    "closestDye": "Nächster Farbstoff",
+    "matchQuality": "Übereinstimmungsqualität",
+    "createdAt": "Erstellt",
+    "marketBoard": "Marktbrett"
+  },
+  "errors": {
+    "userNotFound": "Benutzer konnte nicht identifiziert werden.",
+    "dyeNotFound": "Farbstoff mit dem Namen \"{name}\" wurde nicht gefunden.",
+    "colorNotFound": "Kein Farbstoff gefunden, der \"{input}\" entspricht.",
+    "invalidColor": "\"{input}\" konnte nicht als Farbe interpretiert werden.\n\nBitte gib einen gültigen Hex-Code (z.B. `#FF0000`) oder Farbstoffnamen (z.B. `Dalamud-Rot`) ein.",
+    "missingInput": "Bitte gib eine Farbe (Hex-Code oder Farbstoffname) ein.",
+    "missingQuery": "Bitte gib einen Suchbegriff ein.",
+    "missingName": "Bitte gib einen Farbstoffnamen ein.",
+    "noMatchFound": "Keine passenden Farbstoffe in der Datenbank gefunden.",
+    "noDyesAvailable": "Keine Farbstoffe in der Datenbank verfügbar.",
+    "failedToSave": "Einstellung konnte nicht gespeichert werden. Bitte versuche es später erneut.",
+    "failedToReset": "Einstellung konnte nicht zurückgesetzt werden. Bitte versuche es später erneut."
+  },
+  "quality": {
+    "perfect": "Perfekt",
+    "excellent": "Ausgezeichnet",
+    "good": "Gut",
+    "fair": "Akzeptabel",
+    "approximate": "Ungefähr"
+  },
+  "manual": {
+    "title": "XIV Dye Tools Handbuch",
+    "welcome": "Willkommen bei **XIV Dye Tools**! Dieser Bot hilft dir beim Erkunden und Abgleichen von FFXIV-Farbstoffen.",
+    "commandsIntro": "Unten findest du alle verfügbaren Befehle nach Kategorien geordnet.",
+    "autocompleteNote": "Alle Befehle unterstützen **Autovervollständigung** für Farbstoffnamen!",
+    "colorMatching": "Farbabgleich",
+    "dyeInformation": "Farbstoff-Informationen",
+    "botInformation": "Bot-Informationen",
+    "tipsResources": "Tipps & Ressourcen",
+    "match": {
+      "name": "`/match <Farbe> [Anzahl]`",
+      "description": "Finde den nächsten FFXIV-Farbstoff zu einer beliebigen Farbe.\n• Akzeptiert Hex-Codes (`#FF0000`) oder Farbstoffnamen\n• Optional: zeige bis zu 10 nächste Übereinstimmungen"
+    },
+    "harmony": {
+      "name": "`/harmony <Farbe> [Typ]`",
+      "description": "Generiere harmonische Farbstoffkombinationen.\n• Typen: Komplementär, Analog, Triadisch, Geteilt-Komplementär, Tetradisch, Quadratisch, Monochromatisch\n• Erstellt ein visuelles Farbrad"
+    },
+    "mixer": {
+      "name": "`/mixer <Start> <Ende> [Schritte]`",
+      "description": "Erstelle einen Farbverlauf zwischen zwei Farben.\n• Zeigt passende Farbstoffe für jeden Verlaufsschritt\n• Konfigurierbare Schrittanzahl (2-10)"
+    },
+    "dyeSearch": {
+      "name": "`/dye search <Suche>`",
+      "description": "Suche Farbstoffe nach Namen.\n• Fuzzy-Suche findet Teilübereinstimmungen\n• Zeigt Hex-Codes und Kategorien"
+    },
+    "dyeInfo": {
+      "name": "`/dye info <Name>`",
+      "description": "Erhalte detaillierte Informationen zu einem bestimmten Farbstoff.\n• Zeigt Hex-, RGB-, HSV-Werte\n• Zeigt Kategorie und Gegenstands-ID"
+    },
+    "dyeList": {
+      "name": "`/dye list [Kategorie]`",
+      "description": "Liste alle Farbstoffe oder filtere nach Kategorie.\n• Kategorien: Rot, Braun, Gelb, Grün, Blau, Violett, Neutral, Spezial"
+    },
+    "dyeRandom": {
+      "name": "`/dye random [unique_categories]`",
+      "description": "Zeige 5 zufällig ausgewählte Farbstoffe.\n• Option zur Begrenzung auf 1 Farbstoff pro Kategorie"
+    },
+    "about": {
+      "name": "`/about`",
+      "description": "Zeige Bot-Informationen, Version und Links."
+    },
+    "manualCmd": {
+      "name": "`/manual`",
+      "description": "Zeige dieses Hilfe-Handbuch."
+    },
+    "tips": {
+      "autocomplete": "**Autovervollständigung:** Beginne einen Farbstoffnamen einzugeben und Vorschläge erscheinen!",
+      "hexColors": "**Hex-Farben:** Verwende das Standard-Webformat wie `#FF0000` (Rot) oder `#5865F2` (Blurple)",
+      "dyeNames": "**Farbstoffnamen:** Gib Teilnamen ein - 'Dala' findet 'Dalamud-Rot'",
+      "facewearExcluded": "**Gesichtszubehör ausgeschlossen:** Generische Gesichtszubehör-Farbstoffe (wie 'Rot', 'Blau') sind von den Ergebnissen ausgeschlossen",
+      "links": "**Links:**"
+    }
+  },
+  "dye": {
+    "search": {
+      "noResults": "Keine Farbstoffe gefunden, die \"{query}\" entsprechen.",
+      "tryDifferent": "Versuche einen anderen Suchbegriff",
+      "resultsTitle": "Suchergebnisse für \"{query}\"",
+      "foundCount": "{count} Farbstoff gefunden:",
+      "foundCountPlural": "{count} Farbstoffe gefunden:",
+      "moreResults": "...und {count} weitere Ergebnisse",
+      "useInfoHint": "Verwende /dye info <Name> für detaillierte Informationen"
+    },
+    "info": {
+      "detailedInfo": "Detaillierte Informationen zu diesem {category}-Farbstoff."
+    },
+    "list": {
+      "noDyesInCategory": "Keine Farbstoffe in der Kategorie \"{category}\" gefunden.",
+      "categoryTitle": "{category}-Farbstoffe",
+      "dyesInCategory": "{count} Farbstoffe in dieser Kategorie:",
+      "categoriesTitle": "Farbstoff-Kategorien",
+      "categorySummary": "Es gibt {total} Farbstoffe in {count} Kategorien:",
+      "useListHint": "Verwende /dye list <Kategorie> um Farbstoffe in einer Kategorie zu sehen"
+    },
+    "random": {
+      "title": "Zufällige Farbstoffe",
+      "titleUnique": "Zufällige Farbstoffe (1 pro Kategorie)",
+      "description": "Hier sind {count} zufällig ausgewählte Farbstoffe:",
+      "descriptionUnique": "Hier sind {count} zufällig ausgewählte Farbstoffe, einer aus jeder Kategorie:",
+      "runAgainHint": "Führe erneut aus für andere Farbstoffe!"
+    }
+  },
+  "match": {
+    "title": "Farbstoff-Übereinstimmung: {name}",
+    "topMatches": "Top {count} Farbstoff-Übereinstimmungen",
+    "findingMatches": "Finde nächste Übereinstimmungen für {input}",
+    "useInfoHint": "Verwende /dye info für Beschaffungsdetails",
+    "useInfoNameHint": "Verwende /dye info <Name> für Beschaffungsdetails"
+  },
+  "harmony": {
+    "title": "{type}-Harmonie",
+    "baseColor": "Basisfarbe",
+    "harmonyColors": "Harmoniefarben",
+    "complementary": "Komplementär",
+    "analogous": "Analog",
+    "triadic": "Triadisch",
+    "splitComplementary": "Geteilt-Komplementär",
+    "tetradic": "Tetradisch",
+    "square": "Quadratisch",
+    "monochromatic": "Monochromatisch"
+  },
+  "mixer": {
+    "title": "Farbverlauf",
+    "startColor": "Start",
+    "endColor": "Ende",
+    "steps": "{count} Schritte",
+    "gradientFrom": "Verlauf von {start} nach {end}"
+  },
+  "comparison": {
+    "title": "Farbstoff-Vergleich",
+    "colorDistance": "Farbabstand",
+    "contrastRatio": "Kontrastverhältnis",
+    "mostSimilar": "Am ähnlichsten",
+    "mostDifferent": "Am unterschiedlichsten",
+    "wcagAA": "WCAG AA",
+    "wcagAAA": "WCAG AAA",
+    "passes": "Bestanden",
+    "fails": "Nicht bestanden"
+  },
+  "accessibility": {
+    "title": "Barrierefreiheits-Check",
+    "normalVision": "Normale Sicht",
+    "protanopia": "Protanopie (Rotblindheit)",
+    "deuteranopia": "Deuteranopie (Grünblindheit)",
+    "tritanopia": "Tritanopie (Blaublindheit)",
+    "simulatedAppearance": "Simuliertes Erscheinungsbild",
+    "contrastAnalysis": "Kontrastanalyse"
+  },
+  "favorites": {
+    "title": "Deine Favoriten",
+    "empty": "Du hast noch keine Lieblingsfarbstoffe.",
+    "addHint": "Verwende `/favorites add <Farbstoff>` um welche hinzuzufügen!",
+    "added": "**{name}** zu deinen Favoriten hinzugefügt.",
+    "removed": "**{name}** aus deinen Favoriten entfernt.",
+    "cleared": "Alle deine Lieblingsfarbstoffe gelöscht.",
+    "alreadyFavorite": "**{name}** ist bereits in deinen Favoriten.",
+    "notInFavorites": "**{name}** ist nicht in deinen Favoriten.",
+    "limitReached": "Du hast die maximale Anzahl von {max} Favoriten erreicht.\n\nEntferne zuerst einen mit `/favorites remove`.",
+    "count": "{count}/{max} Favoriten"
+  },
+  "collection": {
+    "title": "Deine Sammlungen",
+    "empty": "Du hast noch keine Sammlungen.",
+    "createHint": "Verwende `/collection create <Name>` um eine zu erstellen!",
+    "created": "Neue Sammlung erstellt: **{name}**",
+    "deleted": "Sammlung gelöscht: **{name}**",
+    "renamed": "Sammlung von **{oldName}** in **{newName}** umbenannt.",
+    "dyeAdded": "**{dye}** zur Sammlung \"{collection}\" hinzugefügt.",
+    "dyeRemoved": "**{dye}** aus Sammlung \"{collection}\" entfernt.",
+    "addDyeHint": "Verwende `/collection add {name} <Farbstoff>` um Farbstoffe hinzuzufügen.",
+    "showHint": "Verwende /collection show <Name> um eine Sammlung anzuzeigen",
+    "collectionEmpty": "Diese Sammlung ist leer.",
+    "alreadyExists": "Eine Sammlung mit dem Namen \"{name}\" existiert bereits.",
+    "notFound": "Sammlung mit dem Namen \"{name}\" wurde nicht gefunden.",
+    "nameTooLong": "Sammlungsnamen müssen {max} Zeichen oder weniger haben.",
+    "limitReached": "Du hast die maximale Anzahl von {max} Sammlungen erreicht.\n\nVerwende `/collection delete` um zuerst eine zu entfernen.",
+    "dyeLimitReached": "Diese Sammlung hat die maximale Anzahl von {max} Farbstoffen erreicht.",
+    "dyeAlreadyInCollection": "**{dye}** ist bereits in der Sammlung \"{collection}\".",
+    "dyeNotInCollection": "**{dye}** ist nicht in der Sammlung \"{collection}\" (oder die Sammlung existiert nicht).",
+    "count": "{count}/{max} Sammlungen"
+  },
+  "language": {
+    "title": "Spracheinstellungen",
+    "updated": "Deine Spracheinstellung wurde auf **{language}** gesetzt.",
+    "updateNote": "Farbstoffnamen und Bot-Nachrichten werden jetzt in dieser Sprache angezeigt, wenn verfügbar.",
+    "reset": "Deine Spracheinstellung wurde zurückgesetzt.",
+    "resetNote": "Der Bot wird jetzt die Spracheinstellung deines Discord-Clients verwenden (wenn unterstützt) oder standardmäßig Englisch.",
+    "yourPreference": "Deine Einstellung",
+    "notSet": "Nicht gesetzt",
+    "discordLocale": "Discord-Gebietsschema",
+    "unsupported": "nicht unterstützt",
+    "effectiveLanguage": "Aktive Sprache",
+    "supportedLanguages": "Unterstützte Sprachen",
+    "missingLanguage": "Bitte gib eine Sprache an.",
+    "invalidLanguage": "\"{locale}\" ist keine unterstützte Sprache.\n\nUnterstützte Sprachen: {validList}"
+  },
+  "about": {
+    "title": "XIV Dye Tools Bot",
+    "version": "Version",
+    "description": "Ein Discord-Bot zum Erkunden und Abgleichen von FFXIV-Farbstofffarben.",
+    "commands": "Befehle",
+    "links": "Links",
+    "poweredBy": "Powered by Cloudflare Workers"
+  },
+  "buttons": {
+    "copyHex": "HEX kopieren",
+    "copyRgb": "RGB kopieren",
+    "copyHsv": "HSV kopieren"
+  }
+}

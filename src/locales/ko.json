@@ -1,0 +1,237 @@
+{
+  "meta": {
+    "locale": "ko",
+    "name": "Korean",
+    "nativeName": "한국어",
+    "flag": "🇰🇷"
+  },
+  "common": {
+    "dye": "염료",
+    "dyes": "염료",
+    "color": "색상",
+    "category": "카테고리",
+    "hexColor": "16진수 색상",
+    "rgb": "RGB",
+    "hsv": "HSV",
+    "itemId": "아이템 ID",
+    "distance": "거리",
+    "quality": "품질",
+    "footer": "XIV Dye Tools",
+    "error": "오류",
+    "success": "성공",
+    "inputColor": "입력 색상",
+    "closestDye": "가장 가까운 염료",
+    "matchQuality": "일치 품질",
+    "createdAt": "생성일",
+    "marketBoard": "마켓보드"
+  },
+  "errors": {
+    "userNotFound": "사용자를 확인할 수 없습니다.",
+    "dyeNotFound": "\"{name}\"(이)라는 이름의 염료를 찾을 수 없습니다.",
+    "colorNotFound": "\"{input}\"과(와) 일치하는 염료를 찾을 수 없습니다.",
+    "invalidColor": "\"{input}\"을(를) 색상으로 변환할 수 없습니다.\n\n유효한 16진수 코드(예: `#FF0000`) 또는 염료 이름(예: `달라가브 레드`)을 입력해 주세요.",
+    "missingInput": "색상(16진수 코드 또는 염료 이름)을 입력해 주세요.",
+    "missingQuery": "검색어를 입력해 주세요.",
+    "missingName": "염료 이름을 입력해 주세요.",
+    "noMatchFound": "데이터베이스에서 일치하는 염료를 찾을 수 없습니다.",
+    "noDyesAvailable": "데이터베이스에 염료가 없습니다.",
+    "failedToSave": "설정을 저장할 수 없습니다. 나중에 다시 시도해 주세요.",
+    "failedToReset": "설정을 초기화할 수 없습니다. 나중에 다시 시도해 주세요."
+  },
+  "quality": {
+    "perfect": "완벽",
+    "excellent": "우수",
+    "good": "양호",
+    "fair": "적당",
+    "approximate": "근사"
+  },
+  "manual": {
+    "title": "XIV Dye Tools 매뉴얼",
+    "welcome": "**XIV Dye Tools**에 오신 것을 환영합니다! 이 봇은 FFXIV 염료 색상 탐색 및 매칭을 도와드립니다.",
+    "commandsIntro": "아래에서 카테고리별로 정리된 모든 명령어를 확인하실 수 있습니다.",
+    "autocompleteNote": "모든 명령어에서 염료 이름 **자동완성**을 지원합니다!",
+    "colorMatching": "색상 매칭",
+    "dyeInformation": "염료 정보",
+    "botInformation": "봇 정보",
+    "tipsResources": "팁 및 리소스",
+    "match": {
+      "name": "`/match <색상> [개수]`",
+      "description": "모든 색상에 가장 가까운 FFXIV 염료를 찾습니다.\n• 16진수 코드(`#FF0000`) 또는 염료 이름 사용 가능\n• 선택사항: 최대 10개의 일치 결과 표시"
+    },
+    "harmony": {
+      "name": "`/harmony <색상> [유형]`",
+      "description": "조화로운 염료 조합을 생성합니다.\n• 유형: 보색, 유사색, 삼원색, 분할보색, 사각배색, 정방형, 단색\n• 시각적 색상환 생성"
+    },
+    "mixer": {
+      "name": "`/mixer <시작> <끝> [단계]`",
+      "description": "두 색상 사이의 그라데이션을 생성합니다.\n• 각 그라데이션 단계에 맞는 염료 표시\n• 단계 수 설정 가능 (2-10)"
+    },
+    "dyeSearch": {
+      "name": "`/dye search <검색어>`",
+      "description": "이름으로 염료를 검색합니다.\n• 퍼지 검색으로 부분 일치 찾기\n• 16진수 코드와 카테고리 표시"
+    },
+    "dyeInfo": {
+      "name": "`/dye info <이름>`",
+      "description": "특정 염료에 대한 상세 정보를 확인합니다.\n• Hex, RGB, HSV 값 표시\n• 카테고리 및 아이템 ID 표시"
+    },
+    "dyeList": {
+      "name": "`/dye list [카테고리]`",
+      "description": "모든 염료 목록을 보거나 카테고리별로 필터링합니다.\n• 카테고리: 빨강, 갈색, 노랑, 초록, 파랑, 보라, 무채색, 특수"
+    },
+    "dyeRandom": {
+      "name": "`/dye random [unique_categories]`",
+      "description": "무작위로 선택된 5개의 염료를 표시합니다.\n• 카테고리당 1개로 제한하는 옵션"
+    },
+    "about": {
+      "name": "`/about`",
+      "description": "봇 정보, 버전 및 링크를 표시합니다."
+    },
+    "manualCmd": {
+      "name": "`/manual`",
+      "description": "이 도움말 가이드를 표시합니다."
+    },
+    "tips": {
+      "autocomplete": "**자동완성:** 염료 이름을 입력하기 시작하면 제안이 나타납니다!",
+      "hexColors": "**16진수 색상:** `#FF0000`(빨강)이나 `#5865F2`(블러플) 같은 표준 웹 형식을 사용하세요",
+      "dyeNames": "**염료 이름:** 부분 이름을 입력하세요 - \"달라\"로 \"달라가브 레드\"를 찾을 수 있습니다",
+      "facewearExcluded": "**얼굴장식 제외:** 일반 얼굴장식 염료(\"빨강\", \"파랑\" 등)는 결과에서 제외됩니다",
+      "links": "**링크:**"
+    }
+  },
+  "dye": {
+    "search": {
+      "noResults": "\"{query}\"에 일치하는 염료를 찾을 수 없습니다.",
+      "tryDifferent": "다른 검색어를 시도해 보세요",
+      "resultsTitle": "\"{query}\" 검색 결과",
+      "foundCount": "{count}개의 염료를 찾았습니다:",
+      "foundCountPlural": "{count}개의 염료를 찾았습니다:",
+      "moreResults": "...외 {count}개의 결과",
+      "useInfoHint": "/dye info <이름>으로 상세 정보를 확인하세요"
+    },
+    "info": {
+      "detailedInfo": "이 {category} 염료의 상세 정보입니다."
+    },
+    "list": {
+      "noDyesInCategory": "\"{category}\" 카테고리에서 염료를 찾을 수 없습니다.",
+      "categoryTitle": "{category} 염료",
+      "dyesInCategory": "이 카테고리에 {count}개의 염료가 있습니다:",
+      "categoriesTitle": "염료 카테고리",
+      "categorySummary": "{count}개 카테고리에 총 {total}개의 염료가 있습니다:",
+      "useListHint": "/dye list <카테고리>로 카테고리별 염료를 확인하세요"
+    },
+    "random": {
+      "title": "무작위 염료",
+      "titleUnique": "무작위 염료 (카테고리당 1개)",
+      "description": "무작위로 선택된 {count}개의 염료입니다:",
+      "descriptionUnique": "각 카테고리에서 무작위로 선택된 {count}개의 염료입니다:",
+      "runAgainHint": "다시 실행하면 다른 염료를 볼 수 있습니다!"
+    }
+  },
+  "match": {
+    "title": "염료 매치: {name}",
+    "topMatches": "상위 {count}개 염료 매치",
+    "findingMatches": "{input}에 가장 가까운 매치 검색 중",
+    "useInfoHint": "/dye info로 획득 방법을 확인하세요",
+    "useInfoNameHint": "/dye info <이름>으로 획득 방법을 확인하세요"
+  },
+  "harmony": {
+    "title": "{type} 하모니",
+    "baseColor": "기본 색상",
+    "harmonyColors": "하모니 색상",
+    "complementary": "보색",
+    "analogous": "유사색",
+    "triadic": "삼원색",
+    "splitComplementary": "분할보색",
+    "tetradic": "사각배색",
+    "square": "정방형",
+    "monochromatic": "단색"
+  },
+  "mixer": {
+    "title": "색상 그라데이션",
+    "startColor": "시작",
+    "endColor": "끝",
+    "steps": "{count}단계",
+    "gradientFrom": "{start}에서 {end}까지 그라데이션"
+  },
+  "comparison": {
+    "title": "염료 비교",
+    "colorDistance": "색상 거리",
+    "contrastRatio": "대비율",
+    "mostSimilar": "가장 유사",
+    "mostDifferent": "가장 다름",
+    "wcagAA": "WCAG AA",
+    "wcagAAA": "WCAG AAA",
+    "passes": "통과",
+    "fails": "실패"
+  },
+  "accessibility": {
+    "title": "접근성 검사",
+    "normalVision": "정상 시력",
+    "protanopia": "적색맹",
+    "deuteranopia": "녹색맹",
+    "tritanopia": "청색맹",
+    "simulatedAppearance": "시뮬레이션 모습",
+    "contrastAnalysis": "대비 분석"
+  },
+  "favorites": {
+    "title": "즐겨찾기",
+    "empty": "아직 즐겨찾기한 염료가 없습니다.",
+    "addHint": "`/favorites add <염료>`로 추가하세요!",
+    "added": "**{name}**을(를) 즐겨찾기에 추가했습니다.",
+    "removed": "**{name}**을(를) 즐겨찾기에서 제거했습니다.",
+    "cleared": "모든 즐겨찾기를 삭제했습니다.",
+    "alreadyFavorite": "**{name}**은(는) 이미 즐겨찾기에 있습니다.",
+    "notInFavorites": "**{name}**은(는) 즐겨찾기에 없습니다.",
+    "limitReached": "즐겨찾기 최대 개수({max}개)에 도달했습니다.\n\n`/favorites remove`로 먼저 하나를 제거하세요.",
+    "count": "즐겨찾기 {count}/{max}개"
+  },
+  "collection": {
+    "title": "컬렉션",
+    "empty": "아직 컬렉션이 없습니다.",
+    "createHint": "`/collection create <이름>`으로 만들어 보세요!",
+    "created": "새 컬렉션을 만들었습니다: **{name}**",
+    "deleted": "컬렉션을 삭제했습니다: **{name}**",
+    "renamed": "컬렉션 이름을 **{oldName}**에서 **{newName}**(으)로 변경했습니다.",
+    "dyeAdded": "**{dye}**을(를) \"{collection}\" 컬렉션에 추가했습니다.",
+    "dyeRemoved": "**{dye}**을(를) \"{collection}\" 컬렉션에서 제거했습니다.",
+    "addDyeHint": "`/collection add {name} <염료>`로 염료를 추가하세요.",
+    "showHint": "/collection show <이름>으로 컬렉션을 확인하세요",
+    "collectionEmpty": "이 컬렉션은 비어 있습니다.",
+    "alreadyExists": "\"{name}\"(이)라는 이름의 컬렉션이 이미 존재합니다.",
+    "notFound": "\"{name}\"(이)라는 이름의 컬렉션을 찾을 수 없습니다.",
+    "nameTooLong": "컬렉션 이름은 {max}자 이하여야 합니다.",
+    "limitReached": "컬렉션 최대 개수({max}개)에 도달했습니다.\n\n`/collection delete`로 먼저 하나를 삭제하세요.",
+    "dyeLimitReached": "이 컬렉션의 염료 최대 개수({max}개)에 도달했습니다.",
+    "dyeAlreadyInCollection": "**{dye}**은(는) 이미 \"{collection}\" 컬렉션에 있습니다.",
+    "dyeNotInCollection": "**{dye}**은(는) \"{collection}\" 컬렉션에 없습니다 (또는 컬렉션이 존재하지 않습니다).",
+    "count": "컬렉션 {count}/{max}개"
+  },
+  "language": {
+    "title": "언어 설정",
+    "updated": "언어 설정을 **{language}**(으)로 변경했습니다.",
+    "updateNote": "이제 염료 이름과 봇 메시지가 이 언어로 표시됩니다 (지원되는 경우).",
+    "reset": "언어 설정을 초기화했습니다.",
+    "resetNote": "이제 봇은 Discord 클라이언트 언어 설정을 사용합니다 (지원되는 경우). 지원되지 않으면 영어가 기본값입니다.",
+    "yourPreference": "설정 언어",
+    "notSet": "설정 안 됨",
+    "discordLocale": "Discord 로케일",
+    "unsupported": "지원 안 됨",
+    "effectiveLanguage": "적용 언어",
+    "supportedLanguages": "지원 언어",
+    "missingLanguage": "언어를 지정해 주세요.",
+    "invalidLanguage": "\"{locale}\"은(는) 지원되지 않는 언어입니다.\n\n지원 언어: {validList}"
+  },
+  "about": {
+    "title": "XIV Dye Tools Bot",
+    "version": "버전",
+    "description": "FFXIV 염료 색상 탐색 및 매칭을 위한 Discord 봇입니다.",
+    "commands": "명령어",
+    "links": "링크",
+    "poweredBy": "Cloudflare Workers 기반"
+  },
+  "buttons": {
+    "copyHex": "HEX 복사",
+    "copyRgb": "RGB 복사",
+    "copyHsv": "HSV 복사"
+  }
+}

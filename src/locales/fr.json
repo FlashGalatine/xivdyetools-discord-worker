@@ -1,0 +1,237 @@
+{
+  "meta": {
+    "locale": "fr",
+    "name": "French",
+    "nativeName": "Français",
+    "flag": "🇫🇷"
+  },
+  "common": {
+    "dye": "Teinture",
+    "dyes": "Teintures",
+    "color": "Couleur",
+    "category": "Catégorie",
+    "hexColor": "Couleur Hex",
+    "rgb": "RGB",
+    "hsv": "HSV",
+    "itemId": "ID d'objet",
+    "distance": "Distance",
+    "quality": "Qualité",
+    "footer": "XIV Dye Tools",
+    "error": "Erreur",
+    "success": "Succès",
+    "inputColor": "Couleur d'entrée",
+    "closestDye": "Teinture la plus proche",
+    "matchQuality": "Qualité de correspondance",
+    "createdAt": "Créé le",
+    "marketBoard": "Tableau des ventes"
+  },
+  "errors": {
+    "userNotFound": "Impossible d'identifier l'utilisateur.",
+    "dyeNotFound": "Impossible de trouver une teinture nommée \"{name}\".",
+    "colorNotFound": "Impossible de trouver une teinture correspondant à \"{input}\".",
+    "invalidColor": "Impossible de convertir \"{input}\" en couleur.\n\nVeuillez fournir un code hexadécimal valide (ex: `#FF0000`) ou un nom de teinture (ex: `Rouge Dalamud`).",
+    "missingInput": "Veuillez fournir une couleur (code hexadécimal ou nom de teinture).",
+    "missingQuery": "Veuillez fournir un terme de recherche.",
+    "missingName": "Veuillez fournir un nom de teinture.",
+    "noMatchFound": "Aucune teinture correspondante trouvée dans la base de données.",
+    "noDyesAvailable": "Aucune teinture disponible dans la base de données.",
+    "failedToSave": "Impossible de sauvegarder votre préférence. Veuillez réessayer plus tard.",
+    "failedToReset": "Impossible de réinitialiser votre préférence. Veuillez réessayer plus tard."
+  },
+  "quality": {
+    "perfect": "Parfait",
+    "excellent": "Excellent",
+    "good": "Bon",
+    "fair": "Correct",
+    "approximate": "Approximatif"
+  },
+  "manual": {
+    "title": "Manuel XIV Dye Tools",
+    "welcome": "Bienvenue sur **XIV Dye Tools** ! Ce bot vous aide à explorer et associer les couleurs de teinture FFXIV.",
+    "commandsIntro": "Vous trouverez ci-dessous toutes les commandes disponibles organisées par catégorie.",
+    "autocompleteNote": "Toutes les commandes prennent en charge l'**autocomplétion** pour les noms de teinture !",
+    "colorMatching": "Correspondance des couleurs",
+    "dyeInformation": "Informations sur les teintures",
+    "botInformation": "Informations du bot",
+    "tipsResources": "Conseils et ressources",
+    "match": {
+      "name": "`/match <couleur> [nombre]`",
+      "description": "Trouvez la teinture FFXIV la plus proche d'une couleur.\n• Accepte les codes hexadécimaux (`#FF0000`) ou les noms de teinture\n• Optionnel : afficher jusqu'à 10 correspondances"
+    },
+    "harmony": {
+      "name": "`/harmony <couleur> [type]`",
+      "description": "Générez des combinaisons de teintures harmonieuses.\n• Types : Complémentaire, Analogue, Triadique, Complémentaire divisé, Tétradique, Carré, Monochromatique\n• Crée une roue chromatique visuelle"
+    },
+    "mixer": {
+      "name": "`/mixer <début> <fin> [étapes]`",
+      "description": "Créez un dégradé de couleurs entre deux couleurs.\n• Affiche les teintures correspondantes pour chaque étape\n• Nombre d'étapes configurable (2-10)"
+    },
+    "dyeSearch": {
+      "name": "`/dye search <recherche>`",
+      "description": "Recherchez des teintures par nom.\n• La recherche floue trouve des correspondances partielles\n• Affiche les codes hexadécimaux et les catégories"
+    },
+    "dyeInfo": {
+      "name": "`/dye info <nom>`",
+      "description": "Obtenez des informations détaillées sur une teinture spécifique.\n• Affiche les valeurs Hex, RGB, HSV\n• Affiche la catégorie et l'ID d'objet"
+    },
+    "dyeList": {
+      "name": "`/dye list [catégorie]`",
+      "description": "Listez toutes les teintures ou filtrez par catégorie.\n• Catégories : Rouges, Bruns, Jaunes, Verts, Bleus, Violets, Neutres, Spéciales"
+    },
+    "dyeRandom": {
+      "name": "`/dye random [unique_categories]`",
+      "description": "Affichez 5 teintures sélectionnées au hasard.\n• Option pour limiter à 1 teinture par catégorie"
+    },
+    "about": {
+      "name": "`/about`",
+      "description": "Afficher les informations du bot, la version et les liens."
+    },
+    "manualCmd": {
+      "name": "`/manual`",
+      "description": "Afficher ce guide d'aide."
+    },
+    "tips": {
+      "autocomplete": "**Autocomplétion :** Commencez à taper un nom de teinture et des suggestions apparaîtront !",
+      "hexColors": "**Couleurs Hex :** Utilisez le format web standard comme `#FF0000` (rouge) ou `#5865F2` (blurple)",
+      "dyeNames": "**Noms de teinture :** Tapez des noms partiels - \"dala\" trouvera \"Rouge Dalamud\"",
+      "facewearExcluded": "**Accessoires de visage exclus :** Les teintures génériques d'accessoires de visage (comme \"Rouge\", \"Bleu\") sont exclues des résultats",
+      "links": "**Liens :**"
+    }
+  },
+  "dye": {
+    "search": {
+      "noResults": "Aucune teinture correspondant à \"{query}\" trouvée.",
+      "tryDifferent": "Essayez un autre terme de recherche",
+      "resultsTitle": "Résultats de recherche pour \"{query}\"",
+      "foundCount": "{count} teinture trouvée :",
+      "foundCountPlural": "{count} teintures trouvées :",
+      "moreResults": "...et {count} autres résultats",
+      "useInfoHint": "Utilisez /dye info <nom> pour des informations détaillées"
+    },
+    "info": {
+      "detailedInfo": "Informations détaillées pour cette teinture {category}."
+    },
+    "list": {
+      "noDyesInCategory": "Aucune teinture trouvée dans la catégorie \"{category}\".",
+      "categoryTitle": "Teintures {category}",
+      "dyesInCategory": "{count} teintures dans cette catégorie :",
+      "categoriesTitle": "Catégories de teintures",
+      "categorySummary": "Il y a {total} teintures dans {count} catégories :",
+      "useListHint": "Utilisez /dye list <catégorie> pour voir les teintures d'une catégorie"
+    },
+    "random": {
+      "title": "Teintures aléatoires",
+      "titleUnique": "Teintures aléatoires (1 par catégorie)",
+      "description": "Voici {count} teintures sélectionnées au hasard :",
+      "descriptionUnique": "Voici {count} teintures sélectionnées au hasard, une de chaque catégorie :",
+      "runAgainHint": "Exécutez à nouveau pour des teintures différentes !"
+    }
+  },
+  "match": {
+    "title": "Correspondance de teinture : {name}",
+    "topMatches": "Top {count} correspondances de teinture",
+    "findingMatches": "Recherche des correspondances les plus proches pour {input}",
+    "useInfoHint": "Utilisez /dye info pour les détails d'acquisition",
+    "useInfoNameHint": "Utilisez /dye info <nom> pour les détails d'acquisition"
+  },
+  "harmony": {
+    "title": "Harmonie {type}",
+    "baseColor": "Couleur de base",
+    "harmonyColors": "Couleurs harmoniques",
+    "complementary": "Complémentaire",
+    "analogous": "Analogue",
+    "triadic": "Triadique",
+    "splitComplementary": "Complémentaire divisé",
+    "tetradic": "Tétradique",
+    "square": "Carré",
+    "monochromatic": "Monochromatique"
+  },
+  "mixer": {
+    "title": "Dégradé de couleurs",
+    "startColor": "Début",
+    "endColor": "Fin",
+    "steps": "{count} étapes",
+    "gradientFrom": "Dégradé de {start} à {end}"
+  },
+  "comparison": {
+    "title": "Comparaison de teintures",
+    "colorDistance": "Distance de couleur",
+    "contrastRatio": "Ratio de contraste",
+    "mostSimilar": "Plus similaire",
+    "mostDifferent": "Plus différent",
+    "wcagAA": "WCAG AA",
+    "wcagAAA": "WCAG AAA",
+    "passes": "Réussi",
+    "fails": "Échoué"
+  },
+  "accessibility": {
+    "title": "Vérification d'accessibilité",
+    "normalVision": "Vision normale",
+    "protanopia": "Protanopie (daltonisme rouge)",
+    "deuteranopia": "Deutéranopie (daltonisme vert)",
+    "tritanopia": "Tritanopie (daltonisme bleu)",
+    "simulatedAppearance": "Apparence simulée",
+    "contrastAnalysis": "Analyse du contraste"
+  },
+  "favorites": {
+    "title": "Vos favoris",
+    "empty": "Vous n'avez pas encore de teintures favorites.",
+    "addHint": "Utilisez `/favorites add <teinture>` pour en ajouter !",
+    "added": "**{name}** ajouté à vos favoris.",
+    "removed": "**{name}** retiré de vos favoris.",
+    "cleared": "Tous vos favoris ont été effacés.",
+    "alreadyFavorite": "**{name}** est déjà dans vos favoris.",
+    "notInFavorites": "**{name}** n'est pas dans vos favoris.",
+    "limitReached": "Vous avez atteint le maximum de {max} favoris.\n\nSupprimez-en un avec `/favorites remove` d'abord.",
+    "count": "{count}/{max} favoris"
+  },
+  "collection": {
+    "title": "Vos collections",
+    "empty": "Vous n'avez pas encore de collections.",
+    "createHint": "Utilisez `/collection create <nom>` pour en créer une !",
+    "created": "Nouvelle collection créée : **{name}**",
+    "deleted": "Collection supprimée : **{name}**",
+    "renamed": "Collection renommée de **{oldName}** en **{newName}**.",
+    "dyeAdded": "**{dye}** ajouté à la collection \"{collection}\".",
+    "dyeRemoved": "**{dye}** retiré de la collection \"{collection}\".",
+    "addDyeHint": "Utilisez `/collection add {name} <teinture>` pour ajouter des teintures.",
+    "showHint": "Utilisez /collection show <nom> pour voir une collection",
+    "collectionEmpty": "Cette collection est vide.",
+    "alreadyExists": "Une collection nommée \"{name}\" existe déjà.",
+    "notFound": "Impossible de trouver une collection nommée \"{name}\".",
+    "nameTooLong": "Les noms de collection doivent avoir {max} caractères ou moins.",
+    "limitReached": "Vous avez atteint le maximum de {max} collections.\n\nUtilisez `/collection delete` pour en supprimer une d'abord.",
+    "dyeLimitReached": "Cette collection a atteint le maximum de {max} teintures.",
+    "dyeAlreadyInCollection": "**{dye}** est déjà dans la collection \"{collection}\".",
+    "dyeNotInCollection": "**{dye}** n'est pas dans la collection \"{collection}\" (ou la collection n'existe pas).",
+    "count": "{count}/{max} collections"
+  },
+  "language": {
+    "title": "Paramètres de langue",
+    "updated": "Votre préférence de langue a été définie sur **{language}**.",
+    "updateNote": "Les noms de teinture et les messages du bot utiliseront désormais cette langue lorsque disponible.",
+    "reset": "Votre préférence de langue a été réinitialisée.",
+    "resetNote": "Le bot utilisera désormais la langue de votre client Discord (si prise en charge) ou l'anglais par défaut.",
+    "yourPreference": "Votre préférence",
+    "notSet": "Non définie",
+    "discordLocale": "Langue Discord",
+    "unsupported": "non prise en charge",
+    "effectiveLanguage": "Langue effective",
+    "supportedLanguages": "Langues prises en charge",
+    "missingLanguage": "Veuillez spécifier une langue.",
+    "invalidLanguage": "\"{locale}\" n'est pas une langue prise en charge.\n\nLangues prises en charge : {validList}"
+  },
+  "about": {
+    "title": "XIV Dye Tools Bot",
+    "version": "Version",
+    "description": "Un bot Discord pour l'exploration et la correspondance des couleurs de teinture FFXIV.",
+    "commands": "Commandes",
+    "links": "Liens",
+    "poweredBy": "Propulsé par Cloudflare Workers"
+  },
+  "buttons": {
+    "copyHex": "Copier HEX",
+    "copyRgb": "Copier RGB",
+    "copyHsv": "Copier HSV"
+  }
+}
