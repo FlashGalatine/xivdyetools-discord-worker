@@ -1,17 +1,67 @@
 # XIV Dye Tools Discord Worker
 
-Discord bot for FFXIV dye color exploration, running on Cloudflare Workers using HTTP Interactions.
+> Discord bot for FFXIV dye color exploration, running on Cloudflare Workers using HTTP Interactions.
 
-## Overview
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.3%2B-blue)](https://www.typescriptlang.org/)
+[![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers-F38020)](https://workers.cloudflare.com/)
 
-This is the Cloudflare Workers version of the XIV Dye Tools Discord bot, migrated from the traditional Discord.js Gateway model to Discord's HTTP Interactions model.
+## Features
 
-### Key Features
+🎨 **Color Harmony Generation** - Create complementary, triadic, analogous, and more color schemes
+🎯 **Dye Matching** - Find closest FFXIV dyes to any color (hex or image upload)
+♿ **Accessibility** - Colorblindness simulation for protan, deutan, tritan vision types
+📊 **Dye Comparison** - Side-by-side comparison of up to 4 dyes with visualizations
+🌈 **Color Mixing** - Find intermediate dyes for smooth color gradients
+⭐ **Favorites** - Save up to 20 favorite dyes per user
+📁 **Collections** - Create up to 50 custom dye collections
+🗳️ **Community Presets** - Browse, submit, and vote on user-created color palettes
+💰 **Live Pricing** - Market board prices via Universalis API
+🌐 **Multi-Language** - Full localization for EN, JA, DE, FR, KO, ZH
+⚡ **Serverless** - Runs on Cloudflare Workers edge network with auto-scaling
 
-- **Serverless**: Runs on Cloudflare Workers edge network
-- **No WebSocket**: Uses HTTP Interactions instead of Gateway
-- **Auto-scaling**: Handles traffic spikes automatically
-- **Low latency**: Global edge deployment
+## Commands
+
+| Command | Description |
+|---------|-------------|
+| `/harmony <color>` | Generate color harmonies with color wheel visualization |
+| `/match <color>` | Find closest dye to a hex color |
+| `/match_image` | Upload an image to extract and match colors (1-5 colors) |
+| `/dye <name>` | Search the 136-dye database by name |
+| `/comparison <dye1> <dye2> [dye3] [dye4]` | Compare multiple dyes side-by-side |
+| `/mixer <start> <end>` | Create color gradients between two dyes |
+| `/accessibility <dye>` | Simulate colorblindness for dye colors |
+| `/favorites` | View, add, or remove favorite dyes |
+| `/collection` | Create and manage custom dye collections |
+| `/preset list [category]` | Browse curated and community color palettes |
+| `/preset show <name>` | Display a preset's colors with swatch visualization |
+| `/preset submit` | Submit your own color palette to the community |
+| `/preset vote <preset>` | Vote for a community preset |
+| `/language <locale>` | Change bot UI language |
+| `/manual` | Help and documentation |
+| `/about` | Bot information and credits |
+
+## Privacy & Terms
+
+🔒 **Privacy Policy**: See [PRIVACY_POLICY.md](./PRIVACY_POLICY.md) for information about data collection, storage, and usage.
+
+📜 **Terms of Service**: See [TERMS_OF_SERVICE.md](./TERMS_OF_SERVICE.md) for usage terms.
+
+**Summary:**
+- We collect Discord user IDs for favorites, collections, and rate limiting
+- Images uploaded via `/match_image` are processed in-memory and **not stored**
+- We do not share or sell your data
+- Full details in the linked documents
+
+## Tech Stack
+
+- **Cloudflare Workers** - Serverless edge deployment
+- **HTTP Interactions** - No WebSocket, Discord's HTTP-based interaction model
+- **xivdyetools-core** - Shared color algorithms and dye database
+- **resvg-wasm** - SVG to PNG rendering
+- **Hono** - Lightweight web framework
+- **Cloudflare KV** - User preferences, favorites, collections
+- **Cloudflare D1** - Preset storage (via presets-api)
+- **TypeScript** - Type-safe development
 
 ## Development
 
@@ -68,7 +118,7 @@ npm run register-commands
    # Create KV namespace
    wrangler kv namespace create "DISCORD_BOT_KV"
 
-   # Create R2 bucket
+   # Create R2 bucket (optional, for image caching)
    wrangler r2 bucket create xivdyetools-bot-images
    ```
 
@@ -100,12 +150,12 @@ Discord API
 │   Cloudflare Worker             │
 │                                 │
 │  ┌─────────────────────────┐   │
-│  │  Signature Verification  │   │
+│  │  Ed25519 Verification    │   │
 │  └─────────────────────────┘   │
 │              │                  │
 │              ▼                  │
 │  ┌─────────────────────────┐   │
-│  │  Interaction Router      │   │
+│  │  Hono Router             │   │
 │  └─────────────────────────┘   │
 │              │                  │
 │    ┌─────────┼─────────┐       │
@@ -113,8 +163,37 @@ Discord API
 │  Commands  Buttons  Autocomplete│
 │                                 │
 └─────────────────────────────────┘
+         │
+         ▼
+┌─────────────────────────────────┐
+│  Service Bindings               │
+│  • xivdyetools-presets-api      │
+│  • Cloudflare KV (favorites)    │
+│  • Cloudflare R2 (images)       │
+└─────────────────────────────────┘
 ```
+
+## Related Projects
+
+- **[xivdyetools-core](https://github.com/FlashGalatine/xivdyetools-core)** - Core color algorithms (npm package)
+- **[XIV Dye Tools Web App](https://github.com/FlashGalatine/xivdyetools)** - Interactive web tools
+- **[xivdyetools-discord-bot](https://github.com/FlashGalatine/xivdyetools-discord-bot)** - Traditional Discord.js bot
 
 ## License
 
-ISC
+MIT © 2025 Flash Galatine
+
+See [LICENSE](./LICENSE) for full details.
+
+## Legal Notice
+
+**This is a fan-made tool and is not affiliated with or endorsed by Square Enix Co., Ltd. FINAL FANTASY is a registered trademark of Square Enix Holdings Co., Ltd.**
+
+## Support
+
+- **Issues**: [GitHub Issues](https://github.com/FlashGalatine/xivdyetools-discord-worker/issues)
+- **Discord**: [Join Server](https://discord.gg/rzxDHNr6Wv)
+
+---
+
+**Made with ❤️ for the FFXIV community**
