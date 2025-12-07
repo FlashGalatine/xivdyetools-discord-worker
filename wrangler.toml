@@ -79,6 +79,6 @@ name = "xivdyetools-discord-worker"
 
 [env.production.vars]
 # Production Discord Application ID
-DISCORD_CLIENT_ID = "1433508594426445878"
+DISCORD_CLIENT_ID = "1447108133020369048"
 PRESETS_API_URL = "https://xivdyetools-worker.ashejunius.workers.dev"
 

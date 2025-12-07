@@ -232,7 +232,7 @@ export interface PresetNotificationPayload {
     /** Moderation result */
     moderation_status: 'clean' | 'flagged' | 'auto_approved';
     /** Submission source */
-    source: 'bot' | 'web';
+    source: 'bot' | 'web' | 'none';
     created_at: string;
   };
 }

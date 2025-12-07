@@ -91,32 +91,8 @@ app.post('/webhooks/preset-submission', async (c) => {
   const { preset } = payload;
   console.log(`Received preset webhook: ${preset.name} (${preset.id}) from ${preset.source}`);
 
-  // Post to submission log channel (all submissions)
-  if (env.SUBMISSION_LOG_CHANNEL_ID) {
-    const statusIcon = STATUS_DISPLAY[preset.status]?.icon || '📋';
-    const statusColor = STATUS_DISPLAY[preset.status]?.color || 0x5865f2;
-
-    await sendMessage(env.DISCORD_TOKEN, env.SUBMISSION_LOG_CHANNEL_ID, {
-      embeds: [
-        {
-          title: `${statusIcon} New Preset Submission`,
-          description: `**${preset.name}** submitted via ${preset.source === 'web' ? 'Web App' : 'Discord Bot'}`,
-          color: statusColor,
-          fields: [
-            { name: 'Description', value: preset.description, inline: false },
-            { name: 'Category', value: preset.category_id, inline: true },
-            { name: 'Author', value: preset.author_name || 'Unknown', inline: true },
-            { name: 'Status', value: preset.status, inline: true },
-            { name: 'Dyes', value: preset.dyes.length.toString(), inline: true },
-          ],
-          footer: { text: `ID: ${preset.id}` },
-          timestamp: preset.created_at,
-        },
-      ],
-    });
-  }
-
-  // Post to moderation channel if pending
+  // Only pending presets go to moderation channel
+  // Approved/rejected notifications are sent by the moderation button handlers after action is taken
   if (preset.status === 'pending' && env.MODERATION_CHANNEL_ID) {
     await sendMessage(env.DISCORD_TOKEN, env.MODERATION_CHANNEL_ID, {
       embeds: [
