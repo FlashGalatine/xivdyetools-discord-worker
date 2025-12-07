@@ -30,7 +30,12 @@ import {
 import { checkRateLimit, formatRateLimitMessage } from './services/rate-limiter.js';
 import { getCollections } from './services/user-storage.js';
 import { handleButtonInteraction } from './handlers/buttons/index.js';
-import { handlePresetRejectionModal, isPresetRejectionModal } from './handlers/modals/index.js';
+import {
+  handlePresetRejectionModal,
+  isPresetRejectionModal,
+  handlePresetRevertModal,
+  isPresetRevertModal,
+} from './handlers/modals/index.js';
 import { DyeService, dyeDatabase } from 'xivdyetools-core';
 import * as presetApi from './services/preset-api.js';
 import { sendMessage } from './utils/discord-api.js';
@@ -534,6 +539,11 @@ async function handleModal(
   // Route preset rejection modal
   if (isPresetRejectionModal(customId)) {
     return handlePresetRejectionModal(interaction, env, ctx);
+  }
+
+  // Route preset revert modal
+  if (isPresetRevertModal(customId)) {
+    return handlePresetRevertModal(interaction, env, ctx);
   }
 
   // Unknown modal

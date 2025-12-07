@@ -10,6 +10,7 @@ import { handleCopyHex, handleCopyRgb, handleCopyHsv } from './copy.js';
 import {
   handlePresetApproveButton,
   handlePresetRejectButton,
+  handlePresetRevertButton,
 } from './preset-moderation.js';
 
 // Re-export button creation helpers
@@ -79,6 +80,10 @@ export async function handleButtonInteraction(
 
   if (customId.startsWith('preset_reject_')) {
     return handlePresetRejectButton(interaction, env, ctx);
+  }
+
+  if (customId.startsWith('preset_revert_')) {
+    return handlePresetRevertButton(interaction, env, ctx);
   }
 
   // Unknown button

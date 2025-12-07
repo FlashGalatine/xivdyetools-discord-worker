@@ -207,8 +207,61 @@ export async function handlePresetRejectButton(
 }
 
 /**
+ * Handle the Revert button click - shows modal for reason
+ * Used when a preset edit was flagged and moderator wants to restore original values
+ */
+export async function handlePresetRevertButton(
+  interaction: ButtonInteraction,
+  env: Env,
+  ctx: ExecutionContext
+): Promise<Response> {
+  const customId = interaction.data?.custom_id || '';
+  const presetId = customId.replace('preset_revert_', '');
+  const userId = interaction.member?.user?.id ?? interaction.user?.id;
+
+  if (!presetId || !userId) {
+    return ephemeralResponse('Invalid button interaction.');
+  }
+
+  // Check moderator status
+  if (!presetApi.isModerator(env, userId)) {
+    return ephemeralResponse('You do not have permission to revert presets.');
+  }
+
+  // Show modal for revert reason
+  return Response.json({
+    type: InteractionResponseType.MODAL,
+    data: {
+      custom_id: `preset_revert_modal_${presetId}`,
+      title: 'Revert Preset Edit',
+      components: [
+        {
+          type: 1, // Action Row
+          components: [
+            {
+              type: 4, // Text Input
+              custom_id: 'revert_reason',
+              label: 'Reason for reverting',
+              style: 2, // Paragraph (multiline)
+              min_length: 10,
+              max_length: 200,
+              required: true,
+              placeholder: 'Explain why the edit is being reverted...',
+            },
+          ],
+        },
+      ],
+    },
+  });
+}
+
+/**
  * Check if a custom_id is a preset moderation button
  */
 export function isPresetModerationButton(customId: string): boolean {
-  return customId.startsWith('preset_approve_') || customId.startsWith('preset_reject_');
+  return (
+    customId.startsWith('preset_approve_') ||
+    customId.startsWith('preset_reject_') ||
+    customId.startsWith('preset_revert_')
+  );
 }

@@ -7,4 +7,6 @@
 export {
   handlePresetRejectionModal,
   isPresetRejectionModal,
+  handlePresetRevertModal,
+  isPresetRevertModal,
 } from './preset-rejection.js';
