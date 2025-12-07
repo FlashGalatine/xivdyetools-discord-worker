@@ -11,6 +11,7 @@ import { deferredResponse, errorEmbed } from '../../utils/response.js';
 import { editOriginalResponse } from '../../utils/discord-api.js';
 import { generateHarmonyWheel, type HarmonyDye } from '../../services/svg/harmony-wheel.js';
 import { renderSvgToPng } from '../../services/svg/renderer.js';
+import { getDyeEmoji } from '../../services/emoji.js';
 import type { Env } from '../../types/env.js';
 
 // Initialize DyeService with the database
@@ -56,9 +57,9 @@ function normalizeHex(hex: string): string {
 }
 
 /**
- * Resolves color input to a hex value and optional dye name
+ * Resolves color input to a hex value and optional dye info
  */
-function resolveColorInput(input: string): { hex: string; name?: string } | null {
+function resolveColorInput(input: string): { hex: string; name?: string; id?: number } | null {
   // Check if it's a hex color
   if (isValidHex(input)) {
     return { hex: normalizeHex(input) };
@@ -69,7 +70,7 @@ function resolveColorInput(input: string): { hex: string; name?: string } | null
   if (dyes.length > 0) {
     // Take the closest match (first result)
     const dye = dyes[0];
-    return { hex: dye.hex, name: dye.name };
+    return { hex: dye.hex, name: dye.name, id: dye.id };
   }
 
   return null;
@@ -151,7 +152,7 @@ export async function handleHarmonyCommand(
 
   // Process in background
   ctx.waitUntil(
-    processHarmonyCommand(interaction, env, resolved.hex, resolved.name, harmonyType)
+    processHarmonyCommand(interaction, env, resolved.hex, resolved.name, resolved.id, harmonyType)
   );
 
   return deferResponse;
@@ -165,6 +166,7 @@ async function processHarmonyCommand(
   env: Env,
   baseHex: string,
   baseName: string | undefined,
+  baseId: number | undefined,
   harmonyType: HarmonyType
 ): Promise<void> {
   try {
@@ -201,17 +203,26 @@ async function processHarmonyCommand(
     // Render to PNG
     const pngBuffer = await renderSvgToPng(svg, { scale: 2 });
 
-    // Build description text
+    // Build description text with emojis
     const dyeList = harmonyDyes
-      .map((dye, i) => `**${i + 1}.** ${dye.name} (\`${dye.hex.toUpperCase()}\`)`)
+      .map((dye, i) => {
+        const emoji = getDyeEmoji(dye.id);
+        const emojiPrefix = emoji ? `${emoji} ` : '';
+        return `**${i + 1}.** ${emojiPrefix}${dye.name} (\`${dye.hex.toUpperCase()}\`)`;
+      })
       .join('\n');
+
+    // Build base color description with emoji if available
+    const baseEmoji = baseId ? getDyeEmoji(baseId) : undefined;
+    const baseEmojiPrefix = baseEmoji ? `${baseEmoji} ` : '';
+    const baseColorText = `Base color: ${baseEmojiPrefix}**${baseName || baseHex.toUpperCase()}** (\`${baseHex.toUpperCase()}\`)`;
 
     // Send follow-up with image
     await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [
         {
           title: `${formatHarmonyType(harmonyType)} Harmony`,
-          description: `Base color: **${baseName || baseHex.toUpperCase()}** (\`${baseHex.toUpperCase()}\`)\n\n${dyeList}`,
+          description: `${baseColorText}\n\n${dyeList}`,
           color: parseInt(baseHex.replace('#', ''), 16),
           image: { url: 'attachment://image.png' },
           footer: {

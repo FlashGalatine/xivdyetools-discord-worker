@@ -10,7 +10,8 @@
     "test": "vitest",
     "type-check": "tsc --noEmit",
     "lint": "eslint src/",
-    "register-commands": "npx tsx scripts/register-commands.ts"
+    "register-commands": "npx tsx scripts/register-commands.ts",
+    "upload-emojis": "npx tsx scripts/upload-emojis.ts"
   },
   "keywords": [
     "discord",
