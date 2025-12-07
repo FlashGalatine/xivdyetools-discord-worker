@@ -77,113 +77,30 @@ function resolveColorInput(input: string): { hex: string; name?: string; id?: nu
 }
 
 /**
- * Checks if a dye is Facewear (generic names like "Red", "Blue")
- */
-function isFacewear(dye: Dye): boolean {
-  return dye.category === 'Facewear';
-}
-
-/**
- * Finds a non-Facewear replacement for a Facewear dye at a similar color position.
- * Uses the Facewear dye's hex to find the closest non-Facewear alternative.
- */
-function findNonFacewearReplacement(facewearDye: Dye, excludeIds: number[]): Dye | null {
-  // Keep searching until we find a non-Facewear dye
-  const allExcluded = [...excludeIds, facewearDye.id];
-
-  for (let i = 0; i < 10; i++) {
-    const candidate = dyeService.findClosestDye(facewearDye.hex, allExcluded);
-    if (!candidate) return null;
-
-    if (!isFacewear(candidate)) {
-      return candidate;
-    }
-
-    // This candidate is also Facewear, exclude it and try again
-    allExcluded.push(candidate.id);
-  }
-
-  return null;
-}
-
-/**
- * Replaces Facewear dyes with the next-best non-Facewear alternatives
- */
-function replaceFacewearDyes(dyes: Dye[]): Dye[] {
-  const result: Dye[] = [];
-  const usedIds: number[] = [];
-
-  for (const dye of dyes) {
-    if (!isFacewear(dye)) {
-      result.push(dye);
-      usedIds.push(dye.id);
-    } else {
-      // Find a non-Facewear replacement at similar color
-      const replacement = findNonFacewearReplacement(dye, usedIds);
-      if (replacement) {
-        result.push(replacement);
-        usedIds.push(replacement.id);
-      }
-      // If no replacement found, skip this slot
-    }
-  }
-
-  return result;
-}
-
-/**
  * Gets harmony dyes based on the harmony type
- * Replaces any Facewear dyes with the next-best non-Facewear alternatives
+ * Note: xivdyetools-core v1.3.6+ natively excludes Facewear dyes from all harmony functions
  */
 function getHarmonyDyes(hex: string, type: HarmonyType): Dye[] {
-  let dyes: Dye[];
-  let targetCount: number | undefined;
-
   switch (type) {
     case 'triadic':
-      dyes = dyeService.findTriadicDyes(hex);
-      targetCount = 3;
-      break;
+      return dyeService.findTriadicDyes(hex);
     case 'complementary': {
       const comp = dyeService.findComplementaryPair(hex);
-      dyes = comp ? [comp] : [];
-      targetCount = 1;
-      break;
+      return comp ? [comp] : [];
     }
     case 'analogous':
-      dyes = dyeService.findAnalogousDyes(hex, 30);
-      break;
+      return dyeService.findAnalogousDyes(hex, 30);
     case 'split-complementary':
-      dyes = dyeService.findSplitComplementaryDyes(hex);
-      targetCount = 2;
-      break;
+      return dyeService.findSplitComplementaryDyes(hex);
     case 'tetradic':
-      dyes = dyeService.findTetradicDyes(hex);
-      targetCount = 4;
-      break;
+      return dyeService.findTetradicDyes(hex);
     case 'square':
-      dyes = dyeService.findSquareDyes(hex);
-      targetCount = 4;
-      break;
+      return dyeService.findSquareDyes(hex);
     case 'monochromatic':
-      // Request extra to have buffer for filtering
-      dyes = dyeService.findMonochromaticDyes(hex, 10);
-      targetCount = 5;
-      break;
+      return dyeService.findMonochromaticDyes(hex, 5);
     default:
-      dyes = dyeService.findTriadicDyes(hex);
-      targetCount = 3;
+      return dyeService.findTriadicDyes(hex);
   }
-
-  // Replace any Facewear dyes with next-best non-Facewear alternatives
-  const replaced = replaceFacewearDyes(dyes);
-
-  // For types with target counts, trim to expected size
-  if (targetCount && replaced.length > targetCount) {
-    return replaced.slice(0, targetCount);
-  }
-
-  return replaced;
 }
 
 /**
