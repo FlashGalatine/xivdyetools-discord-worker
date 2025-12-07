@@ -130,6 +130,9 @@ export async function handlePresetCommand(
     case 'vote':
       return handleVoteSubcommand(interaction, env, ctx, t, userId, subcommand.options);
 
+    case 'edit':
+      return handleEditSubcommand(interaction, env, ctx, t, userId, userName, subcommand.options);
+
     case 'moderate':
       return handleModerateSubcommand(interaction, env, ctx, t, userId, subcommand.options);
 
@@ -577,6 +580,212 @@ async function processVoteCommand(
 }
 
 /**
+ * /preset edit - Edit one of your own presets
+ */
+async function handleEditSubcommand(
+  interaction: DiscordInteraction,
+  env: Env,
+  ctx: ExecutionContext,
+  t: Translator,
+  userId: string,
+  userName: string,
+  options?: Array<{ name: string; value?: string | number | boolean }>
+): Promise<Response> {
+  const presetId = options?.find((opt) => opt.name === 'preset')?.value as string | undefined;
+
+  if (!presetId) {
+    return messageResponse({
+      embeds: [errorEmbed(t.t('common.error'), t.t('errors.missingInput'))],
+      flags: 64,
+    });
+  }
+
+  // Extract optional update fields
+  const newName = options?.find((opt) => opt.name === 'name')?.value as string | undefined;
+  const newDescription = options?.find((opt) => opt.name === 'description')?.value as string | undefined;
+  const tagsRaw = options?.find((opt) => opt.name === 'tags')?.value as string | undefined;
+
+  // Collect dye names (dye1-dye5)
+  const dyeNames: (string | undefined)[] = [];
+  for (let i = 1; i <= 5; i++) {
+    const dyeValue = options?.find((opt) => opt.name === `dye${i}`)?.value as string | undefined;
+    dyeNames.push(dyeValue);
+  }
+
+  // Check if any updates provided
+  const hasAnyDye = dyeNames.some(d => d !== undefined);
+  if (!newName && !newDescription && !tagsRaw && !hasAnyDye) {
+    return messageResponse({
+      embeds: [errorEmbed(t.t('common.error'), 'Please provide at least one field to update.')],
+      flags: 64,
+    });
+  }
+
+  // Defer response
+  const deferResponse = deferredResponse();
+
+  ctx.waitUntil(
+    processEditCommand(interaction, env, t, userId, userName, presetId, {
+      name: newName,
+      description: newDescription,
+      tagsRaw,
+      dyeNames,
+    })
+  );
+
+  return deferResponse;
+}
+
+async function processEditCommand(
+  interaction: DiscordInteraction,
+  env: Env,
+  t: Translator,
+  userId: string,
+  userName: string,
+  presetId: string,
+  updates: {
+    name?: string;
+    description?: string;
+    tagsRaw?: string;
+    dyeNames: (string | undefined)[];
+  }
+): Promise<void> {
+  try {
+    // First, verify the preset exists and user owns it
+    const existingPreset = await presetApi.getPreset(env, presetId);
+    if (!existingPreset) {
+      await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+        embeds: [errorEmbed(t.t('common.error'), t.t('preset.notFound'))],
+      });
+      return;
+    }
+
+    if (existingPreset.author_discord_id !== userId) {
+      await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+        embeds: [errorEmbed(t.t('common.error'), 'You can only edit your own presets.')],
+      });
+      return;
+    }
+
+    // Build the update payload
+    const editPayload: {
+      name?: string;
+      description?: string;
+      tags?: string[];
+      dyes?: number[];
+    } = {};
+
+    if (updates.name) {
+      editPayload.name = updates.name;
+    }
+
+    if (updates.description) {
+      editPayload.description = updates.description;
+    }
+
+    if (updates.tagsRaw) {
+      editPayload.tags = updates.tagsRaw
+        .split(',')
+        .map((tag) => tag.trim())
+        .filter((tag) => tag.length > 0)
+        .slice(0, 10);
+    }
+
+    // Handle dyes - if any dye option is provided, we need to rebuild the full dye array
+    const hasAnyDye = updates.dyeNames.some(d => d !== undefined);
+    if (hasAnyDye) {
+      // Start with existing dyes
+      const newDyeIds: number[] = [...existingPreset.dyes];
+
+      // Replace any specified positions
+      for (let i = 0; i < 5; i++) {
+        const dyeName = updates.dyeNames[i];
+        if (dyeName) {
+          const dyes = dyeService.searchByName(dyeName);
+          if (dyes.length > 0) {
+            if (i < newDyeIds.length) {
+              newDyeIds[i] = dyes[0].id;
+            } else {
+              newDyeIds.push(dyes[0].id);
+            }
+          } else {
+            await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+              embeds: [errorEmbed(t.t('common.error'), `Invalid dye: ${dyeName}`)],
+            });
+            return;
+          }
+        }
+      }
+
+      // Validate dye count (2-5)
+      if (newDyeIds.length < 2 || newDyeIds.length > 5) {
+        await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+          embeds: [errorEmbed(t.t('common.error'), 'Preset must have 2-5 dyes.')],
+        });
+        return;
+      }
+
+      editPayload.dyes = newDyeIds;
+    }
+
+    // Call the edit API
+    const response = await presetApi.editPreset(env, presetId, editPayload, userId, userName);
+
+    // Handle duplicate dyes error
+    if (!response.success && response.error === 'duplicate_dyes' && response.duplicate) {
+      await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+        embeds: [
+          {
+            title: '⚠️ Duplicate Dye Combination',
+            description: [
+              'This dye combination already exists in another preset:',
+              `**"${response.duplicate.name}"** by ${response.duplicate.author_name || 'Unknown'}`,
+              '',
+              'Please use a different dye combination.',
+            ].join('\n'),
+            color: 0xed4245,
+          },
+        ],
+      });
+      return;
+    }
+
+    // Handle success
+    const updatedPreset = response.preset!;
+    const isPending = response.moderation_status === 'pending';
+
+    const embed = {
+      title: isPending ? '⏳ Preset Updated - Pending Review' : '✅ Preset Updated',
+      description: isPending
+        ? 'Your changes have been submitted for review due to content moderation.'
+        : 'Your changes have been applied.',
+      color: isPending ? 0xfee75c : 0x57f287,
+      fields: [
+        { name: 'Name', value: updatedPreset.name, inline: true },
+        { name: 'Category', value: CATEGORY_DISPLAY[updatedPreset.category_id]?.name || updatedPreset.category_id, inline: true },
+        { name: 'Dyes', value: `${updatedPreset.dyes.length} colors`, inline: true },
+      ],
+      footer: { text: isPending ? 'A moderator will review your changes shortly.' : t.t('common.footer') },
+    };
+
+    await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+      embeds: [embed],
+    });
+
+    // Notify moderation channel if pending
+    if (isPending && env.MODERATION_CHANNEL_ID) {
+      await notifyEditModerationChannel(env, updatedPreset, existingPreset);
+    }
+  } catch (error) {
+    console.error('Edit preset error:', error);
+    const message = error instanceof PresetAPIError ? error.message : 'Failed to edit preset.';
+    await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+      embeds: [errorEmbed(t.t('common.error'), message)],
+    });
+  }
+}
+
+/**
  * /preset moderate - Moderator actions
  */
 async function handleModerateSubcommand(
@@ -913,5 +1122,86 @@ async function notifyModerationChannel(
     });
   } catch (error) {
     console.error('Failed to notify moderation channel:', error);
+  }
+}
+
+/**
+ * Notify moderation channel about a preset edit that needs review
+ */
+async function notifyEditModerationChannel(
+  env: Env,
+  updatedPreset: CommunityPreset,
+  originalPreset: CommunityPreset
+): Promise<void> {
+  if (!env.MODERATION_CHANNEL_ID) return;
+
+  const categoryDisplay = CATEGORY_DISPLAY[updatedPreset.category_id];
+
+  // Build a diff summary
+  const changes: string[] = [];
+  if (updatedPreset.name !== originalPreset.name) {
+    changes.push(`**Name:** "${originalPreset.name}" → "${updatedPreset.name}"`);
+  }
+  if (updatedPreset.description !== originalPreset.description) {
+    changes.push(`**Description:** Changed`);
+  }
+  if (JSON.stringify(updatedPreset.dyes) !== JSON.stringify(originalPreset.dyes)) {
+    changes.push(`**Dyes:** ${originalPreset.dyes.length} → ${updatedPreset.dyes.length} colors`);
+  }
+  if (JSON.stringify(updatedPreset.tags) !== JSON.stringify(originalPreset.tags)) {
+    changes.push(`**Tags:** Updated`);
+  }
+
+  try {
+    await sendMessage(env.DISCORD_TOKEN, env.MODERATION_CHANNEL_ID, {
+      embeds: [
+        {
+          title: `✏️ Preset Edit Pending Review`,
+          description: [
+            `**Preset:** ${updatedPreset.name}`,
+            `**Author:** ${updatedPreset.author_name} (<@${updatedPreset.author_discord_id}>)`,
+            `**Category:** ${categoryDisplay?.name || updatedPreset.category_id}`,
+            '',
+            '**Changes:**',
+            changes.join('\n') || 'No visible changes',
+            '',
+            `**New Description:** ${updatedPreset.description}`,
+          ].join('\n'),
+          color: 0xfee75c,
+          footer: { text: `ID: ${updatedPreset.id}` },
+          timestamp: new Date().toISOString(),
+        },
+      ],
+      components: [
+        {
+          type: 1, // Action Row
+          components: [
+            {
+              type: 2, // Button
+              style: 3, // Success (green)
+              label: 'Approve',
+              custom_id: `preset_approve_${updatedPreset.id}`,
+              emoji: { name: '✅' },
+            },
+            {
+              type: 2, // Button
+              style: 4, // Danger (red)
+              label: 'Reject',
+              custom_id: `preset_reject_${updatedPreset.id}`,
+              emoji: { name: '❌' },
+            },
+            {
+              type: 2, // Button
+              style: 4, // Danger (red)
+              label: 'Revert',
+              custom_id: `preset_revert_${updatedPreset.id}`,
+              emoji: { name: '↩️' },
+            },
+          ],
+        },
+      ],
+    });
+  } catch (error) {
+    console.error('Failed to notify moderation channel about edit:', error);
   }
 }

@@ -363,13 +363,25 @@ async function handleAutocomplete(
   else if (commandName === 'preset') {
     const focusedName = focusedOption?.name;
 
-    // Preset name autocomplete (for show, vote, moderate subcommands)
+    // Preset name autocomplete (for show, vote, moderate, edit subcommands)
     if (focusedName === 'name' || focusedName === 'preset' || focusedName === 'preset_id') {
+      // For edit subcommand, show only user's own presets
+      if (subcommandName === 'edit') {
+        const userId = interaction.member?.user?.id ?? interaction.user?.id;
+        if (userId) {
+          choices = await getMyPresetsAutocompleteChoices(env, userId, query);
+        }
+      }
       // For moderate subcommand, search pending presets
-      const status = subcommandName === 'moderate' ? 'pending' : 'approved';
-      choices = await presetApi.searchPresetsForAutocomplete(env, query, { status });
+      else if (subcommandName === 'moderate') {
+        choices = await presetApi.searchPresetsForAutocomplete(env, query, { status: 'pending' });
+      }
+      // For other subcommands (show, vote), search approved presets
+      else {
+        choices = await presetApi.searchPresetsForAutocomplete(env, query, { status: 'approved' });
+      }
     }
-    // Dye autocomplete (for submit subcommand) - falls through to default dye search
+    // Dye autocomplete (for submit and edit subcommands)
     else if (focusedName?.startsWith('dye')) {
       choices = getDyeAutocompleteChoices(query);
     }
@@ -448,6 +460,41 @@ function getDyeAutocompleteChoices(query: string): Array<{ name: string; value: 
         name: `${dye.name} (${dye.hex.toUpperCase()})`,
         value: dye.name,
       }));
+  }
+}
+
+/**
+ * Get user's own presets for autocomplete (for edit subcommand)
+ */
+async function getMyPresetsAutocompleteChoices(
+  env: Env,
+  userId: string,
+  query: string
+): Promise<Array<{ name: string; value: string }>> {
+  try {
+    const presets = await presetApi.getMyPresets(env, userId);
+
+    if (presets.length === 0) {
+      return [];
+    }
+
+    // Filter by query (case-insensitive)
+    const lowerQuery = query.toLowerCase();
+    const filtered = query.length > 0
+      ? presets.filter((p) => p.name.toLowerCase().includes(lowerQuery))
+      : presets;
+
+    // Return up to 25 choices (Discord's maximum)
+    return filtered.slice(0, 25).map((preset) => ({
+      // Format: "Name (status)" to help user identify pending edits
+      name: preset.status === 'approved'
+        ? preset.name
+        : `${preset.name} (${preset.status})`,
+      value: preset.id,
+    }));
+  } catch (error) {
+    console.error('Failed to get user presets for autocomplete:', error);
+    return [];
   }
 }
 
