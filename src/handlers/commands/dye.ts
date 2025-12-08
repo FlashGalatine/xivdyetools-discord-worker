@@ -15,7 +15,7 @@ import { messageResponse, errorEmbed, hexToDiscordColor } from '../../utils/resp
 import { getDyeEmoji } from '../../services/emoji.js';
 import { createCopyButtons } from '../buttons/index.js';
 import { createUserTranslator, type Translator } from '../../services/bot-i18n.js';
-import { initializeLocale, getLocalizedDyeName, getLocalizedCategory, resolveUserLocale } from '../../services/i18n.js';
+import { initializeLocale, getLocalizedDyeName, getLocalizedCategory } from '../../services/i18n.js';
 import type { Env, DiscordInteraction } from '../../types/env.js';
 
 // Initialize DyeService with the database
@@ -66,9 +66,8 @@ export async function handleDyeCommand(
   const userId = interaction.member?.user?.id ?? interaction.user?.id ?? 'unknown';
   const t = await createUserTranslator(env.KV, userId, interaction.locale);
 
-  // Initialize xivdyetools-core localization for dye names
-  const locale = await resolveUserLocale(env.KV, userId, interaction.locale);
-  await initializeLocale(locale);
+  // Initialize xivdyetools-core localization for dye names using translator's resolved locale
+  await initializeLocale(t.getLocale());
 
   const options = interaction.data?.options || [];
   const subcommand = options[0];

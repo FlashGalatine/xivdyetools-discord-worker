@@ -12,7 +12,7 @@ import { generateComparisonGrid } from '../../services/svg/comparison-grid.js';
 import { renderSvgToPng } from '../../services/svg/renderer.js';
 import { getDyeEmoji } from '../../services/emoji.js';
 import { createUserTranslator, createTranslator, type Translator } from '../../services/bot-i18n.js';
-import { resolveUserLocale, initializeLocale, getLocalizedDyeName, type LocaleCode } from '../../services/i18n.js';
+import { initializeLocale, getLocalizedDyeName, type LocaleCode } from '../../services/i18n.js';
 import type { Env, DiscordInteraction } from '../../types/env.js';
 
 // Initialize DyeService with the database
@@ -123,8 +123,8 @@ export async function handleComparisonCommand(
   // Defer the response (image generation takes time)
   const deferResponse = deferredResponse();
 
-  // Resolve locale for background processing
-  const locale = await resolveUserLocale(env.KV, userId, interaction.locale);
+  // Use translator's resolved locale instead of calling resolveUserLocale again
+  const locale = t.getLocale();
 
   // Process in background
   ctx.waitUntil(processComparisonCommand(interaction, env, dyes, locale));
