@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Version number is dynamically imported from `package.json`
 - Commands grouped: Color Tools, Dye Database, Analysis, Your Data, Community, Utility
 - Added invite bot link and timestamp
+- Added Patreon link to support resources
 
 ### Files Added
 - `src/handlers/commands/about.ts` - Dedicated about command handler
