@@ -40,9 +40,20 @@ import { DyeService, dyeDatabase } from 'xivdyetools-core';
 import * as presetApi from './services/preset-api.js';
 import { sendMessage } from './utils/discord-api.js';
 import { STATUS_DISPLAY, type PresetNotificationPayload } from './types/preset.js';
+import { getLocalizedDyeName } from './services/i18n.js';
 
 // Initialize DyeService for autocomplete
 const dyeService = new DyeService(dyeDatabase);
+
+function formatDyesForEmbed(dyeIds: number[]): string {
+  return dyeIds
+    .map((dyeId) => {
+      const dye = dyeService.getDyeById(dyeId);
+      if (!dye) return dyeId.toString();
+      return getLocalizedDyeName(dye.itemID, dye.name);
+    })
+    .join(', ');
+}
 
 // Create Hono app with environment type
 const app = new Hono<{ Bindings: Env }>();
@@ -109,7 +120,7 @@ app.post('/webhooks/preset-submission', async (c) => {
             { name: 'Category', value: preset.category_id, inline: true },
             { name: 'Author', value: preset.author_name || 'Unknown', inline: true },
             { name: 'Source', value: preset.source === 'web' ? 'Web App' : 'Discord', inline: true },
-            { name: 'Dyes', value: preset.dyes.join(', '), inline: false },
+            { name: 'Dyes', value: formatDyesForEmbed(preset.dyes), inline: false },
             ...(preset.tags.length > 0 ? [{ name: 'Tags', value: preset.tags.join(', '), inline: false }] : []),
           ],
           footer: { text: `ID: ${preset.id}` },
@@ -152,7 +163,7 @@ app.post('/webhooks/preset-submission', async (c) => {
             { name: 'Category', value: preset.category_id, inline: true },
             { name: 'Author', value: preset.author_name || 'Unknown', inline: true },
             { name: 'Source', value: preset.source === 'web' ? 'Web App' : 'Discord', inline: true },
-            { name: 'Dyes', value: preset.dyes.join(', '), inline: false },
+            { name: 'Dyes', value: formatDyesForEmbed(preset.dyes), inline: false },
             ...(preset.tags.length > 0 ? [{ name: 'Tags', value: preset.tags.join(', '), inline: false }] : []),
           ],
           footer: { text: `ID: ${preset.id} • Auto-approved` },
