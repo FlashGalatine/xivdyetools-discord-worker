@@ -27,7 +27,7 @@ import { generatePresetSwatch } from '../../services/svg/preset-swatch.js';
 import { renderSvgToPng } from '../../services/svg/renderer.js';
 import { getDyeEmoji } from '../../services/emoji.js';
 import { createUserTranslator, createTranslator, type Translator } from '../../services/bot-i18n.js';
-import { resolveUserLocale, initializeLocale, getLocalizedDyeName, type LocaleCode } from '../../services/i18n.js';
+import { initializeLocale, getLocalizedDyeName, type LocaleCode } from '../../services/i18n.js';
 import type { Env } from '../../types/env.js';
 import {
   type CommunityPreset,
@@ -226,7 +226,8 @@ async function handleShowSubcommand(
 
   // Defer response
   const deferResponse = deferredResponse();
-  const locale = await resolveUserLocale(env.KV, userId, interaction.locale);
+  // Use translator's resolved locale instead of calling resolveUserLocale again
+  const locale = t.getLocale();
 
   ctx.waitUntil(processShowCommand(interaction, env, t, presetId, locale));
 
@@ -277,7 +278,8 @@ async function handleRandomSubcommand(
 
   // Defer response
   const deferResponse = deferredResponse();
-  const locale = await resolveUserLocale(env.KV, userId, interaction.locale);
+  // Use translator's resolved locale instead of calling resolveUserLocale again
+  const locale = t.getLocale();
 
   ctx.waitUntil(processRandomCommand(interaction, env, t, category, locale));
 

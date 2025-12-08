@@ -18,7 +18,7 @@ import {
 import { renderSvgToPng } from '../../services/svg/renderer.js';
 import { getDyeEmoji } from '../../services/emoji.js';
 import { createTranslator, createUserTranslator, type Translator } from '../../services/bot-i18n.js';
-import { resolveUserLocale, discordLocaleToLocaleCode, initializeLocale, getLocalizedDyeName, type LocaleCode } from '../../services/i18n.js';
+import { discordLocaleToLocaleCode, initializeLocale, getLocalizedDyeName, type LocaleCode } from '../../services/i18n.js';
 import type { Env, DiscordInteraction } from '../../types/env.js';
 
 // Initialize DyeService with the database
@@ -148,9 +148,8 @@ export async function handleMixerCommand(
   }
 
   // Resolve locale for background processing
-  const locale = userId
-    ? await resolveUserLocale(env.KV, userId, interaction.locale ?? 'en')
-    : (discordLocaleToLocaleCode(interaction.locale ?? 'en') ?? 'en');
+  // Use translator's resolved locale instead of calling resolveUserLocale again
+  const locale = t.getLocale();
 
   // Defer the response (image generation takes time)
   const deferResponse = deferredResponse();

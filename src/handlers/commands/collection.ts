@@ -22,7 +22,7 @@ import {
 } from '../../services/user-storage.js';
 import { getDyeEmoji } from '../../services/emoji.js';
 import { createUserTranslator, createTranslator, type Translator } from '../../services/bot-i18n.js';
-import { discordLocaleToLocaleCode, resolveUserLocale, initializeLocale, getLocalizedDyeName } from '../../services/i18n.js';
+import { discordLocaleToLocaleCode, initializeLocale, getLocalizedDyeName } from '../../services/i18n.js';
 import type { Env, DiscordInteraction } from '../../types/env.js';
 
 // Initialize DyeService
@@ -68,7 +68,8 @@ export async function handleCollectionCommand(
   const t = await createUserTranslator(env.KV, userId, interaction.locale);
 
   // Initialize xivdyetools-core localization for dye names
-  const locale = await resolveUserLocale(env.KV, userId, interaction.locale);
+  // Use translator's resolved locale instead of calling resolveUserLocale again
+  const locale = t.getLocale();
   await initializeLocale(locale);
 
   // Extract subcommand
@@ -194,7 +195,7 @@ async function handleCreate(
         successEmbed(
           t.t('common.success'),
           `${t.t('collection.created', { name })}${descText}\n\n` +
-            t.t('collection.addDyeHint', { name })
+          t.t('collection.addDyeHint', { name })
         ),
       ],
       flags: 64,
@@ -484,8 +485,8 @@ async function handleShow(
           infoEmbed(
             collection.name,
             `${collection.description ? `*${collection.description}*\n\n` : ''}` +
-              `${t.t('collection.collectionEmpty')}\n\n` +
-              t.t('collection.addDyeHint', { name: collection.name })
+            `${t.t('collection.collectionEmpty')}\n\n` +
+            t.t('collection.addDyeHint', { name: collection.name })
           ),
         ],
         flags: 64,

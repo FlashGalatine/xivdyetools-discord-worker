@@ -25,7 +25,7 @@ import { getDyeEmoji } from '../../services/emoji.js';
 import { validateAndFetchImage, processImageForExtraction } from '../../services/image/index.js';
 import { getMatchQuality } from '../../types/image.js';
 import { createTranslator, createUserTranslator, type Translator } from '../../services/bot-i18n.js';
-import { resolveUserLocale, discordLocaleToLocaleCode, initializeLocale, getLocalizedDyeName, type LocaleCode } from '../../services/i18n.js';
+import { discordLocaleToLocaleCode, initializeLocale, getLocalizedDyeName, type LocaleCode } from '../../services/i18n.js';
 import type { Env, DiscordInteraction } from '../../types/env.js';
 
 // ============================================================================
@@ -107,9 +107,8 @@ export async function handleMatchImageCommand(
   }
 
   // Resolve locale for background processing
-  const locale = userId
-    ? await resolveUserLocale(env.KV, userId, interaction.locale ?? 'en')
-    : (discordLocaleToLocaleCode(interaction.locale ?? 'en') ?? 'en');
+  // Use translator's resolved locale instead of calling resolveUserLocale again
+  const locale = t.getLocale();
 
   // Defer the response (image processing takes time)
   const deferResponse = deferredResponse();
