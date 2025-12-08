@@ -11,7 +11,7 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import type { Env, InteractionType as IType } from './types/env.js';
 import { InteractionType, InteractionResponseType } from './types/env.js';
-import { verifyDiscordRequest, unauthorizedResponse, badRequestResponse } from './utils/verify.js';
+import { verifyDiscordRequest, unauthorizedResponse, badRequestResponse, timingSafeEqual } from './utils/verify.js';
 import { pongResponse, ephemeralResponse, messageResponse } from './utils/response.js';
 import {
   handleHarmonyCommand,
@@ -72,11 +72,12 @@ app.get('/health', (c) => {
 app.post('/webhooks/preset-submission', async (c) => {
   const env = c.env;
 
-  // Verify webhook secret
-  const authHeader = c.req.header('Authorization');
+  // Verify webhook secret using constant-time comparison to prevent timing attacks
+  const authHeader = c.req.header('Authorization') || '';
   const expectedAuth = `Bearer ${env.INTERNAL_WEBHOOK_SECRET}`;
 
-  if (!env.INTERNAL_WEBHOOK_SECRET || authHeader !== expectedAuth) {
+  // First check if secret is configured, then use timing-safe comparison
+  if (!env.INTERNAL_WEBHOOK_SECRET || !(await timingSafeEqual(authHeader, expectedAuth))) {
     console.error('Webhook authentication failed');
     return c.json({ error: 'Unauthorized' }, 401);
   }
