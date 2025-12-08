@@ -223,4 +223,439 @@ describe('/collection command', () => {
     const body = await res.json();
     expect(body.data.embeds[0].description).toContain('collection not found');
   });
+
+  // Additional create tests
+  it('handles create with nameTooLong error', async () => {
+    mockStorage.createCollection.mockResolvedValueOnce({ success: false, reason: 'nameTooLong' });
+    const interaction: DiscordInteraction = {
+      ...baseInteraction,
+      member: { user: { id: 'u1', username: 't' } },
+      data: { ...baseInteraction.data, options: [{ type: 1, name: 'create', options: [{ name: 'name', value: 'VeryLongCollectionName' }] }] },
+    };
+    const res = await handleCollectionCommand(interaction, env, ctx);
+    const body = await res.json();
+    expect(body.data.embeds[0].description).toContain('name too long');
+  });
+
+  it('handles create with alreadyExists error', async () => {
+    mockStorage.createCollection.mockResolvedValueOnce({ success: false, reason: 'alreadyExists' });
+    const interaction: DiscordInteraction = {
+      ...baseInteraction,
+      member: { user: { id: 'u1', username: 't' } },
+      data: { ...baseInteraction.data, options: [{ type: 1, name: 'create', options: [{ name: 'name', value: 'MyCol' }] }] },
+    };
+    const res = await handleCollectionCommand(interaction, env, ctx);
+    const body = await res.json();
+    expect(body.data.embeds[0].description).toContain('collection exists');
+  });
+
+  it('handles create with limitReached error', async () => {
+    mockStorage.createCollection.mockResolvedValueOnce({ success: false, reason: 'limitReached' });
+    const interaction: DiscordInteraction = {
+      ...baseInteraction,
+      member: { user: { id: 'u1', username: 't' } },
+      data: { ...baseInteraction.data, options: [{ type: 1, name: 'create', options: [{ name: 'name', value: 'NewCol' }] }] },
+    };
+    const res = await handleCollectionCommand(interaction, env, ctx);
+    const body = await res.json();
+    expect(body.data.embeds[0].description).toContain('collection limit');
+  });
+
+  it('handles create with generic failure', async () => {
+    mockStorage.createCollection.mockResolvedValueOnce({ success: false, reason: 'unknown' });
+    const interaction: DiscordInteraction = {
+      ...baseInteraction,
+      member: { user: { id: 'u1', username: 't' } },
+      data: { ...baseInteraction.data, options: [{ type: 1, name: 'create', options: [{ name: 'name', value: 'MyCol' }] }] },
+    };
+    const res = await handleCollectionCommand(interaction, env, ctx);
+    const body = await res.json();
+    expect(body.data.embeds[0].description).toContain('failed to save');
+  });
+
+  it('handles create with missing name', async () => {
+    const interaction: DiscordInteraction = {
+      ...baseInteraction,
+      member: { user: { id: 'u1', username: 't' } },
+      data: { ...baseInteraction.data, options: [{ type: 1, name: 'create', options: [] }] },
+    };
+    const res = await handleCollectionCommand(interaction, env, ctx);
+    const body = await res.json();
+    expect(body.data.embeds[0].description).toContain('missing name');
+  });
+
+  it('handles create with description', async () => {
+    mockStorage.createCollection.mockResolvedValueOnce({ success: true });
+    const interaction: DiscordInteraction = {
+      ...baseInteraction,
+      member: { user: { id: 'u1', username: 't' } },
+      data: { ...baseInteraction.data, options: [{ type: 1, name: 'create', options: [{ name: 'name', value: 'MyCol' }, { name: 'description', value: 'My awesome collection' }] }] },
+    };
+    const res = await handleCollectionCommand(interaction, env, ctx);
+    const body = await res.json();
+    expect(body.data.embeds[0].description).toContain('created MyCol');
+    expect(body.data.embeds[0].description).toContain('My awesome collection');
+  });
+
+  // Delete tests
+  it('handles delete missing name', async () => {
+    const interaction: DiscordInteraction = {
+      ...baseInteraction,
+      member: { user: { id: 'u1', username: 't' } },
+      data: { ...baseInteraction.data, options: [{ type: 1, name: 'delete', options: [] }] },
+    };
+    const res = await handleCollectionCommand(interaction, env, ctx);
+    const body = await res.json();
+    expect(body.data.embeds[0].description).toContain('missing name');
+  });
+
+  it('handles delete success', async () => {
+    mockStorage.deleteCollection.mockResolvedValueOnce(true);
+    const interaction: DiscordInteraction = {
+      ...baseInteraction,
+      member: { user: { id: 'u1', username: 't' } },
+      data: { ...baseInteraction.data, options: [{ type: 1, name: 'delete', options: [{ name: 'name', value: 'MyCol' }] }] },
+    };
+    const res = await handleCollectionCommand(interaction, env, ctx);
+    const body = await res.json();
+    expect(body.data.embeds[0].title).toContain('Success');
+  });
+
+  it('handles delete not found', async () => {
+    mockStorage.deleteCollection.mockResolvedValueOnce(false);
+    const interaction: DiscordInteraction = {
+      ...baseInteraction,
+      member: { user: { id: 'u1', username: 't' } },
+      data: { ...baseInteraction.data, options: [{ type: 1, name: 'delete', options: [{ name: 'name', value: 'Missing' }] }] },
+    };
+    const res = await handleCollectionCommand(interaction, env, ctx);
+    const body = await res.json();
+    expect(body.data.embeds[0].description).toContain('collection not found');
+  });
+
+  // Add tests
+  it('handles add missing input', async () => {
+    const interaction: DiscordInteraction = {
+      ...baseInteraction,
+      member: { user: { id: 'u1', username: 't' } },
+      data: { ...baseInteraction.data, options: [{ type: 1, name: 'add', options: [] }] },
+    };
+    const res = await handleCollectionCommand(interaction, env, ctx);
+    const body = await res.json();
+    expect(body.data.embeds[0].description).toContain('missing input');
+  });
+
+  it('handles add dye not found', async () => {
+    const interaction: DiscordInteraction = {
+      ...baseInteraction,
+      member: { user: { id: 'u1', username: 't' } },
+      data: {
+        ...baseInteraction.data,
+        options: [{ type: 1, name: 'add', options: [{ name: 'name', value: 'MyCol' }, { name: 'dye', value: 'NotARealDye' }] }],
+      },
+    };
+    const res = await handleCollectionCommand(interaction, env, ctx);
+    const body = await res.json();
+    expect(body.data.embeds[0].description).toContain('dye not found');
+  });
+
+  it('handles add with hex color', async () => {
+    mockStorage.addDyeToCollection.mockResolvedValueOnce({ success: true });
+    const interaction: DiscordInteraction = {
+      ...baseInteraction,
+      member: { user: { id: 'u1', username: 't' } },
+      data: {
+        ...baseInteraction.data,
+        options: [{ type: 1, name: 'add', options: [{ name: 'name', value: 'MyCol' }, { name: 'dye', value: '#FF0000' }] }],
+      },
+    };
+    const res = await handleCollectionCommand(interaction, env, ctx);
+    const body = await res.json();
+    expect(body.data.embeds[0].description).toContain('added to MyCol');
+  });
+
+  it('handles add with hex color without hash', async () => {
+    mockStorage.addDyeToCollection.mockResolvedValueOnce({ success: true });
+    const interaction: DiscordInteraction = {
+      ...baseInteraction,
+      member: { user: { id: 'u1', username: 't' } },
+      data: {
+        ...baseInteraction.data,
+        options: [{ type: 1, name: 'add', options: [{ name: 'name', value: 'MyCol' }, { name: 'dye', value: 'FF0000' }] }],
+      },
+    };
+    const res = await handleCollectionCommand(interaction, env, ctx);
+    const body = await res.json();
+    expect(body.data.embeds[0].description).toContain('added to MyCol');
+  });
+
+  it('handles add success', async () => {
+    mockStorage.addDyeToCollection.mockResolvedValueOnce({ success: true });
+    const interaction: DiscordInteraction = {
+      ...baseInteraction,
+      member: { user: { id: 'u1', username: 't' } },
+      data: {
+        ...baseInteraction.data,
+        options: [{ type: 1, name: 'add', options: [{ name: 'name', value: 'MyCol' }, { name: 'dye', value: 'Snow White' }] }],
+      },
+    };
+    const res = await handleCollectionCommand(interaction, env, ctx);
+    const body = await res.json();
+    expect(body.data.embeds[0].description).toContain('added to MyCol');
+  });
+
+  it('handles add notFound error', async () => {
+    mockStorage.addDyeToCollection.mockResolvedValueOnce({ success: false, reason: 'notFound' });
+    const interaction: DiscordInteraction = {
+      ...baseInteraction,
+      member: { user: { id: 'u1', username: 't' } },
+      data: {
+        ...baseInteraction.data,
+        options: [{ type: 1, name: 'add', options: [{ name: 'name', value: 'MyCol' }, { name: 'dye', value: 'Snow White' }] }],
+      },
+    };
+    const res = await handleCollectionCommand(interaction, env, ctx);
+    const body = await res.json();
+    expect(body.data.embeds[0].description).toContain('collection not found');
+  });
+
+  it('handles add limitReached error', async () => {
+    mockStorage.addDyeToCollection.mockResolvedValueOnce({ success: false, reason: 'limitReached' });
+    const interaction: DiscordInteraction = {
+      ...baseInteraction,
+      member: { user: { id: 'u1', username: 't' } },
+      data: {
+        ...baseInteraction.data,
+        options: [{ type: 1, name: 'add', options: [{ name: 'name', value: 'MyCol' }, { name: 'dye', value: 'Snow White' }] }],
+      },
+    };
+    const res = await handleCollectionCommand(interaction, env, ctx);
+    const body = await res.json();
+    expect(body.data.embeds[0].description).toContain('dye limit');
+  });
+
+  it('handles add generic failure', async () => {
+    mockStorage.addDyeToCollection.mockResolvedValueOnce({ success: false, reason: 'unknown' });
+    const interaction: DiscordInteraction = {
+      ...baseInteraction,
+      member: { user: { id: 'u1', username: 't' } },
+      data: {
+        ...baseInteraction.data,
+        options: [{ type: 1, name: 'add', options: [{ name: 'name', value: 'MyCol' }, { name: 'dye', value: 'Snow White' }] }],
+      },
+    };
+    const res = await handleCollectionCommand(interaction, env, ctx);
+    const body = await res.json();
+    expect(body.data.embeds[0].description).toContain('failed to save');
+  });
+
+  // Remove tests
+  it('handles remove missing input', async () => {
+    const interaction: DiscordInteraction = {
+      ...baseInteraction,
+      member: { user: { id: 'u1', username: 't' } },
+      data: { ...baseInteraction.data, options: [{ type: 1, name: 'remove', options: [] }] },
+    };
+    const res = await handleCollectionCommand(interaction, env, ctx);
+    const body = await res.json();
+    expect(body.data.embeds[0].description).toContain('missing input');
+  });
+
+  it('handles remove dye not found', async () => {
+    const interaction: DiscordInteraction = {
+      ...baseInteraction,
+      member: { user: { id: 'u1', username: 't' } },
+      data: {
+        ...baseInteraction.data,
+        options: [{ type: 1, name: 'remove', options: [{ name: 'name', value: 'MyCol' }, { name: 'dye', value: 'NotARealDye' }] }],
+      },
+    };
+    const res = await handleCollectionCommand(interaction, env, ctx);
+    const body = await res.json();
+    expect(body.data.embeds[0].description).toContain('dye not found');
+  });
+
+  it('handles remove success', async () => {
+    mockStorage.removeDyeFromCollection.mockResolvedValueOnce(true);
+    const interaction: DiscordInteraction = {
+      ...baseInteraction,
+      member: { user: { id: 'u1', username: 't' } },
+      data: {
+        ...baseInteraction.data,
+        options: [{ type: 1, name: 'remove', options: [{ name: 'name', value: 'MyCol' }, { name: 'dye', value: 'Snow White' }] }],
+      },
+    };
+    const res = await handleCollectionCommand(interaction, env, ctx);
+    const body = await res.json();
+    expect(body.data.embeds[0].description).toContain('removed from MyCol');
+  });
+
+  it('handles remove not in collection', async () => {
+    mockStorage.removeDyeFromCollection.mockResolvedValueOnce(false);
+    const interaction: DiscordInteraction = {
+      ...baseInteraction,
+      member: { user: { id: 'u1', username: 't' } },
+      data: {
+        ...baseInteraction.data,
+        options: [{ type: 1, name: 'remove', options: [{ name: 'name', value: 'MyCol' }, { name: 'dye', value: 'Snow White' }] }],
+      },
+    };
+    const res = await handleCollectionCommand(interaction, env, ctx);
+    const body = await res.json();
+    expect(body.data.embeds[0].description).toContain('not in MyCol');
+  });
+
+  // Show tests
+  it('handles show missing name', async () => {
+    const interaction: DiscordInteraction = {
+      ...baseInteraction,
+      member: { user: { id: 'u1', username: 't' } },
+      data: { ...baseInteraction.data, options: [{ type: 1, name: 'show', options: [] }] },
+    };
+    const res = await handleCollectionCommand(interaction, env, ctx);
+    const body = await res.json();
+    expect(body.data.embeds[0].description).toContain('missing name');
+  });
+
+  it('handles show not found', async () => {
+    mockStorage.getCollection.mockResolvedValueOnce(null);
+    const interaction: DiscordInteraction = {
+      ...baseInteraction,
+      member: { user: { id: 'u1', username: 't' } },
+      data: { ...baseInteraction.data, options: [{ type: 1, name: 'show', options: [{ name: 'name', value: 'Missing' }] }] },
+    };
+    const res = await handleCollectionCommand(interaction, env, ctx);
+    const body = await res.json();
+    expect(body.data.embeds[0].description).toContain('collection not found');
+  });
+
+  it('handles show with dyes', async () => {
+    mockStorage.getCollection.mockResolvedValueOnce({
+      name: 'MyCol',
+      description: 'A cool collection',
+      dyes: [1, 2],
+      createdAt: Date.now(),
+    });
+    const interaction: DiscordInteraction = {
+      ...baseInteraction,
+      member: { user: { id: 'u1', username: 't' } },
+      data: { ...baseInteraction.data, options: [{ type: 1, name: 'show', options: [{ name: 'name', value: 'MyCol' }] }] },
+    };
+    const res = await handleCollectionCommand(interaction, env, ctx);
+    const body = await res.json();
+    expect(body.data.embeds[0].title).toContain('MyCol');
+    expect(body.data.embeds[0].description).toContain('Snow White-loc');
+    expect(body.data.embeds[0].description).toContain('A cool collection');
+  });
+
+  it('handles show empty without description', async () => {
+    mockStorage.getCollection.mockResolvedValueOnce({
+      name: 'MyCol',
+      dyes: [],
+      createdAt: Date.now(),
+    });
+    const interaction: DiscordInteraction = {
+      ...baseInteraction,
+      member: { user: { id: 'u1', username: 't' } },
+      data: { ...baseInteraction.data, options: [{ type: 1, name: 'show', options: [{ name: 'name', value: 'MyCol' }] }] },
+    };
+    const res = await handleCollectionCommand(interaction, env, ctx);
+    const body = await res.json();
+    expect(body.data.embeds[0].description).toContain('collection empty');
+  });
+
+  // List tests
+  it('handles list with collections', async () => {
+    mockStorage.getCollections.mockResolvedValueOnce([
+      { name: 'Col1', description: 'First collection', dyes: [1], createdAt: Date.now() },
+      { name: 'Col2', description: 'A very long description that should be truncated for display', dyes: [1, 2], createdAt: Date.now() },
+      { name: 'Col3', dyes: [], createdAt: Date.now() },
+    ]);
+    const interaction: DiscordInteraction = {
+      ...baseInteraction,
+      member: { user: { id: 'u1', username: 't' } },
+      data: { ...baseInteraction.data, options: [{ type: 1, name: 'list', options: [] }] },
+    };
+    const res = await handleCollectionCommand(interaction, env, ctx);
+    const body = await res.json();
+    expect(body.data.embeds[0].title).toContain('Collections');
+    expect(body.data.embeds[0].description).toContain('Col1');
+    expect(body.data.embeds[0].description).toContain('Col2');
+    expect(body.data.embeds[0].description).toContain('Col3');
+    expect(body.data.embeds[0].description).toContain('1 Dye'); // singular
+    expect(body.data.embeds[0].description).toContain('2 dyes'); // plural
+  });
+
+  // Rename tests
+  it('handles rename missing input', async () => {
+    const interaction: DiscordInteraction = {
+      ...baseInteraction,
+      member: { user: { id: 'u1', username: 't' } },
+      data: { ...baseInteraction.data, options: [{ type: 1, name: 'rename', options: [] }] },
+    };
+    const res = await handleCollectionCommand(interaction, env, ctx);
+    const body = await res.json();
+    expect(body.data.embeds[0].description).toContain('missing input');
+  });
+
+  it('handles rename success', async () => {
+    mockStorage.renameCollection.mockResolvedValueOnce({ success: true });
+    const interaction: DiscordInteraction = {
+      ...baseInteraction,
+      member: { user: { id: 'u1', username: 't' } },
+      data: {
+        ...baseInteraction.data,
+        options: [{ type: 1, name: 'rename', options: [{ name: 'name', value: 'OldName' }, { name: 'new_name', value: 'NewName' }] }],
+      },
+    };
+    const res = await handleCollectionCommand(interaction, env, ctx);
+    const body = await res.json();
+    expect(body.data.embeds[0].description).toContain('OldName');
+    expect(body.data.embeds[0].description).toContain('NewName');
+  });
+
+  it('handles rename nameTooLong', async () => {
+    mockStorage.renameCollection.mockResolvedValueOnce({ success: false, reason: 'nameTooLong' });
+    const interaction: DiscordInteraction = {
+      ...baseInteraction,
+      member: { user: { id: 'u1', username: 't' } },
+      data: {
+        ...baseInteraction.data,
+        options: [{ type: 1, name: 'rename', options: [{ name: 'name', value: 'Old' }, { name: 'new_name', value: 'VeryLongName' }] }],
+      },
+    };
+    const res = await handleCollectionCommand(interaction, env, ctx);
+    const body = await res.json();
+    expect(body.data.embeds[0].description).toContain('name too long');
+  });
+
+  it('handles rename alreadyExists', async () => {
+    mockStorage.renameCollection.mockResolvedValueOnce({ success: false, reason: 'alreadyExists' });
+    const interaction: DiscordInteraction = {
+      ...baseInteraction,
+      member: { user: { id: 'u1', username: 't' } },
+      data: {
+        ...baseInteraction.data,
+        options: [{ type: 1, name: 'rename', options: [{ name: 'name', value: 'Old' }, { name: 'new_name', value: 'Existing' }] }],
+      },
+    };
+    const res = await handleCollectionCommand(interaction, env, ctx);
+    const body = await res.json();
+    expect(body.data.embeds[0].description).toContain('collection exists');
+  });
+
+  it('handles rename generic failure', async () => {
+    mockStorage.renameCollection.mockResolvedValueOnce({ success: false, reason: 'unknown' });
+    const interaction: DiscordInteraction = {
+      ...baseInteraction,
+      member: { user: { id: 'u1', username: 't' } },
+      data: {
+        ...baseInteraction.data,
+        options: [{ type: 1, name: 'rename', options: [{ name: 'name', value: 'Old' }, { name: 'new_name', value: 'New' }] }],
+      },
+    };
+    const res = await handleCollectionCommand(interaction, env, ctx);
+    const body = await res.json();
+    expect(body.data.embeds[0].description).toContain('failed to save');
+  });
 });

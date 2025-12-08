@@ -16,6 +16,7 @@ vi.mock('./utils/verify.js', () => ({
 }));
 
 vi.mock('./handlers/commands/index.js', () => ({
+  handleAboutCommand: vi.fn(),
   handleHarmonyCommand: vi.fn(),
   handleDyeCommand: vi.fn(),
   handleMixerCommand: vi.fn(),
@@ -100,13 +101,22 @@ describe('index.ts', () => {
   let mockCtx: ExecutionContext;
 
   beforeEach(() => {
+    // Create a proper KV namespace mock with all required methods
+    const mockKV = {
+      get: vi.fn().mockResolvedValue(null),
+      put: vi.fn().mockResolvedValue(undefined),
+      delete: vi.fn().mockResolvedValue(undefined),
+      list: vi.fn().mockResolvedValue({ keys: [], list_complete: true }),
+      getWithMetadata: vi.fn().mockResolvedValue({ value: null, metadata: null }),
+    } as unknown as KVNamespace;
+
     mockEnv = {
       DISCORD_PUBLIC_KEY: 'test-public-key',
       DISCORD_TOKEN: 'test-token',
       DISCORD_APPLICATION_ID: 'test-app-id',
       PRESET_API_URL: 'https://test-api.example.com',
       INTERNAL_WEBHOOK_SECRET: 'test-webhook-secret',
-      KV: {} as KVNamespace,
+      KV: mockKV,
       MODERATION_CHANNEL_ID: 'test-moderation-channel',
       SUBMISSION_LOG_CHANNEL_ID: 'test-submission-log-channel',
     };
@@ -318,9 +328,10 @@ describe('index.ts', () => {
     });
 
     describe('APPLICATION_COMMAND interactions', () => {
-      it('should handle /about command', async () => {
+      it('should route to about command handler', async () => {
         const { verifyDiscordRequest } = await import('./utils/verify.js');
         const { checkRateLimit } = await import('./services/rate-limiter.js');
+        const { handleAboutCommand } = await import('./handlers/commands/index.js');
 
         vi.mocked(verifyDiscordRequest).mockResolvedValue({
           isValid: true,
@@ -332,6 +343,7 @@ describe('index.ts', () => {
           error: '',
         });
         vi.mocked(checkRateLimit).mockResolvedValue({ allowed: true });
+        vi.mocked(handleAboutCommand).mockResolvedValue(new Response());
 
         const req = new Request('http://localhost/', {
           method: 'POST',
@@ -342,10 +354,8 @@ describe('index.ts', () => {
           }),
         });
 
-        const res = await app.fetch(req, mockEnv, mockCtx);
-        expect(res.status).toBe(200);
-        const data = await res.json();
-        expect(data.data.embeds[0].title).toBe('XIV Dye Tools Bot');
+        await app.fetch(req, mockEnv, mockCtx);
+        expect(handleAboutCommand).toHaveBeenCalled();
       });
 
       it('should route to harmony command handler', async () => {

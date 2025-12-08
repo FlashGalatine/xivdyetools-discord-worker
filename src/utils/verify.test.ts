@@ -220,4 +220,66 @@ describe('verify.ts', () => {
             expect(body).toEqual({ error: 'Invalid input' });
         });
     });
+
+    describe('timingSafeEqual', () => {
+        it('should return true for identical strings', async () => {
+            const result = await timingSafeEqual('test-secret', 'test-secret');
+            expect(result).toBe(true);
+        });
+
+        it('should return false for different strings', async () => {
+            const result = await timingSafeEqual('test-secret', 'wrong-secret');
+            expect(result).toBe(false);
+        });
+
+        it('should return false for strings with different lengths', async () => {
+            const result = await timingSafeEqual('short', 'much-longer-string');
+            expect(result).toBe(false);
+        });
+
+        it('should return true for empty strings', async () => {
+            const result = await timingSafeEqual('', '');
+            expect(result).toBe(true);
+        });
+
+        it('should return false for empty vs non-empty', async () => {
+            const result1 = await timingSafeEqual('', 'something');
+            const result2 = await timingSafeEqual('something', '');
+            expect(result1).toBe(false);
+            expect(result2).toBe(false);
+        });
+
+        it('should handle unicode strings', async () => {
+            const result1 = await timingSafeEqual('こんにちは', 'こんにちは');
+            const result2 = await timingSafeEqual('こんにちは', 'さようなら');
+            expect(result1).toBe(true);
+            expect(result2).toBe(false);
+        });
+
+        it('should detect single character differences', async () => {
+            const result = await timingSafeEqual('secret-key-123', 'secret-key-124');
+            expect(result).toBe(false);
+        });
+
+        it('should handle very long identical strings', async () => {
+            const longString = 'a'.repeat(10000);
+            const result = await timingSafeEqual(longString, longString);
+            expect(result).toBe(true);
+        });
+
+        it('should use fallback when crypto.subtle.timingSafeEqual throws', async () => {
+            // Mock crypto.subtle.timingSafeEqual to throw
+            const originalTimingSafeEqual = crypto.subtle.timingSafeEqual;
+            (crypto.subtle as unknown as { timingSafeEqual: undefined }).timingSafeEqual = undefined;
+
+            const result1 = await timingSafeEqual('test', 'test');
+            const result2 = await timingSafeEqual('test', 'diff');
+
+            // Restore
+            (crypto.subtle as unknown as { timingSafeEqual: typeof originalTimingSafeEqual }).timingSafeEqual = originalTimingSafeEqual;
+
+            expect(result1).toBe(true);
+            expect(result2).toBe(false);
+        });
+    });
 });
