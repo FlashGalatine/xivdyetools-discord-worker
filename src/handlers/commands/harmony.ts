@@ -14,7 +14,7 @@ import { renderSvgToPng } from '../../services/svg/renderer.js';
 import { getDyeEmoji } from '../../services/emoji.js';
 import { createUserTranslator, createTranslator, type Translator } from '../../services/bot-i18n.js';
 import { resolveUserLocale, initializeLocale, getLocalizedDyeName, type LocaleCode } from '../../services/i18n.js';
-import type { Env } from '../../types/env.js';
+import type { Env, DiscordInteraction } from '../../types/env.js';
 
 // Initialize DyeService with the database
 const dyeService = new DyeService(dyeDatabase);
@@ -31,27 +31,6 @@ const HARMONY_TYPES = [
 ] as const;
 
 type HarmonyType = (typeof HARMONY_TYPES)[number];
-
-interface DiscordInteraction {
-  id: string;
-  token: string;
-  application_id: string;
-  locale?: string;
-  member?: {
-    user: {
-      id: string;
-    };
-  };
-  user?: {
-    id: string;
-  };
-  data?: {
-    options?: Array<{
-      name: string;
-      value?: string | number | boolean;
-    }>;
-  };
-}
 
 /**
  * Validates if a string is a valid hex color

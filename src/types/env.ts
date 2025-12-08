@@ -66,6 +66,76 @@ export interface Env {
 }
 
 /**
+ * Discord Interaction type (simplified)
+ * Consolidated to avoid duplicate definitions across command handlers
+ * Full types would come from a Discord types package
+ */
+export interface DiscordInteraction {
+  id: string;
+  type?: number; // Interaction type (1=PING, 2=APPLICATION_COMMAND, etc.) - optional for handler tests
+  application_id: string;
+  token: string;
+  locale?: string; // User's locale (e.g., "en-US", "ja")
+  guild_id?: string;
+  channel_id?: string;
+  member?: {
+    user: {
+      id: string;
+      username?: string;
+      discriminator?: string;
+      avatar?: string;
+      global_name?: string;
+    };
+  };
+  user?: {
+    id: string;
+    username?: string;
+    discriminator?: string;
+    avatar?: string;
+    global_name?: string;
+  };
+  data?: {
+    id?: string;
+    name?: string;
+    type?: number;
+    custom_id?: string; // For button/modal interactions
+    options?: Array<{
+      name: string;
+      type?: number;
+      value?: string | number | boolean;
+      options?: Array<{
+        name: string;
+        type?: number;
+        value?: string | number | boolean;
+      }>;
+    }>;
+    components?: Array<{
+      type: number;
+      components?: Array<{
+        type: number;
+        custom_id?: string;
+        value?: string;
+      }>;
+    }>;
+    resolved?: {
+      attachments?: Record<
+        string,
+        {
+          id: string;
+          filename: string;
+          size: number;
+          url: string;
+          proxy_url: string;
+          content_type?: string;
+          width?: number;
+          height?: number;
+        }
+      >;
+    };
+  };
+}
+
+/**
  * Discord Interaction Types
  * @see https://discord.com/developers/docs/interactions/receiving-and-responding
  */

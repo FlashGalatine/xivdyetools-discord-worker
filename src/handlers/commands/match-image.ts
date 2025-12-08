@@ -26,7 +26,7 @@ import { validateAndFetchImage, processImageForExtraction } from '../../services
 import { getMatchQuality } from '../../types/image.js';
 import { createTranslator, createUserTranslator, type Translator } from '../../services/bot-i18n.js';
 import { resolveUserLocale, discordLocaleToLocaleCode, initializeLocale, getLocalizedDyeName, type LocaleCode } from '../../services/i18n.js';
-import type { Env } from '../../types/env.js';
+import type { Env, DiscordInteraction } from '../../types/env.js';
 
 // ============================================================================
 // Service Initialization
@@ -34,47 +34,6 @@ import type { Env } from '../../types/env.js';
 
 const dyeService = new DyeService(dyeDatabase);
 const paletteService = new PaletteService();
-
-// ============================================================================
-// Types
-// ============================================================================
-
-interface DiscordInteraction {
-  id: string;
-  token: string;
-  application_id: string;
-  locale?: string;
-  member?: {
-    user: {
-      id: string;
-    };
-  };
-  user?: {
-    id: string;
-  };
-  data?: {
-    options?: Array<{
-      name: string;
-      value?: string | number | boolean;
-      type: number;
-    }>;
-    resolved?: {
-      attachments?: Record<
-        string,
-        {
-          id: string;
-          filename: string;
-          size: number;
-          url: string;
-          proxy_url: string;
-          content_type?: string;
-          width?: number;
-          height?: number;
-        }
-      >;
-    };
-  };
-}
 
 // ============================================================================
 // Constants

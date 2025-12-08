@@ -37,44 +37,10 @@ import {
   PresetAPIError,
 } from '../../types/preset.js';
 import * as presetApi from '../../services/preset-api.js';
+import type { DiscordInteraction } from '../../types/env.js';
 
 // Initialize DyeService
 const dyeService = new DyeService(dyeDatabase);
-
-// ============================================================================
-// Types
-// ============================================================================
-
-interface DiscordInteraction {
-  id: string;
-  token: string;
-  application_id: string;
-  locale?: string;
-  member?: {
-    user: {
-      id: string;
-      username: string;
-      global_name?: string;
-    };
-  };
-  user?: {
-    id: string;
-    username: string;
-    global_name?: string;
-  };
-  data?: {
-    options?: Array<{
-      name: string;
-      type: number;
-      value?: string | number | boolean;
-      options?: Array<{
-        name: string;
-        type: number;
-        value?: string | number | boolean;
-      }>;
-    }>;
-  };
-}
 
 // ============================================================================
 // Main Handler

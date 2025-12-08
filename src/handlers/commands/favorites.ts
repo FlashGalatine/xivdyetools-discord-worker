@@ -17,39 +17,10 @@ import {
 import { getDyeEmoji } from '../../services/emoji.js';
 import { createUserTranslator, type Translator } from '../../services/bot-i18n.js';
 import { resolveUserLocale, initializeLocale, getLocalizedDyeName, getLocalizedCategory } from '../../services/i18n.js';
-import type { Env } from '../../types/env.js';
+import type { Env, DiscordInteraction } from '../../types/env.js';
 
 // Initialize DyeService
 const dyeService = new DyeService(dyeDatabase);
-
-interface DiscordInteraction {
-  id: string;
-  token: string;
-  application_id: string;
-  locale?: string;
-  member?: {
-    user: {
-      id: string;
-      username: string;
-    };
-  };
-  user?: {
-    id: string;
-    username: string;
-  };
-  data?: {
-    options?: Array<{
-      name: string;
-      type: number;
-      value?: string | number | boolean;
-      options?: Array<{
-        name: string;
-        type: number;
-        value?: string | number | boolean;
-      }>;
-    }>;
-  };
-}
 
 /**
  * Resolve dye input to a Dye object

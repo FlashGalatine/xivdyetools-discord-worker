@@ -6,23 +6,8 @@
  * Sends as ephemeral message (only visible to the user).
  */
 
-import type { Env } from '../../types/env.js';
+import type { Env, DiscordInteraction } from '../../types/env.js';
 import { createUserTranslator, type Translator } from '../../services/bot-i18n.js';
-
-interface DiscordInteraction {
-  id: string;
-  token: string;
-  application_id: string;
-  locale?: string;
-  member?: {
-    user: {
-      id: string;
-    };
-  };
-  user?: {
-    id: string;
-  };
-}
 
 // Discord embed color constants
 const COLORS = {
