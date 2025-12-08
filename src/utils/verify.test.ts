@@ -6,6 +6,7 @@ import {
     verifyDiscordRequest,
     unauthorizedResponse,
     badRequestResponse,
+    timingSafeEqual,
 } from './verify.js';
 
 // Mock the discord-interactions verifyKey function
@@ -148,6 +149,42 @@ describe('verify.ts', () => {
 
             expect(result.isValid).toBe(false);
             expect(result.error).toBe('Verification failed');
+        });
+
+        it('should reject request body that is too large via Content-Length header', async () => {
+            const request = new Request('https://example.com', {
+                method: 'POST',
+                headers: {
+                    'Content-Length': '200000', // >100KB
+                    'X-Signature-Ed25519': 'signature',
+                    'X-Signature-Timestamp': '12345',
+                },
+                body: '{}',
+            });
+
+            const result = await verifyDiscordRequest(request, mockPublicKey);
+
+            expect(result.isValid).toBe(false);
+            expect(result.error).toBe('Request body too large');
+        });
+
+        it('should reject request body that is too large via actual body size', async () => {
+            // Create a body that's >100KB
+            const largeBody = 'a'.repeat(100001);
+            
+            const request = new Request('https://example.com', {
+                method: 'POST',
+                headers: {
+                    'X-Signature-Ed25519': 'signature',
+                    'X-Signature-Timestamp': '12345',
+                },
+                body: largeBody,
+            });
+
+            const result = await verifyDiscordRequest(request, mockPublicKey);
+
+            expect(result.isValid).toBe(false);
+            expect(result.error).toBe('Request body too large');
         });
     });
 
