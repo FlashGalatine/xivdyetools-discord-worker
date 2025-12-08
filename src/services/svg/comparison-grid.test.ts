@@ -165,5 +165,85 @@ describe('svg/comparison-grid.ts', () => {
             expect(svg).toContain('>2<');
             expect(svg).toContain('>3<');
         });
+
+        it('should handle blue-dominant color (max === b branch in rgbToHsv)', () => {
+            // Blue dye to hit max === b branch in rgbToHsv
+            const blueDye: Dye = {
+                id: 10,
+                itemID: 5740,
+                name: 'Pure Blue',
+                hex: '#0000FF',
+                rgb: { r: 0, g: 0, b: 255 },
+                hsv: { h: 240, s: 100, v: 100 },
+                category: 'Blue',
+            };
+
+            const svg = generateComparisonGrid({ dyes: [blueDye, mockDye2] });
+
+            expect(svg).toContain('Pure Blue');
+            expect(svg).toContain('#0000FF');
+        });
+
+        it('should handle green-dominant color (max === g branch in rgbToHsv)', () => {
+            // Green dye to hit max === g branch in rgbToHsv
+            const greenDye: Dye = {
+                id: 11,
+                itemID: 5741,
+                name: 'Pure Green',
+                hex: '#00FF00',
+                rgb: { r: 0, g: 255, b: 0 },
+                hsv: { h: 120, s: 100, v: 100 },
+                category: 'Green',
+            };
+
+            const svg = generateComparisonGrid({ dyes: [greenDye, mockDye1] });
+
+            expect(svg).toContain('Pure Green');
+            expect(svg).toContain('#00FF00');
+        });
+
+        it('should handle achromatic colors (max === min in rgbToHsv)', () => {
+            // Gray dye where r === g === b (achromatic)
+            const grayDye: Dye = {
+                id: 12,
+                itemID: 5742,
+                name: 'Pure Gray',
+                hex: '#808080',
+                rgb: { r: 128, g: 128, b: 128 },
+                hsv: { h: 0, s: 0, v: 50 },
+                category: 'Gray',
+            };
+
+            const svg = generateComparisonGrid({ dyes: [grayDye, mockDye3] });
+
+            expect(svg).toContain('Pure Gray');
+            expect(svg).toContain('#808080');
+        });
+
+        it('should show AAA contrast rating for high contrast', () => {
+            // Black and white have very high contrast (ratio > 7)
+            const svg = generateComparisonGrid({ dyes: [mockDye2, mockDye3] }); // Jet Black and Snow White
+
+            // The contrast ratio between black and white should be AAA
+            expect(svg).toContain('AAA');
+        });
+
+        it('should show different contrast ratings based on color pairs', () => {
+            // Test with colors that have different contrast levels
+            const mediumContrastDye: Dye = {
+                id: 13,
+                itemID: 5743,
+                name: 'Medium Gray',
+                hex: '#6B6B6B',
+                rgb: { r: 107, g: 107, b: 107 },
+                hsv: { h: 0, s: 0, v: 42 },
+                category: 'Gray',
+            };
+
+            const svg = generateComparisonGrid({ dyes: [mediumContrastDye, mockDye3] });
+
+            // Should contain some contrast rating
+            expect(svg).toContain('Contrast:');
+        });
     });
 });

@@ -13,6 +13,27 @@ const dyeRed = { id: 1, name: 'Rolanberry Red', hex: '#FF0000', category: 'Gener
 // ---------------------------------------------------------------------------
 // Mocks
 // ---------------------------------------------------------------------------
+// Overridable mock functions for test-specific behavior
+let mockExtractAndMatchPalette = vi.fn((_rgbData: number[][], _dyeService: unknown, options: { colorCount?: number }) => {
+    const count = options?.colorCount ?? 1;
+    const matches = [];
+    for (let i = 0; i < count; i++) {
+        matches.push({
+            extracted: `#${(i * 17).toString(16).padStart(2, '0').repeat(3)}`,
+            matchedDye: { ...dyeRed, id: dyeRed.id + i },
+            distance: i * 10,
+            dominance: Math.round(100 / count),
+        });
+    }
+    return matches;
+});
+
+let mockPixelDataToRGBFiltered = vi.fn((pixels: Uint8ClampedArray) => {
+    if (pixels.length === 0) return [];
+    // Return mock RGB data
+    return [[255, 0, 0], [0, 255, 0], [0, 0, 255]];
+});
+
 vi.mock('xivdyetools-core', () => {
     class MockDyeService {
         searchByName() {
@@ -24,23 +45,11 @@ vi.mock('xivdyetools-core', () => {
     }
 
     class MockPaletteService {
-        extractAndMatchPalette(_rgbData: number[][], _dyeService: unknown, options: { colorCount?: number }) {
-            const count = options?.colorCount ?? 1;
-            const matches = [];
-            for (let i = 0; i < count; i++) {
-                matches.push({
-                    extracted: `#${(i * 17).toString(16).padStart(2, '0').repeat(3)}`,
-                    matchedDye: { ...dyeRed, id: dyeRed.id + i },
-                    distance: i * 10,
-                    dominance: Math.round(100 / count),
-                });
-            }
-            return matches;
+        extractAndMatchPalette(rgbData: number[][], dyeService: unknown, options: { colorCount?: number }) {
+            return mockExtractAndMatchPalette(rgbData, dyeService, options);
         }
         static pixelDataToRGBFiltered(pixels: Uint8ClampedArray) {
-            if (pixels.length === 0) return [];
-            // Return mock RGB data
-            return [[255, 0, 0], [0, 255, 0], [0, 0, 255]];
+            return mockPixelDataToRGBFiltered(pixels);
         }
     }
 
@@ -176,6 +185,24 @@ describe('/match_image command', () => {
             pixels: new Uint8Array([255, 0, 0, 255, 0, 255, 0, 255, 0, 0, 255, 255]),
             width: 1,
             height: 3,
+        });
+        // Reset mock implementations to default
+        mockExtractAndMatchPalette = vi.fn((_rgbData: number[][], _dyeService: unknown, options: { colorCount?: number }) => {
+            const count = options?.colorCount ?? 1;
+            const matches = [];
+            for (let i = 0; i < count; i++) {
+                matches.push({
+                    extracted: `#${(i * 17).toString(16).padStart(2, '0').repeat(3)}`,
+                    matchedDye: { ...dyeRed, id: dyeRed.id + i },
+                    distance: i * 10,
+                    dominance: Math.round(100 / count),
+                });
+            }
+            return matches;
+        });
+        mockPixelDataToRGBFiltered = vi.fn((pixels: Uint8ClampedArray) => {
+            if (pixels.length === 0) return [];
+            return [[255, 0, 0], [0, 255, 0], [0, 0, 255]];
         });
     });
 
@@ -532,5 +559,167 @@ describe('/match_image command', () => {
         const body = await res.json();
 
         expect(body.type).toBe(5);
+    });
+
+    it('handles empty pixel array (fully transparent image)', async () => {
+        // Override mock to return empty array (all pixels transparent)
+        mockPixelDataToRGBFiltered = vi.fn(() => []);
+
+        const interaction: DiscordInteraction = {
+            ...baseInteraction,
+            data: {
+                ...baseInteraction.data,
+                options: [
+                    { name: 'image', value: 'attachment-id-123' },
+                ],
+                resolved: {
+                    attachments: {
+                        'attachment-id-123': {
+                            id: 'attachment-id-123',
+                            filename: 'test.png',
+                            url: 'https://cdn.discordapp.com/attachments/test.png',
+                            size: 1000,
+                            content_type: 'image/png',
+                        },
+                    },
+                },
+            },
+        };
+
+        await handleMatchImageCommand(interaction, env, ctx);
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
+        expect(mockEditOriginalResponse).toHaveBeenCalledWith(
+            expect.anything(),
+            expect.anything(),
+            expect.objectContaining({
+                embeds: expect.arrayContaining([
+                    expect.objectContaining({
+                        description: 'No colors found',
+                    }),
+                ]),
+            })
+        );
+    });
+
+    it('handles empty matches from extractAndMatchPalette', async () => {
+        // Override mock to return empty array (no matches)
+        mockExtractAndMatchPalette = vi.fn(() => []);
+
+        const interaction: DiscordInteraction = {
+            ...baseInteraction,
+            data: {
+                ...baseInteraction.data,
+                options: [
+                    { name: 'image', value: 'attachment-id-123' },
+                ],
+                resolved: {
+                    attachments: {
+                        'attachment-id-123': {
+                            id: 'attachment-id-123',
+                            filename: 'test.png',
+                            url: 'https://cdn.discordapp.com/attachments/test.png',
+                            size: 1000,
+                            content_type: 'image/png',
+                        },
+                    },
+                },
+            },
+        };
+
+        await handleMatchImageCommand(interaction, env, ctx);
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
+        expect(mockEditOriginalResponse).toHaveBeenCalledWith(
+            expect.anything(),
+            expect.anything(),
+            expect.objectContaining({
+                embeds: expect.arrayContaining([
+                    expect.objectContaining({
+                        description: 'Extraction failed',
+                    }),
+                ]),
+            })
+        );
+    });
+
+    it('handles generic error (unknown error message)', async () => {
+        mockValidateAndFetchImage.mockRejectedValueOnce(new Error('Some unexpected error'));
+
+        const interaction: DiscordInteraction = {
+            ...baseInteraction,
+            data: {
+                ...baseInteraction.data,
+                options: [
+                    { name: 'image', value: 'attachment-id-123' },
+                ],
+                resolved: {
+                    attachments: {
+                        'attachment-id-123': {
+                            id: 'attachment-id-123',
+                            filename: 'test.png',
+                            url: 'https://cdn.discordapp.com/attachments/test.png',
+                            size: 1000,
+                            content_type: 'image/png',
+                        },
+                    },
+                },
+            },
+        };
+
+        await handleMatchImageCommand(interaction, env, ctx);
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
+        expect(mockEditOriginalResponse).toHaveBeenCalledWith(
+            expect.anything(),
+            expect.anything(),
+            expect.objectContaining({
+                embeds: expect.arrayContaining([
+                    expect.objectContaining({
+                        description: 'Processing failed',
+                    }),
+                ]),
+            })
+        );
+    });
+
+    it('handles non-Error thrown', async () => {
+        mockValidateAndFetchImage.mockRejectedValueOnce('string error');
+
+        const interaction: DiscordInteraction = {
+            ...baseInteraction,
+            data: {
+                ...baseInteraction.data,
+                options: [
+                    { name: 'image', value: 'attachment-id-123' },
+                ],
+                resolved: {
+                    attachments: {
+                        'attachment-id-123': {
+                            id: 'attachment-id-123',
+                            filename: 'test.png',
+                            url: 'https://cdn.discordapp.com/attachments/test.png',
+                            size: 1000,
+                            content_type: 'image/png',
+                        },
+                    },
+                },
+            },
+        };
+
+        await handleMatchImageCommand(interaction, env, ctx);
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
+        expect(mockEditOriginalResponse).toHaveBeenCalledWith(
+            expect.anything(),
+            expect.anything(),
+            expect.objectContaining({
+                embeds: expect.arrayContaining([
+                    expect.objectContaining({
+                        description: 'Processing failed',
+                    }),
+                ]),
+            })
+        );
     });
 });

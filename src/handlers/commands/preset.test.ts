@@ -98,10 +98,10 @@ vi.mock('../../services/preset-api.js', () => ({
     removeVote: (...args: unknown[]) => mockRemoveVote(...args),
     isModerator: (...args: unknown[]) => mockIsModerator(...args),
     editPreset: (...args: unknown[]) => mockEditPreset(...args),
-    getPendingPresets: vi.fn().mockResolvedValue({ presets: [], total: 0 }),
-    approvePreset: vi.fn().mockResolvedValue({ success: true }),
-    rejectPreset: vi.fn().mockResolvedValue({ success: true }),
-    getPresetStats: vi.fn().mockResolvedValue({ approved: 10, pending: 2, rejected: 1 }),
+    getPendingPresets: vi.fn().mockResolvedValue([]),
+    approvePreset: vi.fn().mockResolvedValue({ id: 'preset-1', name: 'Test Preset', status: 'approved' }),
+    rejectPreset: vi.fn().mockResolvedValue({ id: 'preset-1', name: 'Test Preset', status: 'rejected' }),
+    getModerationStats: vi.fn().mockResolvedValue({ pending: 5, approved: 100, rejected: 10, flagged: 2, actions_last_week: 25 }),
 }));
 
 // ---------------------------------------------------------------------------
@@ -663,6 +663,421 @@ describe('/preset command', () => {
             expect(res).toBeDefined();
             expect(ctx.waitUntil).toHaveBeenCalled();
         });
+
+        it('returns error when preset not found', async () => {
+            mockGetPreset.mockResolvedValueOnce(null);
+
+            const interaction: DiscordInteraction = {
+                ...baseInteraction,
+                data: {
+                    ...baseInteraction.data,
+                    options: [{
+                        type: 1,
+                        name: 'edit',
+                        options: [
+                            { name: 'preset', value: 'nonexistent' },
+                            { name: 'name', value: 'Updated Name' },
+                        ],
+                    }],
+                },
+            };
+
+            await handlePresetCommand(interaction, env, ctx);
+            await new Promise((resolve) => setTimeout(resolve, 100));
+
+            expect(mockEditOriginalResponse).toHaveBeenCalledWith(
+                expect.anything(),
+                expect.anything(),
+                expect.objectContaining({
+                    embeds: expect.arrayContaining([
+                        expect.objectContaining({
+                            description: 'Preset not found',
+                        }),
+                    ]),
+                })
+            );
+        });
+
+        it('returns error when user does not own the preset', async () => {
+            mockGetPreset.mockResolvedValueOnce({
+                ...mockPreset,
+                author_discord_id: 'different-user',
+            });
+
+            const interaction: DiscordInteraction = {
+                ...baseInteraction,
+                data: {
+                    ...baseInteraction.data,
+                    options: [{
+                        type: 1,
+                        name: 'edit',
+                        options: [
+                            { name: 'preset', value: 'preset-1' },
+                            { name: 'name', value: 'Updated Name' },
+                        ],
+                    }],
+                },
+            };
+
+            await handlePresetCommand(interaction, env, ctx);
+            await new Promise((resolve) => setTimeout(resolve, 100));
+
+            expect(mockEditOriginalResponse).toHaveBeenCalledWith(
+                expect.anything(),
+                expect.anything(),
+                expect.objectContaining({
+                    embeds: expect.arrayContaining([
+                        expect.objectContaining({
+                            description: 'You can only edit your own presets.',
+                        }),
+                    ]),
+                })
+            );
+        });
+
+        it('edits preset with description only', async () => {
+            const interaction: DiscordInteraction = {
+                ...baseInteraction,
+                data: {
+                    ...baseInteraction.data,
+                    options: [{
+                        type: 1,
+                        name: 'edit',
+                        options: [
+                            { name: 'preset', value: 'preset-1' },
+                            { name: 'description', value: 'New Description' },
+                        ],
+                    }],
+                },
+            };
+
+            await handlePresetCommand(interaction, env, ctx);
+            await new Promise((resolve) => setTimeout(resolve, 100));
+
+            expect(mockEditPreset).toHaveBeenCalledWith(
+                expect.anything(),
+                'preset-1',
+                expect.objectContaining({ description: 'New Description' }),
+                expect.anything(),
+                expect.anything()
+            );
+        });
+
+        it('edits preset with tags', async () => {
+            const interaction: DiscordInteraction = {
+                ...baseInteraction,
+                data: {
+                    ...baseInteraction.data,
+                    options: [{
+                        type: 1,
+                        name: 'edit',
+                        options: [
+                            { name: 'preset', value: 'preset-1' },
+                            { name: 'tags', value: 'tag1, tag2, tag3' },
+                        ],
+                    }],
+                },
+            };
+
+            await handlePresetCommand(interaction, env, ctx);
+            await new Promise((resolve) => setTimeout(resolve, 100));
+
+            expect(mockEditPreset).toHaveBeenCalledWith(
+                expect.anything(),
+                'preset-1',
+                expect.objectContaining({ tags: ['tag1', 'tag2', 'tag3'] }),
+                expect.anything(),
+                expect.anything()
+            );
+        });
+
+        it('edits preset with dye replacement at existing position', async () => {
+            const interaction: DiscordInteraction = {
+                ...baseInteraction,
+                data: {
+                    ...baseInteraction.data,
+                    options: [{
+                        type: 1,
+                        name: 'edit',
+                        options: [
+                            { name: 'preset', value: 'preset-1' },
+                            { name: 'dye1', value: 'Ceruleum Blue' },
+                        ],
+                    }],
+                },
+            };
+
+            await handlePresetCommand(interaction, env, ctx);
+            await new Promise((resolve) => setTimeout(resolve, 100));
+
+            expect(mockEditPreset).toHaveBeenCalledWith(
+                expect.anything(),
+                'preset-1',
+                expect.objectContaining({
+                    dyes: expect.arrayContaining([2]), // dyeBlue.id
+                }),
+                expect.anything(),
+                expect.anything()
+            );
+        });
+
+        it('edits preset with dye addition extending array', async () => {
+            mockGetPreset.mockResolvedValueOnce({
+                ...mockPreset,
+                dyes: [1, 2], // Only 2 dyes
+            });
+
+            const interaction: DiscordInteraction = {
+                ...baseInteraction,
+                data: {
+                    ...baseInteraction.data,
+                    options: [{
+                        type: 1,
+                        name: 'edit',
+                        options: [
+                            { name: 'preset', value: 'preset-1' },
+                            { name: 'dye3', value: 'Celeste Green' }, // Add at position 3
+                        ],
+                    }],
+                },
+            };
+
+            await handlePresetCommand(interaction, env, ctx);
+            await new Promise((resolve) => setTimeout(resolve, 100));
+
+            expect(mockEditPreset).toHaveBeenCalledWith(
+                expect.anything(),
+                'preset-1',
+                expect.objectContaining({
+                    dyes: [1, 2, 3], // Extended with green
+                }),
+                expect.anything(),
+                expect.anything()
+            );
+        });
+
+        it('returns error for invalid dye name in edit', async () => {
+            const interaction: DiscordInteraction = {
+                ...baseInteraction,
+                data: {
+                    ...baseInteraction.data,
+                    options: [{
+                        type: 1,
+                        name: 'edit',
+                        options: [
+                            { name: 'preset', value: 'preset-1' },
+                            { name: 'dye1', value: 'Nonexistent Dye' },
+                        ],
+                    }],
+                },
+            };
+
+            await handlePresetCommand(interaction, env, ctx);
+            await new Promise((resolve) => setTimeout(resolve, 100));
+
+            expect(mockEditOriginalResponse).toHaveBeenCalledWith(
+                expect.anything(),
+                expect.anything(),
+                expect.objectContaining({
+                    embeds: expect.arrayContaining([
+                        expect.objectContaining({
+                            description: expect.stringContaining('Invalid dye'),
+                        }),
+                    ]),
+                })
+            );
+        });
+
+        it('returns error when dye count falls below 2', async () => {
+            mockGetPreset.mockResolvedValueOnce({
+                ...mockPreset,
+                dyes: [1], // Only 1 dye (invalid)
+            });
+
+            const interaction: DiscordInteraction = {
+                ...baseInteraction,
+                data: {
+                    ...baseInteraction.data,
+                    options: [{
+                        type: 1,
+                        name: 'edit',
+                        options: [
+                            { name: 'preset', value: 'preset-1' },
+                            { name: 'dye1', value: 'Rolanberry Red' },
+                        ],
+                    }],
+                },
+            };
+
+            await handlePresetCommand(interaction, env, ctx);
+            await new Promise((resolve) => setTimeout(resolve, 100));
+
+            expect(mockEditOriginalResponse).toHaveBeenCalledWith(
+                expect.anything(),
+                expect.anything(),
+                expect.objectContaining({
+                    embeds: expect.arrayContaining([
+                        expect.objectContaining({
+                            description: expect.stringContaining('2-5 dyes'),
+                        }),
+                    ]),
+                })
+            );
+        });
+
+        it('handles duplicate_dyes error from API', async () => {
+            mockEditPreset.mockResolvedValueOnce({
+                success: false,
+                error: 'duplicate_dyes',
+                duplicate: {
+                    id: 'other-preset',
+                    name: 'Existing Preset',
+                    author_name: 'Other Author',
+                },
+            });
+
+            const interaction: DiscordInteraction = {
+                ...baseInteraction,
+                data: {
+                    ...baseInteraction.data,
+                    options: [{
+                        type: 1,
+                        name: 'edit',
+                        options: [
+                            { name: 'preset', value: 'preset-1' },
+                            { name: 'name', value: 'Updated Name' },
+                        ],
+                    }],
+                },
+            };
+
+            await handlePresetCommand(interaction, env, ctx);
+            await new Promise((resolve) => setTimeout(resolve, 100));
+
+            expect(mockEditOriginalResponse).toHaveBeenCalledWith(
+                expect.anything(),
+                expect.anything(),
+                expect.objectContaining({
+                    embeds: expect.arrayContaining([
+                        expect.objectContaining({
+                            title: expect.stringContaining('Duplicate'),
+                        }),
+                    ]),
+                })
+            );
+        });
+
+        it('shows pending status when edit requires moderation', async () => {
+            mockEditPreset.mockResolvedValueOnce({
+                success: true,
+                preset: { ...mockPreset, name: 'Updated Name' },
+                moderation_status: 'pending',
+            });
+
+            const interaction: DiscordInteraction = {
+                ...baseInteraction,
+                data: {
+                    ...baseInteraction.data,
+                    options: [{
+                        type: 1,
+                        name: 'edit',
+                        options: [
+                            { name: 'preset', value: 'preset-1' },
+                            { name: 'name', value: 'Updated Name' },
+                        ],
+                    }],
+                },
+            };
+
+            const envWithMod = { ...env, MODERATION_CHANNEL_ID: 'mod-channel' } as Env;
+            await handlePresetCommand(interaction, envWithMod, ctx);
+            await new Promise((resolve) => setTimeout(resolve, 100));
+
+            expect(mockEditOriginalResponse).toHaveBeenCalledWith(
+                expect.anything(),
+                expect.anything(),
+                expect.objectContaining({
+                    embeds: expect.arrayContaining([
+                        expect.objectContaining({
+                            title: expect.stringContaining('Pending Review'),
+                        }),
+                    ]),
+                })
+            );
+            expect(mockSendMessage).toHaveBeenCalled();
+        });
+
+        it('shows approved status for immediate edit approval', async () => {
+            mockEditPreset.mockResolvedValueOnce({
+                success: true,
+                preset: { ...mockPreset, name: 'Updated Name' },
+                moderation_status: 'approved',
+            });
+
+            const interaction: DiscordInteraction = {
+                ...baseInteraction,
+                data: {
+                    ...baseInteraction.data,
+                    options: [{
+                        type: 1,
+                        name: 'edit',
+                        options: [
+                            { name: 'preset', value: 'preset-1' },
+                            { name: 'name', value: 'Updated Name' },
+                        ],
+                    }],
+                },
+            };
+
+            await handlePresetCommand(interaction, env, ctx);
+            await new Promise((resolve) => setTimeout(resolve, 100));
+
+            expect(mockEditOriginalResponse).toHaveBeenCalledWith(
+                expect.anything(),
+                expect.anything(),
+                expect.objectContaining({
+                    embeds: expect.arrayContaining([
+                        expect.objectContaining({
+                            title: expect.stringContaining('Updated'),
+                        }),
+                    ]),
+                })
+            );
+        });
+
+        it('handles API error during edit', async () => {
+            mockEditPreset.mockRejectedValueOnce(new Error('API error'));
+
+            const interaction: DiscordInteraction = {
+                ...baseInteraction,
+                data: {
+                    ...baseInteraction.data,
+                    options: [{
+                        type: 1,
+                        name: 'edit',
+                        options: [
+                            { name: 'preset', value: 'preset-1' },
+                            { name: 'name', value: 'Updated Name' },
+                        ],
+                    }],
+                },
+            };
+
+            await handlePresetCommand(interaction, env, ctx);
+            await new Promise((resolve) => setTimeout(resolve, 100));
+
+            expect(mockEditOriginalResponse).toHaveBeenCalledWith(
+                expect.anything(),
+                expect.anything(),
+                expect.objectContaining({
+                    embeds: expect.arrayContaining([
+                        expect.objectContaining({
+                            description: expect.stringContaining('Failed to edit'),
+                        }),
+                    ]),
+                })
+            );
+        });
     });
 
     describe('/preset moderate', () => {
@@ -706,6 +1121,354 @@ describe('/preset command', () => {
             const body = await res.json();
 
             expect(body.type).toBe(5); // Deferred
+        });
+
+        it('returns error when action is missing', async () => {
+            mockIsModerator.mockReturnValue(true);
+
+            const interaction: DiscordInteraction = {
+                ...baseInteraction,
+                data: {
+                    ...baseInteraction.data,
+                    options: [{
+                        type: 1,
+                        name: 'moderate',
+                        options: [],
+                    }],
+                },
+            };
+
+            const res = await handlePresetCommand(interaction, env, ctx);
+            const body = await res.json();
+
+            expect(body.data.content).toBe('Missing action');
+        });
+
+        it('shows empty queue message when no pending presets', async () => {
+            mockIsModerator.mockReturnValue(true);
+            const { getPendingPresets } = await import('../../services/preset-api.js');
+            vi.mocked(getPendingPresets).mockResolvedValueOnce([]);
+
+            const interaction: DiscordInteraction = {
+                ...baseInteraction,
+                data: {
+                    ...baseInteraction.data,
+                    options: [{
+                        type: 1,
+                        name: 'moderate',
+                        options: [{ name: 'action', value: 'pending' }],
+                    }],
+                },
+            };
+
+            await handlePresetCommand(interaction, env, ctx);
+            await new Promise((resolve) => setTimeout(resolve, 100));
+
+            expect(mockEditOriginalResponse).toHaveBeenCalledWith(
+                expect.anything(),
+                expect.anything(),
+                expect.objectContaining({
+                    embeds: expect.arrayContaining([
+                        expect.objectContaining({
+                            title: expect.stringContaining('preset.moderation.pendingQueue'),
+                        }),
+                    ]),
+                })
+            );
+        });
+
+        it('shows list of pending presets', async () => {
+            mockIsModerator.mockReturnValue(true);
+            const { getPendingPresets } = await import('../../services/preset-api.js');
+            vi.mocked(getPendingPresets).mockResolvedValueOnce([
+                { ...mockPreset, id: 'pending-1', name: 'Pending Preset 1', status: 'pending' },
+                { ...mockPreset, id: 'pending-2', name: 'Pending Preset 2', status: 'pending' },
+            ]);
+
+            const interaction: DiscordInteraction = {
+                ...baseInteraction,
+                data: {
+                    ...baseInteraction.data,
+                    options: [{
+                        type: 1,
+                        name: 'moderate',
+                        options: [{ name: 'action', value: 'pending' }],
+                    }],
+                },
+            };
+
+            await handlePresetCommand(interaction, env, ctx);
+            await new Promise((resolve) => setTimeout(resolve, 100));
+
+            expect(mockEditOriginalResponse).toHaveBeenCalledWith(
+                expect.anything(),
+                expect.anything(),
+                expect.objectContaining({
+                    embeds: expect.arrayContaining([
+                        expect.objectContaining({
+                            description: expect.stringContaining('Pending Preset 1'),
+                        }),
+                    ]),
+                })
+            );
+        });
+
+        it('returns error when approving without preset_id', async () => {
+            mockIsModerator.mockReturnValue(true);
+
+            const interaction: DiscordInteraction = {
+                ...baseInteraction,
+                data: {
+                    ...baseInteraction.data,
+                    options: [{
+                        type: 1,
+                        name: 'moderate',
+                        options: [{ name: 'action', value: 'approve' }],
+                    }],
+                },
+            };
+
+            await handlePresetCommand(interaction, env, ctx);
+            await new Promise((resolve) => setTimeout(resolve, 100));
+
+            expect(mockEditOriginalResponse).toHaveBeenCalledWith(
+                expect.anything(),
+                expect.anything(),
+                expect.objectContaining({
+                    embeds: expect.arrayContaining([
+                        expect.objectContaining({
+                            description: 'preset.moderation.missingId',
+                        }),
+                    ]),
+                })
+            );
+        });
+
+        it('approves preset successfully', async () => {
+            mockIsModerator.mockReturnValue(true);
+            const { approvePreset } = await import('../../services/preset-api.js');
+            vi.mocked(approvePreset).mockResolvedValueOnce({ ...mockPreset, status: 'approved' });
+
+            const interaction: DiscordInteraction = {
+                ...baseInteraction,
+                data: {
+                    ...baseInteraction.data,
+                    options: [{
+                        type: 1,
+                        name: 'moderate',
+                        options: [
+                            { name: 'action', value: 'approve' },
+                            { name: 'preset_id', value: 'preset-1' },
+                        ],
+                    }],
+                },
+            };
+
+            await handlePresetCommand(interaction, env, ctx);
+            await new Promise((resolve) => setTimeout(resolve, 100));
+
+            expect(approvePreset).toHaveBeenCalledWith(env, 'preset-1', 'user-1', undefined);
+        });
+
+        it('returns error when rejecting without preset_id', async () => {
+            mockIsModerator.mockReturnValue(true);
+
+            const interaction: DiscordInteraction = {
+                ...baseInteraction,
+                data: {
+                    ...baseInteraction.data,
+                    options: [{
+                        type: 1,
+                        name: 'moderate',
+                        options: [
+                            { name: 'action', value: 'reject' },
+                            { name: 'reason', value: 'Some reason' },
+                        ],
+                    }],
+                },
+            };
+
+            await handlePresetCommand(interaction, env, ctx);
+            await new Promise((resolve) => setTimeout(resolve, 100));
+
+            expect(mockEditOriginalResponse).toHaveBeenCalledWith(
+                expect.anything(),
+                expect.anything(),
+                expect.objectContaining({
+                    embeds: expect.arrayContaining([
+                        expect.objectContaining({
+                            description: 'preset.moderation.missingId',
+                        }),
+                    ]),
+                })
+            );
+        });
+
+        it('returns error when rejecting without reason', async () => {
+            mockIsModerator.mockReturnValue(true);
+
+            const interaction: DiscordInteraction = {
+                ...baseInteraction,
+                data: {
+                    ...baseInteraction.data,
+                    options: [{
+                        type: 1,
+                        name: 'moderate',
+                        options: [
+                            { name: 'action', value: 'reject' },
+                            { name: 'preset_id', value: 'preset-1' },
+                        ],
+                    }],
+                },
+            };
+
+            await handlePresetCommand(interaction, env, ctx);
+            await new Promise((resolve) => setTimeout(resolve, 100));
+
+            expect(mockEditOriginalResponse).toHaveBeenCalledWith(
+                expect.anything(),
+                expect.anything(),
+                expect.objectContaining({
+                    embeds: expect.arrayContaining([
+                        expect.objectContaining({
+                            description: 'preset.moderation.missingReason',
+                        }),
+                    ]),
+                })
+            );
+        });
+
+        it('rejects preset successfully', async () => {
+            mockIsModerator.mockReturnValue(true);
+            const { rejectPreset } = await import('../../services/preset-api.js');
+            vi.mocked(rejectPreset).mockResolvedValueOnce({ ...mockPreset, status: 'rejected' });
+
+            const interaction: DiscordInteraction = {
+                ...baseInteraction,
+                data: {
+                    ...baseInteraction.data,
+                    options: [{
+                        type: 1,
+                        name: 'moderate',
+                        options: [
+                            { name: 'action', value: 'reject' },
+                            { name: 'preset_id', value: 'preset-1' },
+                            { name: 'reason', value: 'Contains inappropriate content' },
+                        ],
+                    }],
+                },
+            };
+
+            await handlePresetCommand(interaction, env, ctx);
+            await new Promise((resolve) => setTimeout(resolve, 100));
+
+            expect(rejectPreset).toHaveBeenCalledWith(env, 'preset-1', 'user-1', 'Contains inappropriate content');
+        });
+
+        it('shows moderation stats', async () => {
+            mockIsModerator.mockReturnValue(true);
+            const { getModerationStats } = await import('../../services/preset-api.js');
+            vi.mocked(getModerationStats).mockResolvedValueOnce({
+                pending: 5,
+                approved: 100,
+                rejected: 10,
+                flagged: 2,
+                actions_last_week: 25,
+            });
+
+            const interaction: DiscordInteraction = {
+                ...baseInteraction,
+                data: {
+                    ...baseInteraction.data,
+                    options: [{
+                        type: 1,
+                        name: 'moderate',
+                        options: [{ name: 'action', value: 'stats' }],
+                    }],
+                },
+            };
+
+            await handlePresetCommand(interaction, env, ctx);
+            await new Promise((resolve) => setTimeout(resolve, 100));
+
+            expect(getModerationStats).toHaveBeenCalled();
+            expect(mockEditOriginalResponse).toHaveBeenCalledWith(
+                expect.anything(),
+                expect.anything(),
+                expect.objectContaining({
+                    embeds: expect.arrayContaining([
+                        expect.objectContaining({
+                            fields: expect.arrayContaining([
+                                expect.objectContaining({ name: '🟡 Pending', value: '5' }),
+                            ]),
+                        }),
+                    ]),
+                })
+            );
+        });
+
+        it('handles unknown action', async () => {
+            mockIsModerator.mockReturnValue(true);
+
+            const interaction: DiscordInteraction = {
+                ...baseInteraction,
+                data: {
+                    ...baseInteraction.data,
+                    options: [{
+                        type: 1,
+                        name: 'moderate',
+                        options: [{ name: 'action', value: 'unknown_action' }],
+                    }],
+                },
+            };
+
+            await handlePresetCommand(interaction, env, ctx);
+            await new Promise((resolve) => setTimeout(resolve, 100));
+
+            expect(mockEditOriginalResponse).toHaveBeenCalledWith(
+                expect.anything(),
+                expect.anything(),
+                expect.objectContaining({
+                    embeds: expect.arrayContaining([
+                        expect.objectContaining({
+                            description: expect.stringContaining('unknown_action'),
+                        }),
+                    ]),
+                })
+            );
+        });
+
+        it('handles API errors gracefully', async () => {
+            mockIsModerator.mockReturnValue(true);
+            const { getPendingPresets } = await import('../../services/preset-api.js');
+            vi.mocked(getPendingPresets).mockRejectedValueOnce(new Error('API unavailable'));
+
+            const interaction: DiscordInteraction = {
+                ...baseInteraction,
+                data: {
+                    ...baseInteraction.data,
+                    options: [{
+                        type: 1,
+                        name: 'moderate',
+                        options: [{ name: 'action', value: 'pending' }],
+                    }],
+                },
+            };
+
+            await handlePresetCommand(interaction, env, ctx);
+            await new Promise((resolve) => setTimeout(resolve, 100));
+
+            expect(mockEditOriginalResponse).toHaveBeenCalledWith(
+                expect.anything(),
+                expect.anything(),
+                expect.objectContaining({
+                    embeds: expect.arrayContaining([
+                        expect.objectContaining({
+                            description: expect.stringContaining('failed'),
+                        }),
+                    ]),
+                })
+            );
         });
     });
 

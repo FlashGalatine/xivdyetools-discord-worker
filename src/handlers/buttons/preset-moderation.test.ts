@@ -226,5 +226,172 @@ describe('preset-moderation.ts', () => {
 
             expect(body.data.content).toContain('Invalid');
         });
+
+        it('should handle DM user without member (user object)', async () => {
+            const interaction = {
+                id: '123',
+                token: 'token',
+                application_id: 'app',
+                data: { custom_id: 'preset_revert_abc123' },
+                user: { id: 'mod123', username: 'Mod' }, // DM style
+            };
+
+            const response = await handlePresetRevertButton(interaction, mockEnv, mockCtx);
+            const body = await response.json();
+
+            expect(body.type).toBe(InteractionResponseType.MODAL);
+        });
+    });
+
+    describe('handlePresetApproveButton async processing', () => {
+        it('should process approval without channel_id (skip message edit)', async () => {
+            const interaction = {
+                id: '123',
+                token: 'token',
+                application_id: 'app',
+                data: { custom_id: 'preset_approve_abc123' },
+                member: { user: { id: 'mod123', username: 'Mod' } },
+                // No channel_id
+                message: { id: 'msg123', embeds: [{ title: 'Test' }] },
+            };
+
+            const response = await handlePresetApproveButton(interaction, mockEnv, mockCtx);
+            const body = await response.json();
+
+            expect(body.type).toBe(InteractionResponseType.DEFERRED_UPDATE_MESSAGE);
+            expect(mockCtx.waitUntil).toHaveBeenCalled();
+        });
+
+        it('should process approval without message.id (skip message edit)', async () => {
+            const interaction = {
+                id: '123',
+                token: 'token',
+                application_id: 'app',
+                data: { custom_id: 'preset_approve_abc123' },
+                member: { user: { id: 'mod123', username: 'Mod' } },
+                channel_id: 'channel123',
+                // No message
+            };
+
+            const response = await handlePresetApproveButton(interaction, mockEnv, mockCtx);
+            const body = await response.json();
+
+            expect(body.type).toBe(InteractionResponseType.DEFERRED_UPDATE_MESSAGE);
+            expect(mockCtx.waitUntil).toHaveBeenCalled();
+        });
+
+        it('should process approval without SUBMISSION_LOG_CHANNEL_ID (skip notification)', async () => {
+            const envWithoutLog = {
+                ...mockEnv,
+                SUBMISSION_LOG_CHANNEL_ID: undefined,
+            } as any;
+
+            const interaction = {
+                id: '123',
+                token: 'token',
+                application_id: 'app',
+                data: { custom_id: 'preset_approve_abc123' },
+                member: { user: { id: 'mod123', username: 'Mod' } },
+                channel_id: 'channel123',
+                message: { id: 'msg123', embeds: [{ title: 'Test' }] },
+            };
+
+            const response = await handlePresetApproveButton(interaction, envWithoutLog, mockCtx);
+            const body = await response.json();
+
+            expect(body.type).toBe(InteractionResponseType.DEFERRED_UPDATE_MESSAGE);
+        });
+
+        it('should handle API error during approval with channel/message', async () => {
+            const { approvePreset } = await import('../../services/preset-api.js');
+            vi.mocked(approvePreset).mockRejectedValueOnce(new Error('API error'));
+
+            const interaction = {
+                id: '123',
+                token: 'token',
+                application_id: 'app',
+                data: { custom_id: 'preset_approve_abc123' },
+                member: { user: { id: 'mod123', username: 'Mod' } },
+                channel_id: 'channel123',
+                message: { id: 'msg123', embeds: [{ title: 'Test', fields: [] }] },
+            };
+
+            const response = await handlePresetApproveButton(interaction, mockEnv, mockCtx);
+            const body = await response.json();
+
+            expect(body.type).toBe(InteractionResponseType.DEFERRED_UPDATE_MESSAGE);
+            // Wait for async processing
+            await new Promise(resolve => setTimeout(resolve, 50));
+            const { editMessage } = await import('../../utils/discord-api.js');
+            expect(editMessage).toHaveBeenCalled();
+        });
+
+        it('should handle API error during approval without channel/message (silent)', async () => {
+            const { approvePreset } = await import('../../services/preset-api.js');
+            vi.mocked(approvePreset).mockRejectedValueOnce(new Error('API error'));
+
+            const interaction = {
+                id: '123',
+                token: 'token',
+                application_id: 'app',
+                data: { custom_id: 'preset_approve_abc123' },
+                member: { user: { id: 'mod123', username: 'Mod' } },
+                // No channel_id or message - silent error handling
+            };
+
+            const response = await handlePresetApproveButton(interaction, mockEnv, mockCtx);
+            const body = await response.json();
+
+            expect(body.type).toBe(InteractionResponseType.DEFERRED_UPDATE_MESSAGE);
+        });
+
+        it('should handle DM user without member (user object)', async () => {
+            const interaction = {
+                id: '123',
+                token: 'token',
+                application_id: 'app',
+                data: { custom_id: 'preset_approve_abc123' },
+                user: { id: 'mod123', username: 'Mod' }, // DM style
+                channel_id: 'channel123',
+                message: { id: 'msg123', embeds: [{ title: 'Test' }] },
+            };
+
+            const response = await handlePresetApproveButton(interaction, mockEnv, mockCtx);
+            const body = await response.json();
+
+            expect(body.type).toBe(InteractionResponseType.DEFERRED_UPDATE_MESSAGE);
+        });
+    });
+
+    describe('handlePresetRejectButton edge cases', () => {
+        it('should return ephemeral error for missing presetId', async () => {
+            const interaction = {
+                id: '123',
+                token: 'token',
+                application_id: 'app',
+                data: { custom_id: 'preset_reject_' }, // No preset ID
+                member: { user: { id: 'mod123', username: 'Mod' } },
+            };
+
+            const response = await handlePresetRejectButton(interaction, mockEnv, mockCtx);
+            const body = await response.json();
+
+            expect(body.data.content).toContain('Invalid');
+        });
+
+        it('should handle DM user without member (user object)', async () => {
+            const interaction = {
+                id: '123',
+                token: 'token',
+                application_id: 'app',
+                data: { custom_id: 'preset_reject_abc123' },
+                user: { id: 'mod123', username: 'Mod' }, // DM style
+            };
+
+            const response = await handlePresetRejectButton(interaction, mockEnv, mockCtx);
+            const body = await response.json();
+
+            expect(body.type).toBe(InteractionResponseType.MODAL);
+        });
     });
 });

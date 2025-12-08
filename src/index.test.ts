@@ -607,6 +607,429 @@ describe('index.ts', () => {
           { status: 'approved' }
         );
       });
+
+      it('should handle preset edit autocomplete (user own presets)', async () => {
+        const { verifyDiscordRequest } = await import('./utils/verify.js');
+        const { getMyPresets } = await import('./services/preset-api.js');
+
+        vi.mocked(verifyDiscordRequest).mockResolvedValue({
+          isValid: true,
+          body: JSON.stringify({
+            type: InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE,
+            data: {
+              name: 'preset',
+              options: [
+                {
+                  name: 'edit',
+                  type: 1,
+                  options: [{ name: 'preset', value: 'my', focused: true }],
+                },
+              ],
+            },
+            user: { id: 'user-123' },
+          }),
+          error: '',
+        });
+        vi.mocked(getMyPresets).mockResolvedValue([
+          { id: 'preset-1', name: 'My Preset', status: 'approved' },
+          { id: 'preset-2', name: 'My Pending Preset', status: 'pending' },
+        ]);
+
+        const req = new Request('http://localhost/', {
+          method: 'POST',
+          body: JSON.stringify({
+            type: InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE,
+            data: {
+              name: 'preset',
+              options: [
+                {
+                  name: 'edit',
+                  type: 1,
+                  options: [{ name: 'preset', value: 'my', focused: true }],
+                },
+              ],
+            },
+            user: { id: 'user-123' },
+          }),
+        });
+
+        const res = await app.fetch(req, mockEnv, mockCtx);
+        expect(res.status).toBe(200);
+        const data = await res.json();
+        expect(getMyPresets).toHaveBeenCalledWith(mockEnv, 'user-123');
+      });
+
+      it('should handle preset moderate autocomplete (pending presets)', async () => {
+        const { verifyDiscordRequest } = await import('./utils/verify.js');
+        const { searchPresetsForAutocomplete } = await import('./services/preset-api.js');
+
+        vi.mocked(verifyDiscordRequest).mockResolvedValue({
+          isValid: true,
+          body: JSON.stringify({
+            type: InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE,
+            data: {
+              name: 'preset',
+              options: [
+                {
+                  name: 'moderate',
+                  type: 1,
+                  options: [{ name: 'preset_id', value: 'test', focused: true }],
+                },
+              ],
+            },
+            user: { id: 'user-123' },
+          }),
+          error: '',
+        });
+        vi.mocked(searchPresetsForAutocomplete).mockResolvedValue([
+          { name: 'Pending Preset', value: 'preset-pending' },
+        ]);
+
+        const req = new Request('http://localhost/', {
+          method: 'POST',
+          body: JSON.stringify({
+            type: InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE,
+            data: {
+              name: 'preset',
+              options: [
+                {
+                  name: 'moderate',
+                  type: 1,
+                  options: [{ name: 'preset_id', value: 'test', focused: true }],
+                },
+              ],
+            },
+            user: { id: 'user-123' },
+          }),
+        });
+
+        const res = await app.fetch(req, mockEnv, mockCtx);
+        expect(res.status).toBe(200);
+        expect(searchPresetsForAutocomplete).toHaveBeenCalledWith(
+          mockEnv,
+          'test',
+          { status: 'pending' }
+        );
+      });
+
+      it('should handle preset dye autocomplete', async () => {
+        const { verifyDiscordRequest } = await import('./utils/verify.js');
+
+        vi.mocked(verifyDiscordRequest).mockResolvedValue({
+          isValid: true,
+          body: JSON.stringify({
+            type: InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE,
+            data: {
+              name: 'preset',
+              options: [
+                {
+                  name: 'submit',
+                  type: 1,
+                  options: [{ name: 'dye1', value: 'snow', focused: true }],
+                },
+              ],
+            },
+            user: { id: 'user-123' },
+          }),
+          error: '',
+        });
+
+        const req = new Request('http://localhost/', {
+          method: 'POST',
+          body: JSON.stringify({
+            type: InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE,
+            data: {
+              name: 'preset',
+              options: [
+                {
+                  name: 'submit',
+                  type: 1,
+                  options: [{ name: 'dye1', value: 'snow', focused: true }],
+                },
+              ],
+            },
+            user: { id: 'user-123' },
+          }),
+        });
+
+        const res = await app.fetch(req, mockEnv, mockCtx);
+        expect(res.status).toBe(200);
+        const data = await res.json();
+        expect(data.type).toBe(InteractionResponseType.APPLICATION_COMMAND_AUTOCOMPLETE_RESULT);
+      });
+
+      it('should handle dye autocomplete with empty query (show popular dyes)', async () => {
+        const { verifyDiscordRequest } = await import('./utils/verify.js');
+
+        vi.mocked(verifyDiscordRequest).mockResolvedValue({
+          isValid: true,
+          body: JSON.stringify({
+            type: InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE,
+            data: {
+              name: 'match',
+              options: [{ name: 'color', value: '', focused: true }],
+            },
+            user: { id: 'user-123' },
+          }),
+          error: '',
+        });
+
+        const req = new Request('http://localhost/', {
+          method: 'POST',
+          body: JSON.stringify({
+            type: InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE,
+            data: {
+              name: 'match',
+              options: [{ name: 'color', value: '', focused: true }],
+            },
+            user: { id: 'user-123' },
+          }),
+        });
+
+        const res = await app.fetch(req, mockEnv, mockCtx);
+        expect(res.status).toBe(200);
+        const data = await res.json();
+        expect(data.type).toBe(InteractionResponseType.APPLICATION_COMMAND_AUTOCOMPLETE_RESULT);
+        expect(data.data.choices).toBeInstanceOf(Array);
+      });
+
+      it('should handle collection dye autocomplete', async () => {
+        const { verifyDiscordRequest } = await import('./utils/verify.js');
+
+        vi.mocked(verifyDiscordRequest).mockResolvedValue({
+          isValid: true,
+          body: JSON.stringify({
+            type: InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE,
+            data: {
+              name: 'collection',
+              options: [
+                {
+                  name: 'add',
+                  type: 1,
+                  options: [{ name: 'dye', value: 'red', focused: true }],
+                },
+              ],
+            },
+            user: { id: 'user-123' },
+          }),
+          error: '',
+        });
+
+        const req = new Request('http://localhost/', {
+          method: 'POST',
+          body: JSON.stringify({
+            type: InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE,
+            data: {
+              name: 'collection',
+              options: [
+                {
+                  name: 'add',
+                  type: 1,
+                  options: [{ name: 'dye', value: 'red', focused: true }],
+                },
+              ],
+            },
+            user: { id: 'user-123' },
+          }),
+        });
+
+        const res = await app.fetch(req, mockEnv, mockCtx);
+        expect(res.status).toBe(200);
+        const data = await res.json();
+        expect(data.type).toBe(InteractionResponseType.APPLICATION_COMMAND_AUTOCOMPLETE_RESULT);
+      });
+
+      it('should handle collection autocomplete with empty collections', async () => {
+        const { verifyDiscordRequest } = await import('./utils/verify.js');
+        const { getCollections } = await import('./services/user-storage.js');
+
+        vi.mocked(verifyDiscordRequest).mockResolvedValue({
+          isValid: true,
+          body: JSON.stringify({
+            type: InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE,
+            data: {
+              name: 'collection',
+              options: [
+                {
+                  name: 'show',
+                  type: 1,
+                  options: [{ name: 'name', value: 'test', focused: true }],
+                },
+              ],
+            },
+            user: { id: 'user-123' },
+          }),
+          error: '',
+        });
+        vi.mocked(getCollections).mockResolvedValue([]);
+
+        const req = new Request('http://localhost/', {
+          method: 'POST',
+          body: JSON.stringify({
+            type: InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE,
+            data: {
+              name: 'collection',
+              options: [
+                {
+                  name: 'show',
+                  type: 1,
+                  options: [{ name: 'name', value: 'test', focused: true }],
+                },
+              ],
+            },
+            user: { id: 'user-123' },
+          }),
+        });
+
+        const res = await app.fetch(req, mockEnv, mockCtx);
+        expect(res.status).toBe(200);
+        const data = await res.json();
+        expect(data.data.choices).toEqual([]);
+      });
+
+      it('should handle collection autocomplete error gracefully', async () => {
+        const { verifyDiscordRequest } = await import('./utils/verify.js');
+        const { getCollections } = await import('./services/user-storage.js');
+
+        vi.mocked(verifyDiscordRequest).mockResolvedValue({
+          isValid: true,
+          body: JSON.stringify({
+            type: InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE,
+            data: {
+              name: 'collection',
+              options: [
+                {
+                  name: 'show',
+                  type: 1,
+                  options: [{ name: 'name', value: 'test', focused: true }],
+                },
+              ],
+            },
+            user: { id: 'user-123' },
+          }),
+          error: '',
+        });
+        vi.mocked(getCollections).mockRejectedValue(new Error('KV error'));
+
+        const req = new Request('http://localhost/', {
+          method: 'POST',
+          body: JSON.stringify({
+            type: InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE,
+            data: {
+              name: 'collection',
+              options: [
+                {
+                  name: 'show',
+                  type: 1,
+                  options: [{ name: 'name', value: 'test', focused: true }],
+                },
+              ],
+            },
+            user: { id: 'user-123' },
+          }),
+        });
+
+        const res = await app.fetch(req, mockEnv, mockCtx);
+        expect(res.status).toBe(200);
+        const data = await res.json();
+        expect(data.data.choices).toEqual([]);
+      });
+
+      it('should handle getMyPresets with empty presets', async () => {
+        const { verifyDiscordRequest } = await import('./utils/verify.js');
+        const { getMyPresets } = await import('./services/preset-api.js');
+
+        vi.mocked(verifyDiscordRequest).mockResolvedValue({
+          isValid: true,
+          body: JSON.stringify({
+            type: InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE,
+            data: {
+              name: 'preset',
+              options: [
+                {
+                  name: 'edit',
+                  type: 1,
+                  options: [{ name: 'preset', value: 'test', focused: true }],
+                },
+              ],
+            },
+            user: { id: 'user-123' },
+          }),
+          error: '',
+        });
+        vi.mocked(getMyPresets).mockResolvedValue([]);
+
+        const req = new Request('http://localhost/', {
+          method: 'POST',
+          body: JSON.stringify({
+            type: InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE,
+            data: {
+              name: 'preset',
+              options: [
+                {
+                  name: 'edit',
+                  type: 1,
+                  options: [{ name: 'preset', value: 'test', focused: true }],
+                },
+              ],
+            },
+            user: { id: 'user-123' },
+          }),
+        });
+
+        const res = await app.fetch(req, mockEnv, mockCtx);
+        expect(res.status).toBe(200);
+        const data = await res.json();
+        expect(data.data.choices).toEqual([]);
+      });
+
+      it('should handle getMyPresets error gracefully', async () => {
+        const { verifyDiscordRequest } = await import('./utils/verify.js');
+        const { getMyPresets } = await import('./services/preset-api.js');
+
+        vi.mocked(verifyDiscordRequest).mockResolvedValue({
+          isValid: true,
+          body: JSON.stringify({
+            type: InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE,
+            data: {
+              name: 'preset',
+              options: [
+                {
+                  name: 'edit',
+                  type: 1,
+                  options: [{ name: 'preset', value: 'test', focused: true }],
+                },
+              ],
+            },
+            user: { id: 'user-123' },
+          }),
+          error: '',
+        });
+        vi.mocked(getMyPresets).mockRejectedValue(new Error('API error'));
+
+        const req = new Request('http://localhost/', {
+          method: 'POST',
+          body: JSON.stringify({
+            type: InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE,
+            data: {
+              name: 'preset',
+              options: [
+                {
+                  name: 'edit',
+                  type: 1,
+                  options: [{ name: 'preset', value: 'test', focused: true }],
+                },
+              ],
+            },
+            user: { id: 'user-123' },
+          }),
+        });
+
+        const res = await app.fetch(req, mockEnv, mockCtx);
+        expect(res.status).toBe(200);
+        const data = await res.json();
+        expect(data.data.choices).toEqual([]);
+      });
     });
 
     describe('MESSAGE_COMPONENT interactions', () => {
@@ -726,6 +1149,36 @@ describe('index.ts', () => {
         expect(res.status).toBe(200);
         const data = await res.json();
         expect(data.data.content).toContain('Unknown modal');
+      });
+
+      it('should route preset revert modal', async () => {
+        const { verifyDiscordRequest } = await import('./utils/verify.js');
+        const { isPresetRejectionModal, isPresetRevertModal, handlePresetRevertModal } = await import('./handlers/modals/index.js');
+
+        vi.mocked(verifyDiscordRequest).mockResolvedValue({
+          isValid: true,
+          body: JSON.stringify({
+            type: InteractionType.MODAL_SUBMIT,
+            data: { custom_id: 'preset_revert_modal_preset-123' },
+            user: { id: 'user-123' },
+          }),
+          error: '',
+        });
+        vi.mocked(isPresetRejectionModal).mockReturnValue(false);
+        vi.mocked(isPresetRevertModal).mockReturnValue(true);
+        vi.mocked(handlePresetRevertModal).mockResolvedValue(new Response());
+
+        const req = new Request('http://localhost/', {
+          method: 'POST',
+          body: JSON.stringify({
+            type: InteractionType.MODAL_SUBMIT,
+            data: { custom_id: 'preset_revert_modal_preset-123' },
+            user: { id: 'user-123' },
+          }),
+        });
+
+        await app.fetch(req, mockEnv, mockCtx);
+        expect(handlePresetRevertModal).toHaveBeenCalled();
       });
     });
 

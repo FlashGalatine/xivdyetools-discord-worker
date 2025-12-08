@@ -187,5 +187,52 @@ describe('svg/harmony-wheel.ts', () => {
             // The center should have the theme background color
             expect(svg).toContain('fill="#1a1a2e"');
         });
+
+        it('should handle green-dominant color (max === g branch)', () => {
+            // Pure green color should hit the max === g branch in rgbToHue
+            const svg = generateHarmonyWheel({
+                baseColor: '#00ff00', // Pure green - max is g
+                harmonyType: 'triadic',
+                dyes: [{ id: 1, name: 'Green Test', hex: '#00ff00' }],
+            });
+
+            expect(svg).toContain('<svg');
+            expect(svg).toContain('fill="#00ff00"');
+        });
+
+        it('should handle achromatic color (gray - delta === 0)', () => {
+            // Gray color where r === g === b, delta is 0
+            const svg = generateHarmonyWheel({
+                baseColor: '#808080', // Gray - achromatic
+                harmonyType: 'monochromatic',
+                dyes: [{ id: 1, name: 'Gray Test', hex: '#808080' }],
+            });
+
+            expect(svg).toContain('<svg');
+            expect(svg).toContain('fill="#808080"');
+        });
+
+        it('should handle negative hue wrap (hue < 0)', () => {
+            // Certain colors can produce negative hue in calculation that gets wrapped
+            const svg = generateHarmonyWheel({
+                baseColor: '#ff0001', // Slightly off red
+                harmonyType: 'complementary',
+                dyes: [{ id: 1, name: 'Test', hex: '#0000ff' }],
+            });
+
+            expect(svg).toContain('<svg');
+        });
+
+        it('should handle blue-dominant color (max === b branch)', () => {
+            // Pure blue color to hit max === b branch
+            const svg = generateHarmonyWheel({
+                baseColor: '#0000ff', // Pure blue - max is b
+                harmonyType: 'triadic',
+                dyes: [{ id: 1, name: 'Blue Test', hex: '#0000ff' }],
+            });
+
+            expect(svg).toContain('<svg');
+            expect(svg).toContain('fill="#0000ff"');
+        });
     });
 });

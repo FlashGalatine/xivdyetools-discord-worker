@@ -12,17 +12,28 @@ import type { DiscordInteraction, Env } from '../../types/env.js';
 const dyeA = { id: 101, name: 'Dye One', hex: '#101010', category: 'General', itemID: 1001 };
 const dyeB = { id: 102, name: 'Dye Two', hex: '#202020', category: 'General', itemID: 1002 };
 const dyeRose = { id: 103, name: 'Rose Pink', hex: '#ff6699', category: 'General', itemID: 1003 };
+const dyeFacewear = { id: 104, name: 'Facewear Dye', hex: '#303030', category: 'Facewear', itemID: 1004 };
+
+// Mock function references for test-specific overrides
+let mockSearchByName = vi.fn((query: string) => {
+  if (query.toLowerCase().includes('rose')) return [dyeRose];
+  if (query.toLowerCase().includes('facewear')) return [dyeFacewear];
+  return [];
+});
+
+let mockFindClosestDye = vi.fn((_hex: string, excludeIds: number[] = []) => {
+  if (!excludeIds.includes(dyeA.id)) return dyeA;
+  if (!excludeIds.includes(dyeB.id)) return dyeB;
+  return null;
+});
 
 vi.mock('xivdyetools-core', () => {
   class MockDyeService {
     searchByName(query: string) {
-      if (query.toLowerCase().includes('rose')) return [dyeRose];
-      return [];
+      return mockSearchByName(query);
     }
-    findClosestDye(_hex: string, excludeIds: number[] = []) {
-      if (!excludeIds.includes(dyeA.id)) return dyeA;
-      if (!excludeIds.includes(dyeB.id)) return dyeB;
-      return null;
+    findClosestDye(hex: string, excludeIds: number[] = []) {
+      return mockFindClosestDye(hex, excludeIds);
     }
   }
 
@@ -58,7 +69,9 @@ vi.mock('xivdyetools-core', () => {
   return { DyeService: MockDyeService, dyeDatabase: [], ColorService };
 });
 
-vi.mock('../../services/emoji.js', () => ({ getDyeEmoji: () => '🎨' }));
+// Mock emoji - can be overridden per test
+let mockGetDyeEmoji = vi.fn(() => '🎨');
+vi.mock('../../services/emoji.js', () => ({ getDyeEmoji: (...args: any[]) => mockGetDyeEmoji(...args) }));
 vi.mock('../../services/i18n.js', () => ({
   initializeLocale: vi.fn().mockResolvedValue(undefined),
   getLocalizedDyeName: (_id: number, name: string) => `${name}-localized`,
@@ -144,9 +157,22 @@ const ctx: ExecutionContext = {
 describe('/match command', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Reset mock implementations to default behavior
+    mockSearchByName = vi.fn((query: string) => {
+      if (query.toLowerCase().includes('rose')) return [dyeRose];
+      if (query.toLowerCase().includes('facewear')) return [dyeFacewear];
+      return [];
+    });
+    mockFindClosestDye = vi.fn((_hex: string, excludeIds: number[] = []) => {
+      if (!excludeIds.includes(dyeA.id)) return dyeA;
+      if (!excludeIds.includes(dyeB.id)) return dyeB;
+      return null;
+    });
+    mockGetDyeEmoji = vi.fn(() => '🎨');
   });
 
-  it('returns error when color input missing', async () => {
+  describe('input validation', () => {
+    it('returns error when color input missing', async () => {
     const interaction = { ...baseInteraction, data: { ...baseInteraction.data, options: [] } };
 
     const res = await handleMatchCommand(interaction, env, ctx);
@@ -169,7 +195,71 @@ describe('/match command', () => {
     expect(body.data.flags).toBe(64);
   });
 
-  it('returns single match response with copy buttons', async () => {
+    it('accepts 3-digit hex color (#FFF)', async () => {
+      const interaction: DiscordInteraction = {
+        ...baseInteraction,
+        data: { ...baseInteraction.data, options: [{ name: 'color', value: '#FFF' }] },
+      };
+
+      const res = await handleMatchCommand(interaction, env, ctx);
+      const body = await res.json();
+
+      expect(body.data.embeds[0].title).toContain('Closest match');
+    });
+
+    it('accepts hex color without # prefix', async () => {
+      const interaction: DiscordInteraction = {
+        ...baseInteraction,
+        data: { ...baseInteraction.data, options: [{ name: 'color', value: '112233' }] },
+      };
+
+      const res = await handleMatchCommand(interaction, env, ctx);
+      const body = await res.json();
+
+      expect(body.data.embeds[0].title).toContain('Closest match');
+    });
+
+    it('clamps count to minimum of 1', async () => {
+      const interaction: DiscordInteraction = {
+        ...baseInteraction,
+        data: {
+          ...baseInteraction.data,
+          options: [
+            { name: 'color', value: '#112233' },
+            { name: 'count', value: 0 },
+          ],
+        },
+      };
+
+      const res = await handleMatchCommand(interaction, env, ctx);
+      const body = await res.json();
+
+      // count=0 should be clamped to 1, giving single match response
+      expect(body.data.embeds[0].title).toContain('Closest match');
+    });
+
+    it('clamps count to maximum of 10', async () => {
+      const interaction: DiscordInteraction = {
+        ...baseInteraction,
+        data: {
+          ...baseInteraction.data,
+          options: [
+            { name: 'color', value: '#112233' },
+            { name: 'count', value: 15 },
+          ],
+        },
+      };
+
+      const res = await handleMatchCommand(interaction, env, ctx);
+      const body = await res.json();
+
+      // count=15 should be clamped to 10
+      expect(body.data.embeds[0].title).toContain('Top');
+    });
+  });
+
+  describe('single match response', () => {
+    it('returns single match response with copy buttons', async () => {
     const interaction: DiscordInteraction = {
       ...baseInteraction,
       data: { ...baseInteraction.data, options: [{ name: 'color', value: '#112233' }] },
@@ -183,23 +273,251 @@ describe('/match command', () => {
     expect(body.data.components).toHaveLength(1);
   });
 
-  it('returns multiple matches when count > 1', async () => {
-    const interaction: DiscordInteraction = {
-      ...baseInteraction,
-      data: {
-        ...baseInteraction.data,
-        options: [
-          { name: 'color', value: '#112233' },
-          { name: 'count', value: 2 },
-        ],
-      },
-    };
+    it('includes fromDye info when input is a dye name', async () => {
+      // Using "Rose Pink" triggers searchByName mock to return dyeRose
+      const interaction: DiscordInteraction = {
+        ...baseInteraction,
+        data: { ...baseInteraction.data, options: [{ name: 'color', value: 'Rose Pink' }] },
+      };
 
-    const res = await handleMatchCommand(interaction, env, ctx);
-    const body = await res.json();
+      const res = await handleMatchCommand(interaction, env, ctx);
+      const body = await res.json();
 
-    expect(body.data.embeds[0].title).toContain('Top 2 matches');
-    expect(body.data.embeds[0].description).toContain('Dye One-localized');
-    expect(body.data.embeds[0].description).toContain('Dye Two-localized');
+      // Should show source dye name in input color field
+      const inputField = body.data.embeds[0].fields.find((f: any) => f.name.includes('Input'));
+      expect(inputField.value).toContain('Rose Pink-localized');
+      expect(inputField.value).toContain('🎨'); // emoji from getDyeEmoji mock
+    });
+  });
+
+  describe('multiple matches', () => {
+    it('returns multiple matches when count > 1', async () => {
+      const interaction: DiscordInteraction = {
+        ...baseInteraction,
+        data: {
+          ...baseInteraction.data,
+          options: [
+            { name: 'color', value: '#112233' },
+            { name: 'count', value: 2 },
+          ],
+        },
+      };
+
+      const res = await handleMatchCommand(interaction, env, ctx);
+      const body = await res.json();
+
+      expect(body.data.embeds[0].title).toContain('Top 2 matches');
+      expect(body.data.embeds[0].description).toContain('Dye One-localized');
+      expect(body.data.embeds[0].description).toContain('Dye Two-localized');
+    });
+
+    it('includes fromDye info in multi-match when input is a dye name', async () => {
+      const interaction: DiscordInteraction = {
+        ...baseInteraction,
+        data: {
+          ...baseInteraction.data,
+          options: [
+            { name: 'color', value: 'Rose' }, // Will match Rose Pink via searchByName
+            { name: 'count', value: 2 },
+          ],
+        },
+      };
+
+      const res = await handleMatchCommand(interaction, env, ctx);
+      const body = await res.json();
+
+      // Multi-match should show source dye name in description
+      expect(body.data.embeds[0].description).toContain('Rose Pink-localized');
+    });
+  });
+
+  describe('match quality indicators', () => {
+    it('shows perfect match quality for exact color', async () => {
+      // dyeA has hex #101010, searching for same color should be distance 0
+      const interaction: DiscordInteraction = {
+        ...baseInteraction,
+        data: { ...baseInteraction.data, options: [{ name: 'color', value: '#101010' }] },
+      };
+
+      const res = await handleMatchCommand(interaction, env, ctx);
+      const body = await res.json();
+
+      const qualityField = body.data.embeds[0].fields.find((f: any) => f.name.includes('Quality'));
+      expect(qualityField.value).toContain('Perfect');
+    });
+  });
+
+  describe('user context', () => {
+    it('falls back to interaction.user when member is undefined (DM context)', async () => {
+      const interaction: DiscordInteraction = {
+        type: 2,
+        data: {
+          name: 'match',
+          options: [{ name: 'color', value: '#112233' }],
+        },
+        locale: 'en-US',
+        user: { id: 'dm-user', username: 'dm-tester' }, // DM style - no member
+      };
+
+      const res = await handleMatchCommand(interaction, env, ctx);
+      const body = await res.json();
+
+      // Should still work in DM context
+      expect(body.data.embeds[0].title).toContain('Closest match');
+    });
+  });
+
+  describe('edge cases', () => {
+    it('returns error when no matches found (findClosestDye always returns null)', async () => {
+      // Override mock to always return null (no matches in database)
+      mockFindClosestDye = vi.fn(() => null);
+
+      const interaction: DiscordInteraction = {
+        ...baseInteraction,
+        data: { ...baseInteraction.data, options: [{ name: 'color', value: '#112233' }] },
+      };
+
+      const res = await handleMatchCommand(interaction, env, ctx);
+      const body = await res.json();
+
+      expect(body.data.embeds[0].description).toBe('No matches found');
+      expect(body.data.flags).toBe(64);
+    });
+
+    it('excludes Facewear dyes from match results', async () => {
+      // Mock that returns Facewear first, then regular dyes
+      let callCount = 0;
+      mockFindClosestDye = vi.fn((_hex: string, excludeIds: number[] = []) => {
+        callCount++;
+        // First call returns Facewear (should be skipped)
+        if (callCount === 1 && !excludeIds.includes(dyeFacewear.id)) return dyeFacewear;
+        // Second call returns regular dye
+        if (!excludeIds.includes(dyeA.id)) return dyeA;
+        return null;
+      });
+
+      const interaction: DiscordInteraction = {
+        ...baseInteraction,
+        data: { ...baseInteraction.data, options: [{ name: 'color', value: '#112233' }] },
+      };
+
+      const res = await handleMatchCommand(interaction, env, ctx);
+      const body = await res.json();
+
+      // Should return Dye One, not Facewear Dye
+      expect(body.data.embeds[0].title).toContain('Dye One-localized');
+      expect(body.data.embeds[0].title).not.toContain('Facewear');
+    });
+
+    it('handles Facewear dye name search (excludes Facewear from name search)', async () => {
+      // When user searches by name and gets a Facewear dye, it should still work
+      // because the searchByName result exclusion only applies in resolveColorInput
+      // Looking at the code: only non-Facewear dyes are returned from resolveColorInput
+      const interaction: DiscordInteraction = {
+        ...baseInteraction,
+        data: { ...baseInteraction.data, options: [{ name: 'color', value: 'Facewear' }] },
+      };
+
+      const res = await handleMatchCommand(interaction, env, ctx);
+      const body = await res.json();
+
+      // Facewear dye should be excluded from name search, so it should be invalid color
+      expect(body.data.embeds[0].description).toContain('Invalid color');
+    });
+
+    it('exhausts Facewear exclusion attempts (20 max)', async () => {
+      // Mock that always returns Facewear dyes
+      mockFindClosestDye = vi.fn(() => dyeFacewear);
+
+      const interaction: DiscordInteraction = {
+        ...baseInteraction,
+        data: { ...baseInteraction.data, options: [{ name: 'color', value: '#112233' }] },
+      };
+
+      const res = await handleMatchCommand(interaction, env, ctx);
+      const body = await res.json();
+
+      // After 20 attempts of getting Facewear, should return no matches
+      expect(body.data.embeds[0].description).toBe('No matches found');
+      // Mock should have been called 20 times for the Facewear exclusion loop
+      expect(mockFindClosestDye).toHaveBeenCalled();
+    });
+
+    it('handles missing interaction.data.options (uses fallback [])', async () => {
+      const interaction: DiscordInteraction = {
+        type: 2,
+        data: {
+          name: 'match',
+          // No options property at all
+        },
+        locale: 'en-US',
+        member: { user: { id: 'user-1', username: 'tester' } },
+      } as DiscordInteraction;
+
+      const res = await handleMatchCommand(interaction, env, ctx);
+      const body = await res.json();
+
+      // Missing options should result in missing input error
+      expect(body.data.embeds[0].description).toBe('Missing input');
+    });
+
+    it('handles dye with no emoji in single match (emoji ternary false branch)', async () => {
+      // Override emoji mock to return null
+      mockGetDyeEmoji = vi.fn(() => null);
+
+      const interaction: DiscordInteraction = {
+        ...baseInteraction,
+        data: { ...baseInteraction.data, options: [{ name: 'color', value: '#112233' }] },
+      };
+
+      const res = await handleMatchCommand(interaction, env, ctx);
+      const body = await res.json();
+
+      // Should still work without emoji
+      expect(body.data.embeds[0].title).toContain('Closest match');
+      // Match description should not start with emoji
+      const matchField = body.data.embeds[0].fields.find((f: any) => f.name.includes('Closest'));
+      expect(matchField.value).toMatch(/^\*\*Dye One/); // Should start with dye name, not emoji
+    });
+
+    it('handles dye with no emoji in multi match (emoji ternary false branch)', async () => {
+      // Override emoji mock to return null
+      mockGetDyeEmoji = vi.fn(() => null);
+
+      const interaction: DiscordInteraction = {
+        ...baseInteraction,
+        data: {
+          ...baseInteraction.data,
+          options: [
+            { name: 'color', value: '#112233' },
+            { name: 'count', value: 2 },
+          ],
+        },
+      };
+
+      const res = await handleMatchCommand(interaction, env, ctx);
+      const body = await res.json();
+
+      // Should still work without emoji
+      expect(body.data.embeds[0].title).toContain('Top 2 matches');
+    });
+
+    it('handles fromDye with no emoji (fromEmoji ternary false branch)', async () => {
+      // Override emoji mock to return null
+      mockGetDyeEmoji = vi.fn(() => null);
+
+      const interaction: DiscordInteraction = {
+        ...baseInteraction,
+        data: { ...baseInteraction.data, options: [{ name: 'color', value: 'Rose Pink' }] },
+      };
+
+      const res = await handleMatchCommand(interaction, env, ctx);
+      const body = await res.json();
+
+      // Should still include fromDye name without emoji
+      const inputField = body.data.embeds[0].fields.find((f: any) => f.name.includes('Input'));
+      expect(inputField.value).toContain('Rose Pink-localized');
+      expect(inputField.value).not.toContain('🎨');
+    });
   });
 });

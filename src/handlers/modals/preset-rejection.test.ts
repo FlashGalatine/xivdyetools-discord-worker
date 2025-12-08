@@ -264,5 +264,382 @@ describe('preset-rejection.ts', () => {
 
             expect(body.type).toBe(InteractionResponseType.DEFERRED_UPDATE_MESSAGE);
         });
+
+        it('should process revert without channel_id (skip message edit)', async () => {
+            const interaction = {
+                id: '123',
+                token: 'token',
+                application_id: 'app',
+                data: {
+                    custom_id: 'preset_revert_modal_abc123',
+                    components: [
+                        {
+                            type: 1,
+                            components: [{ type: 4, custom_id: 'revert_reason', value: 'This is a valid revert reason' }],
+                        },
+                    ],
+                },
+                member: { user: { id: 'mod123', username: 'Mod' } },
+                // No channel_id
+                message: { id: 'msg123', embeds: [{ title: 'Test' }] },
+            };
+
+            const response = await handlePresetRevertModal(interaction, mockEnv, mockCtx);
+            const body = await response.json();
+
+            expect(body.type).toBe(InteractionResponseType.DEFERRED_UPDATE_MESSAGE);
+            expect(mockCtx.waitUntil).toHaveBeenCalled();
+        });
+
+        it('should process revert without message (skip message edit)', async () => {
+            const interaction = {
+                id: '123',
+                token: 'token',
+                application_id: 'app',
+                data: {
+                    custom_id: 'preset_revert_modal_abc123',
+                    components: [
+                        {
+                            type: 1,
+                            components: [{ type: 4, custom_id: 'revert_reason', value: 'This is a valid revert reason' }],
+                        },
+                    ],
+                },
+                member: { user: { id: 'mod123', username: 'Mod' } },
+                channel_id: 'channel123',
+                // No message
+            };
+
+            const response = await handlePresetRevertModal(interaction, mockEnv, mockCtx);
+            const body = await response.json();
+
+            expect(body.type).toBe(InteractionResponseType.DEFERRED_UPDATE_MESSAGE);
+            expect(mockCtx.waitUntil).toHaveBeenCalled();
+        });
+
+        it('should process revert without SUBMISSION_LOG_CHANNEL_ID (skip notification)', async () => {
+            const envWithoutLog = {
+                ...mockEnv,
+                SUBMISSION_LOG_CHANNEL_ID: undefined,
+            } as any;
+
+            const interaction = {
+                id: '123',
+                token: 'token',
+                application_id: 'app',
+                data: {
+                    custom_id: 'preset_revert_modal_abc123',
+                    components: [
+                        {
+                            type: 1,
+                            components: [{ type: 4, custom_id: 'revert_reason', value: 'This is a valid revert reason' }],
+                        },
+                    ],
+                },
+                member: { user: { id: 'mod123', username: 'Mod' } },
+                channel_id: 'channel123',
+                message: { id: 'msg123', embeds: [{ title: 'Test' }] },
+            };
+
+            const response = await handlePresetRevertModal(interaction, envWithoutLog, mockCtx);
+            const body = await response.json();
+
+            expect(body.type).toBe(InteractionResponseType.DEFERRED_UPDATE_MESSAGE);
+        });
+    });
+
+    describe('handlePresetRejectionModal async processing', () => {
+        it('should process rejection without channel_id (skip message edit)', async () => {
+            const interaction = {
+                id: '123',
+                token: 'token',
+                application_id: 'app',
+                data: {
+                    custom_id: 'preset_reject_modal_abc123',
+                    components: [
+                        {
+                            type: 1,
+                            components: [{ type: 4, custom_id: 'rejection_reason', value: 'This is a valid rejection reason' }],
+                        },
+                    ],
+                },
+                member: { user: { id: 'mod123', username: 'Mod' } },
+                // No channel_id
+                message: { id: 'msg123', embeds: [{ title: 'Test' }] },
+            };
+
+            const response = await handlePresetRejectionModal(interaction, mockEnv, mockCtx);
+            const body = await response.json();
+
+            expect(body.type).toBe(InteractionResponseType.DEFERRED_UPDATE_MESSAGE);
+            expect(mockCtx.waitUntil).toHaveBeenCalled();
+        });
+
+        it('should process rejection without message.id (skip message edit)', async () => {
+            const interaction = {
+                id: '123',
+                token: 'token',
+                application_id: 'app',
+                data: {
+                    custom_id: 'preset_reject_modal_abc123',
+                    components: [
+                        {
+                            type: 1,
+                            components: [{ type: 4, custom_id: 'rejection_reason', value: 'This is a valid rejection reason' }],
+                        },
+                    ],
+                },
+                member: { user: { id: 'mod123', username: 'Mod' } },
+                channel_id: 'channel123',
+                // No message
+            };
+
+            const response = await handlePresetRejectionModal(interaction, mockEnv, mockCtx);
+            const body = await response.json();
+
+            expect(body.type).toBe(InteractionResponseType.DEFERRED_UPDATE_MESSAGE);
+            expect(mockCtx.waitUntil).toHaveBeenCalled();
+        });
+
+        it('should process rejection without SUBMISSION_LOG_CHANNEL_ID (skip notification)', async () => {
+            const envWithoutLog = {
+                ...mockEnv,
+                SUBMISSION_LOG_CHANNEL_ID: undefined,
+            } as any;
+
+            const interaction = {
+                id: '123',
+                token: 'token',
+                application_id: 'app',
+                data: {
+                    custom_id: 'preset_reject_modal_abc123',
+                    components: [
+                        {
+                            type: 1,
+                            components: [{ type: 4, custom_id: 'rejection_reason', value: 'This is a valid rejection reason' }],
+                        },
+                    ],
+                },
+                member: { user: { id: 'mod123', username: 'Mod' } },
+                channel_id: 'channel123',
+                message: { id: 'msg123', embeds: [{ title: 'Test' }] },
+            };
+
+            const response = await handlePresetRejectionModal(interaction, envWithoutLog, mockCtx);
+            const body = await response.json();
+
+            expect(body.type).toBe(InteractionResponseType.DEFERRED_UPDATE_MESSAGE);
+        });
+
+        it('should handle API error during rejection with channel/message', async () => {
+            const { rejectPreset } = await import('../../services/preset-api.js');
+            vi.mocked(rejectPreset).mockRejectedValueOnce(new Error('API error'));
+
+            const interaction = {
+                id: '123',
+                token: 'token',
+                application_id: 'app',
+                data: {
+                    custom_id: 'preset_reject_modal_abc123',
+                    components: [
+                        {
+                            type: 1,
+                            components: [{ type: 4, custom_id: 'rejection_reason', value: 'This is a valid rejection reason' }],
+                        },
+                    ],
+                },
+                member: { user: { id: 'mod123', username: 'Mod' } },
+                channel_id: 'channel123',
+                message: { id: 'msg123', embeds: [{ title: 'Test', fields: [] }] },
+            };
+
+            const response = await handlePresetRejectionModal(interaction, mockEnv, mockCtx);
+            const body = await response.json();
+
+            expect(body.type).toBe(InteractionResponseType.DEFERRED_UPDATE_MESSAGE);
+            // Wait for async processing
+            await new Promise(resolve => setTimeout(resolve, 50));
+            const { editMessage } = await import('../../utils/discord-api.js');
+            expect(editMessage).toHaveBeenCalled();
+        });
+
+        it('should handle API error during rejection without channel/message (silent)', async () => {
+            const { rejectPreset } = await import('../../services/preset-api.js');
+            vi.mocked(rejectPreset).mockRejectedValueOnce(new Error('API error'));
+
+            const interaction = {
+                id: '123',
+                token: 'token',
+                application_id: 'app',
+                data: {
+                    custom_id: 'preset_reject_modal_abc123',
+                    components: [
+                        {
+                            type: 1,
+                            components: [{ type: 4, custom_id: 'rejection_reason', value: 'This is a valid rejection reason' }],
+                        },
+                    ],
+                },
+                member: { user: { id: 'mod123', username: 'Mod' } },
+                // No channel_id or message - silent error handling
+            };
+
+            const response = await handlePresetRejectionModal(interaction, mockEnv, mockCtx);
+            const body = await response.json();
+
+            expect(body.type).toBe(InteractionResponseType.DEFERRED_UPDATE_MESSAGE);
+        });
+
+        it('should handle API error during revert with channel/message', async () => {
+            const { revertPreset } = await import('../../services/preset-api.js');
+            vi.mocked(revertPreset).mockRejectedValueOnce(new Error('API error'));
+
+            const interaction = {
+                id: '123',
+                token: 'token',
+                application_id: 'app',
+                data: {
+                    custom_id: 'preset_revert_modal_abc123',
+                    components: [
+                        {
+                            type: 1,
+                            components: [{ type: 4, custom_id: 'revert_reason', value: 'This is a valid revert reason' }],
+                        },
+                    ],
+                },
+                member: { user: { id: 'mod123', username: 'Mod' } },
+                channel_id: 'channel123',
+                message: { id: 'msg123', embeds: [{ title: 'Test', fields: [] }] },
+            };
+
+            const response = await handlePresetRevertModal(interaction, mockEnv, mockCtx);
+            const body = await response.json();
+
+            expect(body.type).toBe(InteractionResponseType.DEFERRED_UPDATE_MESSAGE);
+            // Wait for async processing
+            await new Promise(resolve => setTimeout(resolve, 50));
+            const { editMessage } = await import('../../utils/discord-api.js');
+            expect(editMessage).toHaveBeenCalled();
+        });
+
+        it('should handle API error during revert without channel/message (silent)', async () => {
+            const { revertPreset } = await import('../../services/preset-api.js');
+            vi.mocked(revertPreset).mockRejectedValueOnce(new Error('API error'));
+
+            const interaction = {
+                id: '123',
+                token: 'token',
+                application_id: 'app',
+                data: {
+                    custom_id: 'preset_revert_modal_abc123',
+                    components: [
+                        {
+                            type: 1,
+                            components: [{ type: 4, custom_id: 'revert_reason', value: 'This is a valid revert reason' }],
+                        },
+                    ],
+                },
+                member: { user: { id: 'mod123', username: 'Mod' } },
+                // No channel_id or message - silent error handling
+            };
+
+            const response = await handlePresetRevertModal(interaction, mockEnv, mockCtx);
+            const body = await response.json();
+
+            expect(body.type).toBe(InteractionResponseType.DEFERRED_UPDATE_MESSAGE);
+        });
+    });
+
+    describe('extractTextInputValue edge cases', () => {
+        it('should return undefined for non-action-row components', async () => {
+            const interaction = {
+                id: '123',
+                token: 'token',
+                application_id: 'app',
+                data: {
+                    custom_id: 'preset_reject_modal_abc123',
+                    components: [
+                        {
+                            type: 2, // Not an action row (type 1)
+                            components: [{ type: 4, custom_id: 'rejection_reason', value: 'Valid reason here' }],
+                        },
+                    ],
+                },
+                member: { user: { id: 'mod123', username: 'Mod' } },
+            };
+
+            const response = await handlePresetRejectionModal(interaction, mockEnv, mockCtx);
+            const body = await response.json();
+
+            // Should fail validation because reason wasn't extracted
+            expect(body.data.embeds[0].description).toContain('10 characters');
+        });
+
+        it('should return undefined for wrong custom_id', async () => {
+            const interaction = {
+                id: '123',
+                token: 'token',
+                application_id: 'app',
+                data: {
+                    custom_id: 'preset_reject_modal_abc123',
+                    components: [
+                        {
+                            type: 1,
+                            components: [{ type: 4, custom_id: 'wrong_custom_id', value: 'Valid reason here' }],
+                        },
+                    ],
+                },
+                member: { user: { id: 'mod123', username: 'Mod' } },
+            };
+
+            const response = await handlePresetRejectionModal(interaction, mockEnv, mockCtx);
+            const body = await response.json();
+
+            // Should fail validation because reason wasn't extracted (wrong custom_id)
+            expect(body.data.embeds[0].description).toContain('10 characters');
+        });
+
+        it('should return undefined for non-text-input component type', async () => {
+            const interaction = {
+                id: '123',
+                token: 'token',
+                application_id: 'app',
+                data: {
+                    custom_id: 'preset_reject_modal_abc123',
+                    components: [
+                        {
+                            type: 1,
+                            components: [{ type: 2, custom_id: 'rejection_reason', value: 'Valid reason here' }], // type 2 is button, not text input
+                        },
+                    ],
+                },
+                member: { user: { id: 'mod123', username: 'Mod' } },
+            };
+
+            const response = await handlePresetRejectionModal(interaction, mockEnv, mockCtx);
+            const body = await response.json();
+
+            // Should fail validation because reason wasn't extracted (wrong component type)
+            expect(body.data.embeds[0].description).toContain('10 characters');
+        });
+
+        it('should return undefined when components is undefined', async () => {
+            const interaction = {
+                id: '123',
+                token: 'token',
+                application_id: 'app',
+                data: {
+                    custom_id: 'preset_reject_modal_abc123',
+                    // No components
+                },
+                member: { user: { id: 'mod123', username: 'Mod' } },
+            };
+
+            const response = await handlePresetRejectionModal(interaction, mockEnv, mockCtx);
+            const body = await response.json();
+
+            // Should fail validation because reason wasn't extracted (no components)
+            expect(body.data.embeds[0].description).toContain('10 characters');
+        });
     });
 });
