@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-Cloudflare Workers-based Discord bot for FFXIV dye color tools. Uses HTTP Interactions (not Gateway WebSocket) for serverless operation on the edge network.
+**Version 2.0.0** - The primary Discord bot for FFXIV dye color tools. Uses HTTP Interactions (not Gateway WebSocket) for serverless operation on the edge network.
+
+This bot replaces the deprecated `xivdyetools-discord-bot` (traditional Node.js/Discord.js bot).
 
 ## Quick Commands
 
@@ -35,6 +37,8 @@ wrangler secret put DISCORD_TOKEN
 wrangler secret put DISCORD_PUBLIC_KEY
 wrangler secret put BOT_API_SECRET
 wrangler secret put INTERNAL_WEBHOOK_SECRET
+wrangler secret put STATS_AUTHORIZED_USERS    # Comma-separated user IDs for /stats
+wrangler secret put MODERATOR_IDS             # Comma-separated user IDs for moderation
 ```
 
 ## Architecture
@@ -63,6 +67,7 @@ src/
 ├── services/
 │   ├── svg/             # SVG generation + PNG rendering via resvg-wasm
 │   ├── image/           # Image processing via Photon WASM
+│   ├── analytics.ts     # Analytics Engine + KV-based stats tracking
 │   ├── rate-limiter.ts  # Per-user sliding window (KV-backed)
 │   ├── user-storage.ts  # Favorites & collections (KV-backed)
 │   ├── preset-api.ts    # Preset API client (Service Binding preferred)
@@ -79,8 +84,9 @@ src/
 
 | Binding | Type | Purpose |
 |---------|------|---------|
-| `KV` | KV Namespace | Rate limiting, user preferences |
+| `KV` | KV Namespace | Rate limiting, user preferences, analytics counters |
 | `DB` | D1 Database | Preset storage |
+| `ANALYTICS` | Analytics Engine | Command usage tracking (long-term storage) |
 | `PRESETS_API` | Service Binding | Worker-to-Worker preset API |
 
 ### Required Secrets
@@ -92,6 +98,7 @@ src/
 
 - `BOT_API_SECRET` - Auth for preset API calls
 - `INTERNAL_WEBHOOK_SECRET` - Webhook authentication
+- `STATS_AUTHORIZED_USERS` - Comma-separated user IDs for /stats command
 - `MODERATOR_IDS` - Comma-separated user IDs for moderation
 - `MODERATION_CHANNEL_ID` - Channel for pending presets
 - `SUBMISSION_LOG_CHANNEL_ID` - Channel for all preset submissions
@@ -167,7 +174,41 @@ return fetch(`${env.PRESETS_API_URL}/presets`, { ... });
 - Dye names from xivdyetools-core
 - Auto-detects from `interaction.locale`
 
+## Available Commands
+
+| Command | Description |
+|---------|-------------|
+| `/harmony` | Generate harmonious dye combinations (complementary, triadic, etc.) |
+| `/match` | Find closest FFXIV dye to a hex color |
+| `/match_image` | Extract colors from image and match to dyes |
+| `/mixer` | Create color gradient between two colors |
+| `/dye search` | Search dyes by name |
+| `/dye info` | Get detailed dye information |
+| `/dye list` | List dyes by category |
+| `/dye random` | Get random dye suggestions |
+| `/comparison` | Compare 2-4 dyes side by side |
+| `/accessibility` | Colorblindness simulation and contrast analysis |
+| `/favorites` | Manage favorite dyes (add/remove/list/clear) |
+| `/collection` | Manage custom dye collections |
+| `/preset` | Browse/submit/vote on community presets |
+| `/language` | Set preferred bot language |
+| `/manual` | Show help guide (optional: `topic:match_image`) |
+| `/about` | Bot information |
+| `/stats` | Usage statistics (authorized users only) |
+
 ## Webhook Endpoints
 
 - `POST /webhooks/preset-submission` - Receives preset submissions from web app
 - `GET /health` - Health check endpoint
+
+## Analytics
+
+Commands are automatically tracked via:
+1. **Analytics Engine** - Long-term storage with aggregation (if configured)
+2. **KV Counters** - Real-time stats accessible via `/stats` command
+
+Stats available:
+- Total commands executed
+- Success rate
+- Top 5 most used commands
+- Unique users per day

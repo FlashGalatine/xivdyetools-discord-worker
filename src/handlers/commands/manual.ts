@@ -3,6 +3,7 @@
  *
  * Displays comprehensive help documentation for all bot commands.
  * Organizes commands into logical categories with descriptions.
+ * Supports optional topic parameter for specific help (e.g., match_image).
  * Sends as ephemeral message (only visible to the user).
  */
 
@@ -18,6 +19,92 @@ const COLORS = {
   red: 0xed4245,
   blue: 0x3498db,
 } as const;
+
+/**
+ * Build embeds for the match_image help topic
+ */
+function buildMatchImageHelpEmbeds(t: Translator) {
+  return [
+    // Main help embed
+    {
+      title: `🎨 ${t.t('matchImageHelp.title')}`,
+      description: t.t('matchImageHelp.description'),
+      color: COLORS.blurple,
+      fields: [
+        {
+          name: `🔍 ${t.t('matchImageHelp.howItWorks')}`,
+          value: t.t('matchImageHelp.howItWorksContent'),
+          inline: false,
+        },
+        {
+          name: `✅ ${t.t('matchImageHelp.tipsForBestResults')}`,
+          value: t.t('matchImageHelp.tipsContent'),
+          inline: false,
+        },
+        {
+          name: `❌ ${t.t('matchImageHelp.commonIssues')}`,
+          value: t.t('matchImageHelp.commonIssuesContent'),
+          inline: false,
+        },
+        {
+          name: `💡 ${t.t('matchImageHelp.proTips')}`,
+          value: t.t('matchImageHelp.proTipsContent'),
+          inline: false,
+        },
+      ],
+      footer: {
+        text: t.t('matchImageHelp.footer'),
+      },
+    },
+    // Examples embed
+    {
+      title: `📸 ${t.t('matchImageHelp.exampleUseCases')}`,
+      color: COLORS.green,
+      fields: [
+        {
+          name: `✨ ${t.t('matchImageHelp.goodExamples')}`,
+          value: t.t('matchImageHelp.goodExamplesContent'),
+          inline: true,
+        },
+        {
+          name: `⚠️ ${t.t('matchImageHelp.poorExamples')}`,
+          value: t.t('matchImageHelp.poorExamplesContent'),
+          inline: true,
+        },
+        {
+          name: `🎯 ${t.t('matchImageHelp.whenToUse')}`,
+          value: t.t('matchImageHelp.whenToUseContent'),
+          inline: false,
+        },
+      ],
+    },
+    // Technical details embed
+    {
+      title: `⚙️ ${t.t('matchImageHelp.technicalDetails')}`,
+      color: COLORS.yellow,
+      fields: [
+        {
+          name: t.t('matchImageHelp.supportedFormats'),
+          value: t.t('matchImageHelp.supportedFormatsContent'),
+          inline: true,
+        },
+        {
+          name: t.t('matchImageHelp.fileLimits'),
+          value: t.t('matchImageHelp.fileLimitsContent'),
+          inline: true,
+        },
+        {
+          name: t.t('matchImageHelp.matchQualityRatings'),
+          value: t.t('matchImageHelp.matchQualityRatingsContent'),
+          inline: false,
+        },
+      ],
+      footer: {
+        text: t.t('matchImageHelp.poweredBy'),
+      },
+    },
+  ];
+}
 
 /**
  * Build embeds using translated strings
@@ -140,8 +227,18 @@ export async function handleManualCommand(
   // Get translator for user's locale
   const t = await createUserTranslator(env.KV, userId, interaction.locale);
 
-  // Build localized embeds
-  const embeds = buildEmbeds(t);
+  // Check for topic option
+  const options = interaction.data?.options || [];
+  const topicOption = options.find((opt) => opt.name === 'topic');
+  const topic = topicOption?.value as string | undefined;
+
+  // Build localized embeds based on topic
+  let embeds;
+  if (topic === 'match_image') {
+    embeds = buildMatchImageHelpEmbeds(t);
+  } else {
+    embeds = buildEmbeds(t);
+  }
 
   return Response.json({
     type: 4, // CHANNEL_MESSAGE_WITH_SOURCE

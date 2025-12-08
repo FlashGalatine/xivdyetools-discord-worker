@@ -63,6 +63,16 @@ export interface Env {
 
   /** Service Binding to Presets API Worker (for Worker-to-Worker communication) */
   PRESETS_API?: Fetcher;
+
+  /** Analytics Engine for command usage tracking */
+  ANALYTICS?: AnalyticsEngineDataset;
+
+  // =========================================================================
+  // Stats Command Access Control
+  // =========================================================================
+
+  /** Comma-separated Discord user IDs who can view /stats */
+  STATS_AUTHORIZED_USERS?: string;
 }
 
 /**

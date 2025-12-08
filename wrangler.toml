@@ -14,6 +14,14 @@ binding = "KV"
 id = "1fcb7e037ccd4172a47fccd97cf8e753"
 
 # ============================================================================
+# Analytics Engine for command usage statistics
+# Create with: wrangler analytics-engine create xivdyetools-bot-analytics
+# ============================================================================
+[[analytics_engine_datasets]]
+binding = "ANALYTICS"
+dataset = "xivdyetools_bot_analytics"
+
+# ============================================================================
 # R2 Bucket for generated images (with 1hr expiry)
 # Create with: wrangler r2 bucket create xivdyetools-bot-images
 # ============================================================================

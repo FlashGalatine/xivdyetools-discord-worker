@@ -16,3 +16,4 @@ export { handleLanguageCommand } from './language.js';
 export { handleFavoritesCommand } from './favorites.js';
 export { handleCollectionCommand } from './collection.js';
 export { handlePresetCommand } from './preset.js';
+export { handleStatsCommand } from './stats.js';

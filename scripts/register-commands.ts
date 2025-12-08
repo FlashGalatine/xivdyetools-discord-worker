@@ -277,6 +277,22 @@ const commands = [
   {
     name: 'manual',
     description: 'Show help and usage guide for all commands',
+    options: [
+      {
+        name: 'topic',
+        description: 'Specific help topic',
+        type: OptionType.STRING,
+        required: false,
+        choices: [
+          { name: '📸 Image Matching Tips', value: 'match_image' },
+        ],
+      },
+    ],
+  },
+
+  {
+    name: 'stats',
+    description: 'Display bot usage statistics (authorized users only)',
   },
 
   // =========================================================================

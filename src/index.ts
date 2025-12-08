@@ -26,8 +26,10 @@ import {
   handleFavoritesCommand,
   handleCollectionCommand,
   handlePresetCommand,
+  handleStatsCommand,
 } from './handlers/commands/index.js';
 import { checkRateLimit, formatRateLimitMessage } from './services/rate-limiter.js';
+import { trackCommandWithKV } from './services/analytics.js';
 import { getCollections } from './services/user-storage.js';
 import { handleButtonInteraction } from './handlers/buttons/index.js';
 import {
@@ -251,12 +253,24 @@ async function handleCommand(
   console.log(`Handling command: /${commandName} from user ${userId}`);
 
   // Check rate limit (skip for utility commands)
-  if (userId && commandName && !['about', 'manual'].includes(commandName)) {
+  if (userId && commandName && !['about', 'manual', 'stats'].includes(commandName)) {
     const rateLimitResult = await checkRateLimit(env.KV, userId, commandName);
     if (!rateLimitResult.allowed) {
       console.log(`User ${userId} rate limited for /${commandName}`);
       return ephemeralResponse(formatRateLimitMessage(rateLimitResult));
     }
+  }
+
+  // Track command usage (fire-and-forget, don't await)
+  if (userId && commandName) {
+    ctx.waitUntil(
+      trackCommandWithKV(env, {
+        commandName,
+        userId,
+        guildId: interaction.guild_id,
+        success: true, // Will be updated if command fails
+      })
+    );
   }
 
   // TODO: Route to specific command handlers
@@ -323,6 +337,9 @@ async function handleCommand(
 
     case 'preset':
       return handlePresetCommand(interaction, env, ctx);
+
+    case 'stats':
+      return handleStatsCommand(interaction, env, ctx);
 
     default:
       // Command not yet implemented
