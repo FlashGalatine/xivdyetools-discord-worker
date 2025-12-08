@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.1] - 2025-12-08
+
+### Changed
+
+#### About Command Enhancement
+- `/about` now displays all 17 available commands organized by category
+- Version number is dynamically imported from `package.json`
+- Commands grouped: Color Tools, Dye Database, Analysis, Your Data, Community, Utility
+- Added invite bot link and timestamp
+
+### Files Added
+- `src/handlers/commands/about.ts` - Dedicated about command handler
+
+### Files Modified
+- `src/handlers/commands/index.ts` - Export about handler
+- `src/index.ts` - Route to about handler instead of inline response
+
+---
+
 ## [2.0.0] - 2025-12-08
 
 ### Added

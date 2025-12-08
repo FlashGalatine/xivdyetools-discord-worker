@@ -14,6 +14,7 @@ import { InteractionType, InteractionResponseType } from './types/env.js';
 import { verifyDiscordRequest, unauthorizedResponse, badRequestResponse, timingSafeEqual } from './utils/verify.js';
 import { pongResponse, ephemeralResponse, messageResponse } from './utils/response.js';
 import {
+  handleAboutCommand,
   handleHarmonyCommand,
   handleDyeCommand,
   handleMixerCommand,
@@ -277,30 +278,7 @@ async function handleCommand(
   // For now, respond with a placeholder message
   switch (commandName) {
     case 'about':
-      return messageResponse({
-        embeds: [{
-          title: 'XIV Dye Tools Bot',
-          description: [
-            '**Version:** 2.0.0 (Cloudflare Workers Edition)',
-            '',
-            'A Discord bot for FFXIV dye color exploration and matching.',
-            '',
-            '**Commands:**',
-            '`/harmony` - Generate color harmonies',
-            '`/match` - Find closest dye to a color',
-            '`/dye` - Search the dye database',
-            '`/mixer` - Create color gradients',
-            '',
-            '**Links:**',
-            '[Web App](https://xivdyetools.projectgalatine.com/)',
-            '[GitHub](https://github.com/FlashGalatine/xivdyetools-discord-worker)',
-          ].join('\n'),
-          color: 0x5865f2, // Discord Blurple
-          footer: {
-            text: 'Powered by Cloudflare Workers',
-          },
-        }],
-      });
+      return handleAboutCommand(interaction, env, ctx);
 
     case 'harmony':
       return handleHarmonyCommand(interaction, env, ctx);

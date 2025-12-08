@@ -4,6 +4,7 @@
  * Re-exports all command handlers for cleaner imports.
  */
 
+export { handleAboutCommand } from './about.js';
 export { handleHarmonyCommand, getHarmonyTypeChoices } from './harmony.js';
 export { handleDyeCommand } from './dye.js';
 export { handleMixerCommand } from './mixer.js';
