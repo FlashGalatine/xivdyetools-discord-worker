@@ -1,6 +1,6 @@
 # XIV Dye Tools Discord Worker
 
-> Discord bot for FFXIV dye color exploration, running on Cloudflare Workers using HTTP Interactions.
+**v2.0.1** | Discord bot for FFXIV dye color exploration, running on Cloudflare Workers using HTTP Interactions.
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3%2B-blue)](https://www.typescriptlang.org/)
 [![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers-F38020)](https://workers.cloudflare.com/)
@@ -19,26 +19,54 @@
 🌐 **Multi-Language** - Full localization for EN, JA, DE, FR, KO, ZH
 ⚡ **Serverless** - Runs on Cloudflare Workers edge network with auto-scaling
 
-## Commands
+## Commands (17 Total)
 
+### Color Tools
 | Command | Description |
 |---------|-------------|
 | `/harmony <color>` | Generate color harmonies with color wheel visualization |
 | `/match <color>` | Find closest dye to a hex color |
 | `/match_image` | Upload an image to extract and match colors (1-5 colors) |
-| `/dye <name>` | Search the 136-dye database by name |
-| `/comparison <dye1> <dye2> [dye3] [dye4]` | Compare multiple dyes side-by-side |
 | `/mixer <start> <end>` | Create color gradients between two dyes |
+
+### Dye Database
+| Command | Description |
+|---------|-------------|
+| `/dye search <name>` | Search the 136-dye database by name |
+| `/dye info <dye>` | Get detailed information about a specific dye |
+| `/dye list [category]` | List dyes by category |
+| `/dye random` | Show a random dye |
+
+### Analysis Tools
+| Command | Description |
+|---------|-------------|
+| `/comparison <dye1> <dye2> [dye3] [dye4]` | Compare multiple dyes side-by-side |
 | `/accessibility <dye>` | Simulate colorblindness for dye colors |
+
+### User Data
+| Command | Description |
+|---------|-------------|
 | `/favorites` | View, add, or remove favorite dyes |
 | `/collection` | Create and manage custom dye collections |
+
+### Community Presets
+| Command | Description |
+|---------|-------------|
 | `/preset list [category]` | Browse curated and community color palettes |
 | `/preset show <name>` | Display a preset's colors with swatch visualization |
+| `/preset random` | Show a random preset |
 | `/preset submit` | Submit your own color palette to the community |
 | `/preset vote <preset>` | Vote for a community preset |
+| `/preset edit <preset>` | Edit your submitted preset |
+| `/preset moderate <preset>` | Moderation actions (moderators only) |
+
+### Utility
+| Command | Description |
+|---------|-------------|
 | `/language <locale>` | Change bot UI language |
 | `/manual` | Help and documentation |
 | `/about` | Bot information and credits |
+| `/stats` | Usage statistics (authorized users only) |
 
 ## Privacy & Terms
 
@@ -173,11 +201,16 @@ Discord API
 └─────────────────────────────────┘
 ```
 
+## Coming Soon
+
+**Budget-Aware Dye Suggestions** - Find affordable alternatives to expensive dyes with `/match --max_price` and `/dye alternatives`. See [specification](../xivdyetools-docs/BUDGET_AWARE_SUGGESTIONS.md) for details.
+
 ## Related Projects
 
 - **[xivdyetools-core](https://github.com/FlashGalatine/xivdyetools-core)** - Core color algorithms (npm package)
-- **[XIV Dye Tools Web App](https://github.com/FlashGalatine/xivdyetools)** - Interactive web tools
-- **[xivdyetools-discord-bot](https://github.com/FlashGalatine/xivdyetools-discord-bot)** - Traditional Discord.js bot
+- **[XIV Dye Tools Web App](https://github.com/FlashGalatine/xivdyetools-web-app)** - Interactive web tools
+- **[xivdyetools-presets-api](https://github.com/FlashGalatine/xivdyetools-presets-api)** - Community presets API
+- **[xivdyetools-oauth](https://github.com/FlashGalatine/xivdyetools-oauth)** - OAuth authentication worker
 
 ## License
 
