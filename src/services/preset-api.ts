@@ -93,6 +93,7 @@ async function request<T>(
     body?: unknown;
     userDiscordId?: string;
     userName?: string;
+    requestId?: string; // For distributed tracing across service bindings
   } = {}
 ): Promise<T> {
   // Require either service binding or URL-based configuration
@@ -103,6 +104,11 @@ async function request<T>(
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
   };
+
+  // Add request ID for distributed tracing
+  if (options.requestId) {
+    headers['X-Request-ID'] = options.requestId;
+  }
 
   // Add auth header if using URL-based fetch (service binding uses internal auth)
   if (env.BOT_API_SECRET) {

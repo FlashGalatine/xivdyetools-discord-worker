@@ -44,6 +44,8 @@ import * as presetApi from './services/preset-api.js';
 import { sendMessage } from './utils/discord-api.js';
 import { STATUS_DISPLAY, type PresetNotificationPayload } from './types/preset.js';
 import { getLocalizedDyeName } from './services/i18n.js';
+import { validateEnv, logValidationErrors } from './utils/env-validation.js';
+import { requestIdMiddleware, getRequestId, type RequestIdVariables } from './middleware/request-id.js';
 
 // Initialize DyeService for autocomplete
 const dyeService = new DyeService(dyeDatabase);
@@ -58,11 +60,51 @@ function formatDyesForEmbed(dyeIds: number[]): string {
     .join(', ');
 }
 
+// Define context variables type
+type Variables = RequestIdVariables;
+
 // Create Hono app with environment type
-const app = new Hono<{ Bindings: Env }>();
+const app = new Hono<{ Bindings: Env; Variables: Variables }>();
+
+// Track if we've validated env in this isolate
+let envValidated = false;
 
 // Enable CORS for development
 app.use('*', cors());
+
+// Request ID middleware (must be early for tracing)
+app.use('*', requestIdMiddleware);
+
+// Environment validation middleware
+// Validates required env vars once per isolate and caches result
+// Note: Discord worker doesn't have an ENVIRONMENT var, so validation always logs warnings
+app.use('*', async (c, next) => {
+  if (!envValidated) {
+    const result = validateEnv(c.env);
+    envValidated = true;
+    if (!result.valid) {
+      logValidationErrors(result.errors);
+      // Discord worker should still try to handle requests even with missing optional vars
+      // Only fail hard if critical secrets (DISCORD_TOKEN, DISCORD_PUBLIC_KEY) are missing
+      if (result.errors.some(e => e.includes('DISCORD_TOKEN') || e.includes('DISCORD_PUBLIC_KEY'))) {
+        return c.json({ error: 'Service misconfigured' }, 500);
+      }
+    }
+  }
+  await next();
+});
+
+// Security headers middleware
+// Applies to all responses (after handler execution)
+app.use('*', async (c, next) => {
+  await next();
+  // Prevent MIME-type sniffing attacks
+  c.header('X-Content-Type-Options', 'nosniff');
+  // Prevent clickjacking by denying iframe embedding
+  c.header('X-Frame-Options', 'DENY');
+  // Enforce HTTPS (Discord bots always use HTTPS endpoints)
+  c.header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+});
 
 /**
  * Health check endpoint
