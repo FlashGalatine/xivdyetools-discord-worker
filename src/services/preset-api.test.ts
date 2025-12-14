@@ -242,6 +242,24 @@ describe('preset-api.ts', () => {
             expect(mockPresets).toContainEqual(result);
         });
 
+        it('should filter by category when provided', async () => {
+            const env = createMockEnv({ withUrlConfig: true });
+            const mockPresets = [
+                { id: '1', name: 'Armor Preset', category: 'armor' },
+            ];
+
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                json: () => Promise.resolve({ presets: mockPresets, total: 1 }),
+            });
+
+            const result = await getRandomPreset(env, 'armor');
+
+            expect(result).toEqual(mockPresets[0]);
+            const calledUrl = mockFetch.mock.calls[0][0];
+            expect(calledUrl).toContain('category=armor');
+        });
+
         it('should return null when no presets available', async () => {
             const env = createMockEnv({ withUrlConfig: true });
 
@@ -326,6 +344,43 @@ describe('preset-api.ts', () => {
         });
     });
 
+    describe('removeVote', () => {
+        it('should remove a vote successfully', async () => {
+            const env = createMockEnv({ withUrlConfig: true });
+            const mockResponse = { success: true, vote_count: 4 };
+
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                json: () => Promise.resolve(mockResponse),
+            });
+
+            const result = await removeVote(env, 'preset123', 'user123');
+
+            expect(result).toEqual(mockResponse);
+            expect(mockFetch).toHaveBeenCalledWith(
+                'https://api.example.com/api/v1/votes/preset123',
+                expect.objectContaining({
+                    method: 'DELETE',
+                    headers: expect.objectContaining({
+                        'X-User-Discord-ID': 'user123',
+                    }),
+                })
+            );
+        });
+
+        it('should handle vote removal errors', async () => {
+            const env = createMockEnv({ withUrlConfig: true });
+
+            mockFetch.mockResolvedValueOnce({
+                ok: false,
+                status: 400,
+                json: () => Promise.resolve({ message: 'User has not voted for this preset' }),
+            });
+
+            await expect(removeVote(env, 'preset123', 'user123')).rejects.toThrow(PresetAPIError);
+        });
+    });
+
     describe('hasVoted', () => {
         it('should return true when user has voted', async () => {
             const env = createMockEnv({ withUrlConfig: true });
@@ -351,6 +406,122 @@ describe('preset-api.ts', () => {
         });
     });
 
+    describe('getPresetByName', () => {
+        it('should find exact match by name', async () => {
+            const env = createMockEnv({ withUrlConfig: true });
+            const mockPreset = { id: '1', name: 'Red Knight', vote_count: 5 };
+
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                json: () => Promise.resolve({ presets: [mockPreset], total: 1 }),
+            });
+
+            const result = await getPresetByName(env, 'Red Knight');
+
+            expect(result).toEqual(mockPreset);
+        });
+
+        it('should return first partial match when no exact match', async () => {
+            const env = createMockEnv({ withUrlConfig: true });
+            const mockPresets = [
+                { id: '1', name: 'Red Knight Armor', vote_count: 5 },
+                { id: '2', name: 'Blue Knight', vote_count: 3 },
+            ];
+
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                json: () => Promise.resolve({ presets: mockPresets, total: 2 }),
+            });
+
+            const result = await getPresetByName(env, 'knight');
+
+            expect(result).toEqual(mockPresets[0]);
+        });
+
+        it('should return null when no match found', async () => {
+            const env = createMockEnv({ withUrlConfig: true });
+
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                json: () => Promise.resolve({ presets: [], total: 0 }),
+            });
+
+            const result = await getPresetByName(env, 'Nonexistent');
+
+            expect(result).toBeNull();
+        });
+    });
+
+    describe('getMyPresets', () => {
+        it('should fetch presets owned by user', async () => {
+            const env = createMockEnv({ withUrlConfig: true });
+            const mockPresets = [
+                { id: '1', name: 'My Preset', author_discord_id: 'user123' },
+            ];
+
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                json: () => Promise.resolve({ presets: mockPresets, total: 1 }),
+            });
+
+            const result = await getMyPresets(env, 'user123');
+
+            expect(result).toEqual(mockPresets);
+            expect(mockFetch.mock.calls[0][1].headers).toMatchObject({
+                'X-User-Discord-ID': 'user123',
+            });
+        });
+    });
+
+    describe('editPreset', () => {
+        it('should edit a preset successfully', async () => {
+            const env = createMockEnv({ withUrlConfig: true });
+            const mockResponse = {
+                preset: { id: 'preset123', name: 'Updated Name' },
+                moderation_triggered: false,
+            };
+
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                json: () => Promise.resolve(mockResponse),
+            });
+
+            const result = await editPreset(
+                env,
+                'preset123',
+                { name: 'Updated Name' },
+                'user123',
+                'TestUser'
+            );
+
+            expect(result).toEqual(mockResponse);
+            expect(mockFetch).toHaveBeenCalledWith(
+                'https://api.example.com/api/v1/presets/preset123',
+                expect.objectContaining({
+                    method: 'PATCH',
+                    headers: expect.objectContaining({
+                        'X-User-Discord-ID': 'user123',
+                        'X-User-Discord-Name': 'TestUser',
+                    }),
+                })
+            );
+        });
+
+        it('should throw error on duplicate dye combination', async () => {
+            const env = createMockEnv({ withUrlConfig: true });
+
+            mockFetch.mockResolvedValueOnce({
+                ok: false,
+                status: 409,
+                json: () => Promise.resolve({ message: 'Duplicate dye combination' }),
+            });
+
+            await expect(
+                editPreset(env, 'preset123', { dye_ids: [1, 2] }, 'user123', 'TestUser')
+            ).rejects.toThrow(PresetAPIError);
+        });
+    });
+
     describe('getCategories', () => {
         it('should fetch categories', async () => {
             const env = createMockEnv({ withUrlConfig: true });
@@ -367,6 +538,201 @@ describe('preset-api.ts', () => {
             const result = await getCategories(env);
 
             expect(result).toEqual(mockCategories);
+        });
+    });
+
+    // ==========================================================================
+    // Moderation Function Tests
+    // ==========================================================================
+
+    describe('getPendingPresets', () => {
+        it('should fetch pending presets for moderator', async () => {
+            const env = createMockEnv({ withUrlConfig: true });
+            const mockPresets = [
+                { id: '1', name: 'Pending Preset', status: 'pending' },
+            ];
+
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                json: () => Promise.resolve({ presets: mockPresets }),
+            });
+
+            const result = await getPendingPresets(env, 'mod123');
+
+            expect(result).toEqual(mockPresets);
+            expect(mockFetch.mock.calls[0][0]).toContain('/moderation/pending');
+            expect(mockFetch.mock.calls[0][1].headers).toMatchObject({
+                'X-User-Discord-ID': 'mod123',
+            });
+        });
+    });
+
+    describe('approvePreset', () => {
+        it('should approve a preset', async () => {
+            const env = createMockEnv({ withUrlConfig: true });
+            const mockPreset = { id: 'preset123', name: 'Test', status: 'approved' };
+
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                json: () => Promise.resolve({ preset: mockPreset }),
+            });
+
+            const result = await approvePreset(env, 'preset123', 'mod123');
+
+            expect(result).toEqual(mockPreset);
+            expect(mockFetch).toHaveBeenCalledWith(
+                'https://api.example.com/api/v1/moderation/preset123/status',
+                expect.objectContaining({
+                    method: 'PATCH',
+                    body: JSON.stringify({ status: 'approved', reason: undefined }),
+                })
+            );
+        });
+
+        it('should approve a preset with reason', async () => {
+            const env = createMockEnv({ withUrlConfig: true });
+            const mockPreset = { id: 'preset123', name: 'Test', status: 'approved' };
+
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                json: () => Promise.resolve({ preset: mockPreset }),
+            });
+
+            await approvePreset(env, 'preset123', 'mod123', 'Looks good');
+
+            expect(mockFetch).toHaveBeenCalledWith(
+                expect.any(String),
+                expect.objectContaining({
+                    body: JSON.stringify({ status: 'approved', reason: 'Looks good' }),
+                })
+            );
+        });
+    });
+
+    describe('rejectPreset', () => {
+        it('should reject a preset with reason', async () => {
+            const env = createMockEnv({ withUrlConfig: true });
+            const mockPreset = { id: 'preset123', name: 'Test', status: 'rejected' };
+
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                json: () => Promise.resolve({ preset: mockPreset }),
+            });
+
+            const result = await rejectPreset(env, 'preset123', 'mod123', 'Inappropriate content');
+
+            expect(result).toEqual(mockPreset);
+            expect(mockFetch).toHaveBeenCalledWith(
+                'https://api.example.com/api/v1/moderation/preset123/status',
+                expect.objectContaining({
+                    method: 'PATCH',
+                    body: JSON.stringify({ status: 'rejected', reason: 'Inappropriate content' }),
+                })
+            );
+        });
+    });
+
+    describe('flagPreset', () => {
+        it('should flag a preset for review', async () => {
+            const env = createMockEnv({ withUrlConfig: true });
+            const mockPreset = { id: 'preset123', name: 'Test', status: 'flagged' };
+
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                json: () => Promise.resolve({ preset: mockPreset }),
+            });
+
+            const result = await flagPreset(env, 'preset123', 'mod123', 'Needs review');
+
+            expect(result).toEqual(mockPreset);
+            expect(mockFetch).toHaveBeenCalledWith(
+                'https://api.example.com/api/v1/moderation/preset123/status',
+                expect.objectContaining({
+                    method: 'PATCH',
+                    body: JSON.stringify({ status: 'flagged', reason: 'Needs review' }),
+                })
+            );
+        });
+    });
+
+    describe('getModerationStats', () => {
+        it('should fetch moderation statistics', async () => {
+            const env = createMockEnv({ withUrlConfig: true });
+            const mockStats = {
+                total_pending: 5,
+                total_approved: 100,
+                total_rejected: 10,
+                total_flagged: 2,
+            };
+
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                json: () => Promise.resolve({ stats: mockStats }),
+            });
+
+            const result = await getModerationStats(env, 'mod123');
+
+            expect(result).toEqual(mockStats);
+            expect(mockFetch.mock.calls[0][0]).toContain('/moderation/stats');
+        });
+    });
+
+    describe('getModerationHistory', () => {
+        it('should fetch moderation history for a preset', async () => {
+            const env = createMockEnv({ withUrlConfig: true });
+            const mockHistory = [
+                { action: 'approved', moderator_id: 'mod123', timestamp: '2024-01-01' },
+            ];
+
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                json: () => Promise.resolve({ history: mockHistory }),
+            });
+
+            const result = await getModerationHistory(env, 'preset123', 'mod123');
+
+            expect(result).toEqual(mockHistory);
+            expect(mockFetch.mock.calls[0][0]).toContain('/moderation/preset123/history');
+        });
+    });
+
+    describe('revertPreset', () => {
+        it('should revert a preset to previous values', async () => {
+            const env = createMockEnv({ withUrlConfig: true });
+            const mockPreset = { id: 'preset123', name: 'Original Name', status: 'approved' };
+
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                json: () => Promise.resolve({ success: true, preset: mockPreset }),
+            });
+
+            const result = await revertPreset(env, 'preset123', 'Reverting inappropriate edit', 'mod123');
+
+            expect(result).toEqual(mockPreset);
+            expect(mockFetch).toHaveBeenCalledWith(
+                'https://api.example.com/api/v1/moderation/preset123/revert',
+                expect.objectContaining({
+                    method: 'PATCH',
+                    body: JSON.stringify({ reason: 'Reverting inappropriate edit' }),
+                    headers: expect.objectContaining({
+                        'X-User-Discord-ID': 'mod123',
+                    }),
+                })
+            );
+        });
+
+        it('should throw error when no previous values exist', async () => {
+            const env = createMockEnv({ withUrlConfig: true });
+
+            mockFetch.mockResolvedValueOnce({
+                ok: false,
+                status: 400,
+                json: () => Promise.resolve({ message: 'No previous values to revert to' }),
+            });
+
+            await expect(
+                revertPreset(env, 'preset123', 'Trying to revert', 'mod123')
+            ).rejects.toThrow(PresetAPIError);
         });
     });
 
@@ -390,6 +756,43 @@ describe('preset-api.ts', () => {
             expect(result[0].name).toContain('5★');
             expect(result[0].name).toContain('User1');
             expect(result[1].name).not.toContain('by');
+        });
+
+        it('should use popular sort when query is empty', async () => {
+            const env = createMockEnv({ withUrlConfig: true });
+            const mockPresets = [
+                { id: '1', name: 'Popular Preset', vote_count: 100 },
+            ];
+
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                json: () => Promise.resolve({ presets: mockPresets, total: 1 }),
+            });
+
+            const result = await searchPresetsForAutocomplete(env, '');
+
+            expect(result).toHaveLength(1);
+            // Verify sort=popular was used (check the URL)
+            const calledUrl = mockFetch.mock.calls[0][0];
+            expect(calledUrl).toContain('sort=popular');
+        });
+
+        it('should respect status and limit options', async () => {
+            const env = createMockEnv({ withUrlConfig: true });
+
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                json: () => Promise.resolve({ presets: [], total: 0 }),
+            });
+
+            await searchPresetsForAutocomplete(env, 'test', {
+                status: 'pending',
+                limit: 10,
+            });
+
+            const calledUrl = mockFetch.mock.calls[0][0];
+            expect(calledUrl).toContain('status=pending');
+            expect(calledUrl).toContain('limit=10');
         });
 
         it('should return empty array on error', async () => {

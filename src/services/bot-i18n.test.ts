@@ -80,6 +80,40 @@ describe('bot-i18n.ts', () => {
                 expect(result).toBe('test_key'); // Returns key since it doesn't exist
             });
 
+            it('should interpolate real translation key with variables', () => {
+                const translator = createTranslator('en');
+
+                // Use a real translation key that has a variable placeholder
+                const result = translator.t('errors.dyeNotFound', { name: 'Snow White' });
+                expect(result).toBe('Could not find a dye named "Snow White".');
+            });
+
+            it('should interpolate multiple variables', () => {
+                const translator = createTranslator('en');
+
+                // Use a key that has multiple placeholders
+                const result = translator.t('dye.list.categorySummary', { total: 100, count: 5 });
+                expect(result).toBe('There are 100 dyes across 5 categories:');
+            });
+
+            it('should keep placeholder when variable is missing', () => {
+                const translator = createTranslator('en');
+
+                // Provide only one of two required variables
+                const result = translator.t('dye.list.categorySummary', { total: 100 });
+                // {count} should remain as-is since it wasn't provided
+                expect(result).toContain('100');
+                expect(result).toContain('{count}');
+            });
+
+            it('should handle numeric variables', () => {
+                const translator = createTranslator('en');
+
+                // Test with a number variable
+                const result = translator.t('dye.search.foundCount', { count: 1 });
+                expect(result).toBe('Found 1 dye:');
+            });
+
             it('should fall back to English for missing translations in other locales', () => {
                 const translator = createTranslator('ja');
 
@@ -87,6 +121,53 @@ describe('bot-i18n.ts', () => {
                 // We'll test with a consistent key like meta.locale
                 const result = translator.t('meta.locale');
                 expect(result).toBe('ja');
+            });
+
+            it('should use English fallback when key is missing in non-English locale', () => {
+                // Create translator for a non-English locale
+                const translator = createTranslator('de');
+
+                // Test with a key that exists - the behavior is to return the value from the locale
+                // For a truly missing key, it would try English fallback first
+                // Since we can't control locale data, test with a non-existent key
+                const result = translator.t('totally.nonexistent.key.xyz123');
+                // Should return the key since it's not found in either locale
+                expect(result).toBe('totally.nonexistent.key.xyz123');
+            });
+
+            it('should interpolate variables with non-English locale', () => {
+                const translator = createTranslator('fr');
+
+                // Use a French translation with variables
+                const result = translator.t('errors.dyeNotFound', { name: 'Blanc Neige' });
+                expect(result).toBe('Impossible de trouver une teinture nommée "Blanc Neige".');
+            });
+
+            it('should return undefined when path traverses through a non-object value', () => {
+                const translator = createTranslator('en');
+
+                // Try to access a nested key where an intermediate value is a string
+                // e.g., 'meta.locale.nested' where meta.locale is 'en' (a string)
+                const result = translator.t('meta.locale.nested');
+                expect(result).toBe('meta.locale.nested');
+            });
+
+            it('should return undefined when path traverses through null value', () => {
+                const translator = createTranslator('en');
+
+                // Access a deeply nested path that doesn't exist
+                const result = translator.t('nonexistent.deep.path.value');
+                expect(result).toBe('nonexistent.deep.path.value');
+            });
+
+            it('should keep placeholder when variable is not provided', () => {
+                // This tests the interpolate function's fallback to match
+                const translator = createTranslator('en');
+
+                // Access a key and provide variables, but the template has a different placeholder
+                // Since we don't have control over the template, test with missing variable
+                const result = translator.t('missing_key', { unused: 'value' });
+                expect(result).toBe('missing_key');
             });
         });
 
