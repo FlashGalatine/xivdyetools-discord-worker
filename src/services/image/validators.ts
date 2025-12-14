@@ -129,10 +129,31 @@ export function validateImageUrl(url: string): UrlValidationResult {
 }
 
 /**
- * Check if a hostname resolves to a private/internal IP
+ * Check if a hostname is unsafe (private/internal IP or IP literal)
+ *
+ * SECURITY: Blocks all IP address literals since Discord CDN uses hostnames.
+ * Also blocks cloud metadata endpoints and private IP ranges.
  */
 function isPrivateHost(hostname: string): boolean {
-  // Common private hostnames
+  // Block ALL IP address literals (IPv4 and IPv6)
+  // Discord CDN always uses hostnames like cdn.discordapp.com, never IPs
+  const ipv4Pattern = /^(\d{1,3}\.){3}\d{1,3}$/;
+  const ipv6Pattern = /^([0-9a-f:]+)$/i;
+  if (ipv4Pattern.test(hostname) || ipv6Pattern.test(hostname)) {
+    return true;
+  }
+
+  // Block cloud metadata endpoints (AWS, GCP, Azure, etc.)
+  const metadataHosts = [
+    /^169\.254\.169\.254$/, // AWS/GCP metadata
+    /^metadata\.google\.internal$/i,
+    /^metadata\.azure\.internal$/i,
+  ];
+  if (metadataHosts.some((pattern) => pattern.test(hostname))) {
+    return true;
+  }
+
+  // Private IP patterns (defense in depth, shouldn't be reachable via hostname)
   const privatePatterns = [
     /^localhost$/i,
     /^127\./,
@@ -143,6 +164,7 @@ function isPrivateHost(hostname: string): boolean {
     /^::1$/,
     /^fc00:/i,
     /^fe80:/i,
+    /^fd[0-9a-f]{2}:/i, // Unique local addresses
   ];
 
   return privatePatterns.some((pattern) => pattern.test(hostname));
@@ -291,6 +313,9 @@ export function validateImageFormat(buffer: Uint8Array): FormatValidationResult 
 /**
  * Fetch an image from a validated URL with timeout
  *
+ * SECURITY: Uses manual redirect handling to prevent SSRF via redirect attacks.
+ * Discord CDN should never redirect to external hosts, but we validate anyway.
+ *
  * @param url - Validated image URL
  * @returns Image buffer
  * @throws Error if fetch fails or times out
@@ -300,13 +325,39 @@ export async function fetchImageWithTimeout(url: string): Promise<Uint8Array> {
   const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
 
   try {
-    const response = await fetch(url, {
+    // SECURITY: Use manual redirect handling to validate redirect targets
+    // This prevents SSRF attacks where Discord CDN might redirect to internal hosts
+    let response = await fetch(url, {
       signal: controller.signal,
+      redirect: 'manual', // Don't auto-follow redirects
       headers: {
         // Identify ourselves as a bot
         'User-Agent': 'XIV Dye Tools Discord Bot/1.0',
       },
     });
+
+    // Handle redirects manually with validation
+    if (response.status >= 300 && response.status < 400) {
+      const redirectUrl = response.headers.get('Location');
+      if (!redirectUrl) {
+        throw new Error('Redirect without Location header');
+      }
+
+      // Validate the redirect target using the same security checks
+      const redirectResult = validateImageUrl(redirectUrl);
+      if (!redirectResult.valid) {
+        throw new Error(`Unsafe redirect target: ${redirectResult.error}`);
+      }
+
+      // Follow the validated redirect (one hop only)
+      response = await fetch(redirectResult.normalizedUrl!, {
+        signal: controller.signal,
+        redirect: 'error', // No further redirects allowed
+        headers: {
+          'User-Agent': 'XIV Dye Tools Discord Bot/1.0',
+        },
+      });
+    }
 
     if (!response.ok) {
       throw new Error(`Failed to fetch image: HTTP ${response.status}`);
