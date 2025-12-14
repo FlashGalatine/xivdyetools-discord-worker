@@ -93,11 +93,20 @@ export function messageResponse(data: InteractionResponseData): Response {
 
 /**
  * Creates an ephemeral (private) message response.
+ * DISCORD-REF-002: Extended to accept either string or full InteractionResponseData
+ * @param content - Either a simple string message or full InteractionResponseData
  */
-export function ephemeralResponse(content: string): Response {
+export function ephemeralResponse(content: string | InteractionResponseData): Response {
+  if (typeof content === 'string') {
+    return messageResponse({
+      content,
+      flags: MessageFlags.EPHEMERAL,
+    });
+  }
+  // InteractionResponseData passed - add ephemeral flag
   return messageResponse({
-    content,
-    flags: MessageFlags.EPHEMERAL,
+    ...content,
+    flags: (content.flags ?? 0) | MessageFlags.EPHEMERAL,
   });
 }
 

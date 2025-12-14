@@ -263,6 +263,7 @@ async function handleCommand(
   }
 
   // Track command usage (fire-and-forget, don't await)
+  // DISCORD-BUG-004: Add error handling to prevent silent analytics failures
   if (userId && commandName) {
     ctx.waitUntil(
       trackCommandWithKV(env, {
@@ -270,6 +271,8 @@ async function handleCommand(
         userId,
         guildId: interaction.guild_id,
         success: true, // Will be updated if command fails
+      }).catch((error) => {
+        console.error('Analytics tracking failed:', error);
       })
     );
   }
