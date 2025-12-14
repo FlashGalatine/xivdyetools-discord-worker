@@ -19,6 +19,8 @@ export interface RateLimitResult {
   resetAt: number;
   /** Seconds until the rate limit resets (only present when rate limited) */
   retryAfter?: number;
+  /** DISCORD-BUG-002: Flag indicating KV error occurred (request was allowed due to fail-open policy) */
+  kvError?: boolean;
 }
 
 /**
@@ -79,16 +81,26 @@ function getCommandLimit(commandName?: string): number {
  * 3. Increment counter and check against limit
  * 4. Store updated data with TTL
  *
+ * DISCORD-BUG-001: Known limitation - due to KV's eventual consistency, two
+ * concurrent requests at the exact window boundary may both receive count=1.
+ * This allows at most 2x burst at window boundaries, which is acceptable
+ * for rate limiting purposes. A timestamp-array approach would fix this but
+ * adds complexity and storage overhead.
+ *
  * @param kv - KV namespace binding
  * @param userId - Discord user ID
  * @param commandName - Optional command name for command-specific limits
- * @returns Rate limit check result
+ * @returns Rate limit check result (check kvError flag for KV failures)
  *
  * @example
  * ```typescript
  * const result = await checkRateLimit(env.KV, userId, 'harmony');
  * if (!result.allowed) {
  *   return ephemeralResponse(`Rate limited. Try again in ${result.retryAfter}s`);
+ * }
+ * if (result.kvError) {
+ *   // Log for monitoring - request was allowed but KV had an issue
+ *   console.warn('Rate limit KV error, request allowed via fail-open');
  * }
  * ```
  */
@@ -151,13 +163,14 @@ export async function checkRateLimit(
       resetAt,
     };
   } catch (error) {
-    // On KV errors, allow the request (fail open)
-    // This prevents KV issues from blocking all commands
+    // DISCORD-BUG-002: On KV errors, allow the request (fail open) and flag the error
+    // This prevents KV issues from blocking all commands while enabling monitoring
     console.error('Rate limit check failed:', error);
     return {
       allowed: true,
       remaining: limit,
       resetAt: now + windowMs,
+      kvError: true, // Flag for caller to potentially log/alert
     };
   }
 }
