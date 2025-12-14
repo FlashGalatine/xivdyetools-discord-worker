@@ -27,6 +27,47 @@ import {
 } from '../types/preset.js';
 
 // ============================================================================
+// HMAC Signature Generation
+// ============================================================================
+
+/**
+ * Generate HMAC-SHA256 signature for bot authentication
+ *
+ * SECURITY: This cryptographically binds the user headers to the request,
+ * preventing header spoofing attacks even if BOT_API_SECRET is leaked.
+ *
+ * @param timestamp - Unix timestamp (seconds)
+ * @param userDiscordId - User's Discord ID
+ * @param userName - User's Discord name
+ * @param signingSecret - The BOT_SIGNING_SECRET
+ * @returns Hex-encoded HMAC signature
+ */
+async function generateRequestSignature(
+  timestamp: number,
+  userDiscordId: string | undefined,
+  userName: string | undefined,
+  signingSecret: string
+): Promise<string> {
+  const message = `${timestamp}:${userDiscordId || ''}:${userName || ''}`;
+
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    'raw',
+    encoder.encode(signingSecret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  );
+
+  const signature = await crypto.subtle.sign('HMAC', key, encoder.encode(message));
+
+  // Convert to hex string
+  return Array.from(new Uint8Array(signature))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+// ============================================================================
 // Core Request Function
 // ============================================================================
 
@@ -91,6 +132,19 @@ async function request<T>(
       );
     } else {
       // Fall back to external URL (for local dev or if service binding not configured)
+      // SECURITY: Add HMAC signature for bot authentication (required after PRESETS-SEC-001 fix)
+      if (env.BOT_SIGNING_SECRET) {
+        const timestamp = Math.floor(Date.now() / 1000);
+        const signature = await generateRequestSignature(
+          timestamp,
+          options.userDiscordId,
+          options.userName,
+          env.BOT_SIGNING_SECRET
+        );
+        headers['X-Request-Timestamp'] = String(timestamp);
+        headers['X-Request-Signature'] = signature;
+      }
+
       const url = `${env.PRESETS_API_URL}${path}`;
       response = await fetch(url, {
         method,
