@@ -1,8 +1,25 @@
 /**
- * Bot UI Translation Service
+ * Bot UI Translation Service (DISCORD-REF-003: Clarified separation from i18n.ts)
  *
- * Provides localized strings for bot UI elements (not dye names - those come from Core).
- * Uses static JSON imports for Cloudflare Workers compatibility.
+ * This service handles:
+ * - Bot-specific UI strings (commands, errors, messages, button labels)
+ * - Static JSON locale files imported at build time (required for Workers)
+ * - The Translator class for string interpolation and fallback handling
+ *
+ * Separation from i18n.ts:
+ * - bot-i18n.ts (this file): Bot UI strings from static JSON locale files
+ * - i18n.ts: User preferences (KV), locale resolution, core library integration
+ *
+ * Why two files?
+ * - Dye names use xivdyetools-core (same as web app) - handled by i18n.ts
+ * - Bot UI strings are Discord-specific - handled here
+ * - Static JSON imports can't be async, while KV operations are async
+ *
+ * Usage:
+ * ```typescript
+ * const t = await createUserTranslator(kv, userId, interaction.locale);
+ * const message = t.t('errors.dyeNotFound', { name: 'Snow White' });
+ * ```
  *
  * @module services/bot-i18n
  */

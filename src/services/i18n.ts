@@ -1,8 +1,19 @@
 /**
- * I18n Service
+ * I18n Service (DISCORD-REF-003: Clarified separation from bot-i18n.ts)
  *
- * Manages user language preferences using Cloudflare KV.
- * Integrates with xivdyetools-core LocalizationService for translations.
+ * This service handles:
+ * - User language PREFERENCES stored in Cloudflare KV
+ * - Locale resolution (user preference → Discord locale → default)
+ * - Integration with xivdyetools-core LocalizationService for DYE NAMES and CATEGORIES
+ *
+ * Separation from bot-i18n.ts:
+ * - i18n.ts (this file): Preferences, locale resolution, core library integration
+ * - bot-i18n.ts: Bot UI strings (commands, errors, messages) from static JSON files
+ *
+ * Why two files?
+ * - Dye names come from xivdyetools-core (shared with web app)
+ * - Bot UI strings are specific to the Discord bot
+ * - Both need user locale preferences, so i18n.ts handles that shared concern
  *
  * @module services/i18n
  */
