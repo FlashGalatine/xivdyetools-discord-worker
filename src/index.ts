@@ -9,6 +9,7 @@
 
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
+import type { ExtendedLogger } from '@xivdyetools/logger';
 import type { Env, InteractionType as IType } from './types/env.js';
 import { InteractionType, InteractionResponseType } from './types/env.js';
 import { verifyDiscordRequest, unauthorizedResponse, badRequestResponse, timingSafeEqual } from './utils/verify.js';
@@ -46,6 +47,7 @@ import { STATUS_DISPLAY, type PresetNotificationPayload } from './types/preset.j
 import { getLocalizedDyeName } from './services/i18n.js';
 import { validateEnv, logValidationErrors } from './utils/env-validation.js';
 import { requestIdMiddleware, getRequestId, type RequestIdVariables } from './middleware/request-id.js';
+import { loggerMiddleware, getLogger } from './middleware/logger.js';
 
 // Initialize DyeService for autocomplete
 const dyeService = new DyeService(dyeDatabase);
@@ -61,7 +63,9 @@ function formatDyesForEmbed(dyeIds: number[]): string {
 }
 
 // Define context variables type
-type Variables = RequestIdVariables;
+type Variables = RequestIdVariables & {
+  logger: ExtendedLogger;
+};
 
 // Create Hono app with environment type
 const app = new Hono<{ Bindings: Env; Variables: Variables }>();
@@ -74,6 +78,9 @@ app.use('*', cors());
 
 // Request ID middleware (must be early for tracing)
 app.use('*', requestIdMiddleware);
+
+// Structured request logger (after request ID for correlation)
+app.use('*', loggerMiddleware);
 
 // Environment validation middleware
 // Validates required env vars once per isolate and caches result
