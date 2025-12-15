@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.2] - 2025-12-14
+
+### Deprecated
+
+#### Type Re-exports
+The following re-exports from `src/types/preset.ts` are deprecated and will be removed in the next major version:
+
+- **Preset Types** (PresetStatus, PresetCategory, CommunityPreset, etc.): Import from `@xivdyetools/types` instead
+- **Request Types** (PresetFilters, PresetSubmission, etc.): Import from `@xivdyetools/types` instead
+- **Response Types** (PresetListResponse, VoteResponse, etc.): Import from `@xivdyetools/types` instead
+- **Moderation Types** (ModerationLogEntry, ModerationStats): Import from `@xivdyetools/types` instead
+
+**Note:** Project-specific types (PresetNotificationPayload, PresetAPIError, CATEGORY_DISPLAY, STATUS_DISPLAY) remain unchanged.
+
+**Migration Guide:**
+```typescript
+// Before (deprecated)
+import { PresetStatus, CommunityPreset } from '@/types/preset';
+
+// After (recommended)
+import type { PresetStatus, CommunityPreset } from '@xivdyetools/types';
+```
+
+---
+
 ## [2.0.1] - 2025-12-08
 
 ### Changed

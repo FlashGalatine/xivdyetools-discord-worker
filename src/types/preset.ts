@@ -11,7 +11,10 @@
 // RE-EXPORT SHARED TYPES FROM @xivdyetools/types
 // ============================================================================
 
-// Core preset types
+/**
+ * @deprecated Import directly from '@xivdyetools/types' instead.
+ * These re-exports will be removed in the next major version.
+ */
 export type {
   PresetStatus,
   PresetCategory,
@@ -21,14 +24,20 @@ export type {
   PresetPreviousValues,
 } from '@xivdyetools/types';
 
-// Request types
+/**
+ * @deprecated Import directly from '@xivdyetools/types' instead.
+ * These re-exports will be removed in the next major version.
+ */
 export type {
   PresetFilters,
   PresetSubmission,
   PresetEditRequest,
 } from '@xivdyetools/types';
 
-// Response types
+/**
+ * @deprecated Import directly from '@xivdyetools/types' instead.
+ * These re-exports will be removed in the next major version.
+ */
 export type {
   PresetListResponse,
   PresetSubmitResponse,
@@ -36,7 +45,10 @@ export type {
   VoteResponse,
 } from '@xivdyetools/types';
 
-// Moderation types
+/**
+ * @deprecated Import directly from '@xivdyetools/types' instead.
+ * These re-exports will be removed in the next major version.
+ */
 export type { ModerationLogEntry, ModerationStats } from '@xivdyetools/types';
 
 // ============================================================================
