@@ -55,7 +55,7 @@ const mockDyeRed = { id: 1, name: 'Rolanberry Red', hex: '#FF0000', category: 'G
 const mockDyeGreen = { id: 2, name: 'Celeste Green', hex: '#00FF00', category: 'General', itemID: 1002 };
 const mockDyeBlue = { id: 3, name: 'Ceruleum Blue', hex: '#0000FF', category: 'General', itemID: 1003 };
 
-vi.mock('xivdyetools-core', () => {
+vi.mock('@xivdyetools/core', () => {
   class MockDyeService {
     searchByName(query: string) {
       const lower = query.toLowerCase();

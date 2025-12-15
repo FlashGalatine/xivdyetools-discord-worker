@@ -9,7 +9,7 @@ import {
 } from './contrast-matrix.js';
 
 // Mock the ColorService with a simpler implementation
-vi.mock('xivdyetools-core', async (importOriginal) => {
+vi.mock('@xivdyetools/core', async (importOriginal) => {
     const actual = await importOriginal<typeof import('xivdyetools-core')>();
     return {
         ...actual,

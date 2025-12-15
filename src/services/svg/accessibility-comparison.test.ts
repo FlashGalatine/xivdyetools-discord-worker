@@ -9,7 +9,7 @@ import {
 } from './accessibility-comparison.js';
 
 // Mock the ColorService
-vi.mock('xivdyetools-core', async (importOriginal) => {
+vi.mock('@xivdyetools/core', async (importOriginal) => {
     const actual = await importOriginal<typeof import('xivdyetools-core')>();
     return {
         ...actual,

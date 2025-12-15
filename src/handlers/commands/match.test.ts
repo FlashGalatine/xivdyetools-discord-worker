@@ -27,7 +27,7 @@ let mockFindClosestDye = vi.fn((_hex: string, excludeIds: number[] = []) => {
   return null;
 });
 
-vi.mock('xivdyetools-core', () => {
+vi.mock('@xivdyetools/core', () => {
   class MockDyeService {
     searchByName(query: string) {
       return mockSearchByName(query);

@@ -65,7 +65,7 @@ vi.mock('./services/i18n.js', () => ({
 }));
 
 // Mock DyeService
-vi.mock('xivdyetools-core', () => {
+vi.mock('@xivdyetools/core', () => {
   class MockDyeService {
     getDyeById(id: number) {
       return {

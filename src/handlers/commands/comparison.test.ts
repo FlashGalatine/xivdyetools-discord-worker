@@ -7,7 +7,7 @@ import { handleComparisonCommand } from './comparison.js';
 import type { Env, DiscordInteraction } from '../../types/env.js';
 
 // Mock dependencies
-vi.mock('xivdyetools-core', () => {
+vi.mock('@xivdyetools/core', () => {
   class MockDyeService {
     searchByName(query: string) {
       if (query.toLowerCase().includes('snow')) {
@@ -497,7 +497,6 @@ describe('comparison.ts', () => {
       vi.mocked(generateComparisonGrid).mockImplementationOnce(() => {
         throw new Error('SVG generation failed');
       });
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
       const interaction: DiscordInteraction = {
         type: 2,
@@ -517,10 +516,8 @@ describe('comparison.ts', () => {
       await handleComparisonCommand(interaction, mockEnv, mockCtx);
       await Promise.all(waitUntilPromises);
 
-      expect(consoleSpy).toHaveBeenCalledWith(
-        'Comparison command error:',
-        expect.any(Error)
-      );
+      // Errors are logged via structured logger (when provided), not console.error
+      // Verify the error response is still sent to Discord
       expect(editOriginalResponse).toHaveBeenCalledWith(
         expect.anything(),
         expect.anything(),
@@ -532,8 +529,6 @@ describe('comparison.ts', () => {
           ]),
         })
       );
-
-      consoleSpy.mockRestore();
     });
   });
 

@@ -12,7 +12,7 @@ import type { DiscordInteraction, Env } from '../../types/env.js';
 const dyeSnow = { id: 1, name: 'Snow White', hex: '#ffffff', category: 'General', itemID: 5001 };
 const dyeBlack = { id: 2, name: 'Soot Black', hex: '#000000', category: 'General', itemID: 5002 };
 
-vi.mock('xivdyetools-core', () => {
+vi.mock('@xivdyetools/core', () => {
   class MockDyeService {
     searchByName(query: string) {
       if (query.toLowerCase().includes('snow')) return [dyeSnow];

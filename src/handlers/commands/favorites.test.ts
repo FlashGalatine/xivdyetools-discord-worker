@@ -8,8 +8,8 @@ import type { Env, DiscordInteraction } from '../../types/env.js';
 import { DyeService } from '@xivdyetools/core';
 
 // Mock dependencies
-vi.mock('xivdyetools-core', async () => {
-  const actual = await vi.importActual('xivdyetools-core');
+vi.mock('@xivdyetools/core', async () => {
+  const actual = await vi.importActual('@xivdyetools/core');
   
   // Mock DyeService
   class MockDyeService {

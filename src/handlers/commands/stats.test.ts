@@ -400,8 +400,6 @@ describe('stats.ts', () => {
     it('should display error message when getStats fails', async () => {
       vi.mocked(getStats).mockRejectedValue(new Error('KV unavailable'));
 
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-
       const interaction: DiscordInteraction = {
         type: 2,
         data: { name: 'stats' },
@@ -417,9 +415,34 @@ describe('stats.ts', () => {
       expect(data.data.embeds[0].title).toContain('Error');
       expect(data.data.embeds[0].description).toContain('Failed to retrieve statistics');
       expect(data.data.flags).toBe(64);
+    });
 
-      expect(consoleSpy).toHaveBeenCalledWith('Error in stats command:', expect.any(Error));
-      consoleSpy.mockRestore();
+    it('should log errors when logger is provided and getStats fails', async () => {
+      vi.mocked(getStats).mockRejectedValue(new Error('KV unavailable'));
+
+      const mockLogger = {
+        error: vi.fn(),
+        info: vi.fn(),
+        warn: vi.fn(),
+        debug: vi.fn(),
+        child: vi.fn().mockReturnThis(),
+      } as any;
+
+      const interaction: DiscordInteraction = {
+        type: 2,
+        data: { name: 'stats' },
+        member: { user: { id: 'admin-123' } },
+        id: 'int-1',
+        application_id: 'app-1',
+        token: 'token-1',
+      };
+
+      await handleStatsCommand(interaction, mockEnv, mockCtx, mockLogger);
+
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        'Error in stats command',
+        expect.any(Error)
+      );
     });
   });
 });

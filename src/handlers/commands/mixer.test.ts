@@ -15,7 +15,7 @@ const facewearDye = { id: 99, name: 'Facewear Dye', hex: '#888888', category: 'F
 // ---------------------------------------------------------------------------
 // Mocks
 // ---------------------------------------------------------------------------
-vi.mock('xivdyetools-core', () => {
+vi.mock('@xivdyetools/core', () => {
     class MockDyeService {
         searchByName(query: string) {
             const lowerQuery = query.toLowerCase();

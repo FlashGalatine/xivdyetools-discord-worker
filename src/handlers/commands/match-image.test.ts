@@ -34,7 +34,7 @@ let mockPixelDataToRGBFiltered = vi.fn((pixels: Uint8ClampedArray) => {
     return [[255, 0, 0], [0, 255, 0], [0, 0, 255]];
 });
 
-vi.mock('xivdyetools-core', () => {
+vi.mock('@xivdyetools/core', () => {
     class MockDyeService {
         searchByName() {
             return [dyeRed];

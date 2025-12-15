@@ -7,7 +7,7 @@ import { handleAccessibilityCommand } from './accessibility.js';
 import type { Env, DiscordInteraction } from '../../types/env.js';
 
 // Mock dependencies
-vi.mock('xivdyetools-core', () => {
+vi.mock('@xivdyetools/core', () => {
   class MockDyeService {
     searchByName(query: string) {
       if (query.toLowerCase().includes('snow')) {

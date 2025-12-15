@@ -85,7 +85,7 @@ describe('buttons/index.ts', () => {
 
             await handleButtonInteraction(interaction, mockEnv, mockCtx);
 
-            expect(handlePresetApproveButton).toHaveBeenCalledWith(interaction, mockEnv, mockCtx);
+            expect(handlePresetApproveButton).toHaveBeenCalledWith(interaction, mockEnv, mockCtx, undefined);
         });
 
         it('should route preset_reject_ buttons to handlePresetRejectButton', async () => {
@@ -98,7 +98,7 @@ describe('buttons/index.ts', () => {
 
             await handleButtonInteraction(interaction, mockEnv, mockCtx);
 
-            expect(handlePresetRejectButton).toHaveBeenCalledWith(interaction, mockEnv, mockCtx);
+            expect(handlePresetRejectButton).toHaveBeenCalledWith(interaction, mockEnv, mockCtx, undefined);
         });
 
         it('should route preset_revert_ buttons to handlePresetRevertButton', async () => {
@@ -111,7 +111,7 @@ describe('buttons/index.ts', () => {
 
             await handleButtonInteraction(interaction, mockEnv, mockCtx);
 
-            expect(handlePresetRevertButton).toHaveBeenCalledWith(interaction, mockEnv, mockCtx);
+            expect(handlePresetRevertButton).toHaveBeenCalledWith(interaction, mockEnv, mockCtx, undefined);
         });
 
         it('should return ephemeral message for unknown buttons', async () => {

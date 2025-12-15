@@ -81,7 +81,7 @@ export async function handlePresetApproveButton(
   }
 
   // Defer update (we'll edit the original message)
-  ctx.waitUntil(processApproval(interaction, env, presetId, userId, userName));
+  ctx.waitUntil(processApproval(interaction, env, presetId, userId, userName, logger));
 
   return Response.json({
     type: InteractionResponseType.DEFERRED_UPDATE_MESSAGE,
@@ -93,7 +93,8 @@ async function processApproval(
   env: Env,
   presetId: string,
   userId: string,
-  userName: string
+  userName: string,
+  logger?: ExtendedLogger
 ): Promise<void> {
   try {
     const preset = await presetApi.approvePreset(env, presetId, userId);

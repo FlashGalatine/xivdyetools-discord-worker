@@ -132,8 +132,7 @@ describe('analytics.ts', () => {
       expect(mockAnalytics.writeDataPoint).not.toHaveBeenCalled();
     });
 
-    it('should catch and log errors without throwing', () => {
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    it('should catch errors without throwing', () => {
       mockAnalytics.writeDataPoint.mockImplementation(() => {
         throw new Error('Analytics error');
       });
@@ -144,14 +143,35 @@ describe('analytics.ts', () => {
         success: true,
       };
 
-      // Should not throw
-      trackCommand(mockEnv, event);
+      // Should not throw (errors are silently caught when no logger is provided)
+      expect(() => trackCommand(mockEnv, event)).not.toThrow();
+    });
 
-      expect(consoleSpy).toHaveBeenCalledWith(
-        'Analytics tracking error:',
+    it('should log errors when logger is provided', () => {
+      mockAnalytics.writeDataPoint.mockImplementation(() => {
+        throw new Error('Analytics error');
+      });
+
+      const mockLogger = {
+        error: vi.fn(),
+        info: vi.fn(),
+        warn: vi.fn(),
+        debug: vi.fn(),
+        child: vi.fn().mockReturnThis(),
+      } as any;
+
+      const event: CommandEvent = {
+        commandName: 'harmony',
+        userId: 'user-123',
+        success: true,
+      };
+
+      trackCommand(mockEnv, event, mockLogger);
+
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        'Analytics tracking error',
         expect.any(Error)
       );
-      consoleSpy.mockRestore();
     });
   });
 

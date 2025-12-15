@@ -19,7 +19,7 @@ import {
 } from './i18n.js';
 
 // Mock xivdyetools-core LocalizationService
-vi.mock('xivdyetools-core', () => ({
+vi.mock('@xivdyetools/core', () => ({
     LocalizationService: {
         clear: vi.fn(),
         setLocale: vi.fn().mockResolvedValue(undefined),
