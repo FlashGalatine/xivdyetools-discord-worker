@@ -141,7 +141,8 @@ app.post('/webhooks/preset-submission', async (c) => {
 
   // First check if secret is configured, then use timing-safe comparison
   if (!env.INTERNAL_WEBHOOK_SECRET || !(await timingSafeEqual(authHeader, expectedAuth))) {
-    console.error('Webhook authentication failed');
+    const logger = c.get('logger');
+    logger.error('Webhook authentication failed');
     return c.json({ error: 'Unauthorized' }, 401);
   }
 
@@ -158,7 +159,8 @@ app.post('/webhooks/preset-submission', async (c) => {
   }
 
   const { preset } = payload;
-  console.log(`Received preset webhook: ${preset.name} (${preset.id}) from ${preset.source}`);
+  const logger = c.get('logger');
+  logger.info('Received preset webhook', { presetName: preset.name, presetId: preset.id, source: preset.source });
 
   // Pending presets go to moderation channel with approve/reject buttons
   if (preset.status === 'pending' && env.MODERATION_CHANNEL_ID) {
@@ -246,8 +248,10 @@ app.post('/', async (c) => {
     env.DISCORD_PUBLIC_KEY
   );
 
+  const logger = c.get('logger');
+
   if (!isValid) {
-    console.error('Signature verification failed:', error);
+    logger.error('Signature verification failed', undefined, { error: error || 'Unknown error' });
     return unauthorizedResponse(error);
   }
 
@@ -261,32 +265,32 @@ app.post('/', async (c) => {
 
   // Handle PING (required for Discord endpoint verification)
   if (interaction.type === InteractionType.PING) {
-    console.log('Received PING, responding with PONG');
+    logger.info('Received PING, responding with PONG');
     return pongResponse();
   }
 
   // Handle Application Commands (slash commands)
   if (interaction.type === InteractionType.APPLICATION_COMMAND) {
-    return handleCommand(interaction, env, c.executionCtx);
+    return handleCommand(interaction, env, c.executionCtx, logger);
   }
 
   // Handle Autocomplete
   if (interaction.type === InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE) {
-    return handleAutocomplete(interaction, env);
+    return handleAutocomplete(interaction, env, logger);
   }
 
   // Handle Message Components (buttons, select menus)
   if (interaction.type === InteractionType.MESSAGE_COMPONENT) {
-    return handleComponent(interaction, env, c.executionCtx);
+    return handleComponent(interaction, env, c.executionCtx, logger);
   }
 
   // Handle Modal Submissions
   if (interaction.type === InteractionType.MODAL_SUBMIT) {
-    return handleModal(interaction, env, c.executionCtx);
+    return handleModal(interaction, env, c.executionCtx, logger);
   }
 
   // Unknown interaction type
-  console.warn('Unknown interaction type:', interaction.type);
+  logger.warn('Unknown interaction type', { interactionType: interaction.type });
   return badRequestResponse(`Unknown interaction type: ${interaction.type}`);
 });
 
@@ -296,17 +300,18 @@ app.post('/', async (c) => {
 async function handleCommand(
   interaction: DiscordInteraction,
   env: Env,
-  ctx: ExecutionContext
+  ctx: ExecutionContext,
+  logger: ExtendedLogger
 ): Promise<Response> {
   const commandName = interaction.data?.name;
   const userId = interaction.member?.user?.id ?? interaction.user?.id;
-  console.log(`Handling command: /${commandName} from user ${userId}`);
+  logger.info('Handling command', { command: commandName, userId });
 
   // Check rate limit (skip for utility commands)
   if (userId && commandName && !['about', 'manual', 'stats'].includes(commandName)) {
     const rateLimitResult = await checkRateLimit(env.KV, userId, commandName);
     if (!rateLimitResult.allowed) {
-      console.log(`User ${userId} rate limited for /${commandName}`);
+      logger.info('User rate limited', { userId, command: commandName });
       return ephemeralResponse(formatRateLimitMessage(rateLimitResult));
     }
   }
@@ -321,7 +326,7 @@ async function handleCommand(
         guildId: interaction.guild_id,
         success: true, // Will be updated if command fails
       }).catch((error) => {
-        console.error('Analytics tracking failed:', error);
+        logger.error('Analytics tracking failed', error instanceof Error ? error : undefined, { error: String(error) });
       })
     );
   }
@@ -384,7 +389,8 @@ async function handleCommand(
  */
 async function handleAutocomplete(
   interaction: DiscordInteraction,
-  env: Env
+  env: Env,
+  logger: ExtendedLogger
 ): Promise<Response> {
   const commandName = interaction.data?.name;
   const options = interaction.data?.options || [];
@@ -416,7 +422,7 @@ async function handleAutocomplete(
 
     // Collection name autocomplete (for add, remove, show, delete, rename subcommands)
     if (focusedName === 'name') {
-      choices = await getCollectionAutocompleteChoices(interaction, env, query);
+      choices = await getCollectionAutocompleteChoices(interaction, env, query, logger);
     }
     // Dye autocomplete (for add/remove subcommands)
     else if (focusedName === 'dye') {
@@ -433,7 +439,7 @@ async function handleAutocomplete(
       if (subcommandName === 'edit') {
         const userId = interaction.member?.user?.id ?? interaction.user?.id;
         if (userId) {
-          choices = await getMyPresetsAutocompleteChoices(env, userId, query);
+          choices = await getMyPresetsAutocompleteChoices(env, userId, query, logger);
         }
       }
       // For moderate subcommand, search pending presets
@@ -467,7 +473,8 @@ async function handleAutocomplete(
 async function getCollectionAutocompleteChoices(
   interaction: DiscordInteraction,
   env: Env,
-  query: string
+  query: string,
+  logger: ExtendedLogger
 ): Promise<Array<{ name: string; value: string }>> {
   const userId = interaction.member?.user?.id ?? interaction.user?.id;
 
@@ -494,7 +501,7 @@ async function getCollectionAutocompleteChoices(
       value: c.name,
     }));
   } catch (error) {
-    console.error('Failed to get collection autocomplete choices:', error);
+    logger.error('Failed to get collection autocomplete choices', error instanceof Error ? error : undefined);
     return [];
   }
 }
@@ -533,7 +540,8 @@ function getDyeAutocompleteChoices(query: string): Array<{ name: string; value: 
 async function getMyPresetsAutocompleteChoices(
   env: Env,
   userId: string,
-  query: string
+  query: string,
+  logger: ExtendedLogger
 ): Promise<Array<{ name: string; value: string }>> {
   try {
     const presets = await presetApi.getMyPresets(env, userId);
@@ -557,7 +565,7 @@ async function getMyPresetsAutocompleteChoices(
       value: preset.id,
     }));
   } catch (error) {
-    console.error('Failed to get user presets for autocomplete:', error);
+    logger.error('Failed to get user presets for autocomplete', error instanceof Error ? error : undefined);
     return [];
   }
 }
@@ -568,12 +576,13 @@ async function getMyPresetsAutocompleteChoices(
 async function handleComponent(
   interaction: DiscordInteraction,
   env: Env,
-  ctx: ExecutionContext
+  ctx: ExecutionContext,
+  logger: ExtendedLogger
 ): Promise<Response> {
   const customId = interaction.data?.custom_id;
   const componentType = interaction.data?.component_type;
 
-  console.log(`Handling component: ${customId} (type: ${componentType})`);
+  logger.info('Handling component', { customId, componentType });
 
   // Buttons have component_type 2
   if (componentType === 2) {
@@ -590,10 +599,11 @@ async function handleComponent(
 async function handleModal(
   interaction: DiscordInteraction,
   env: Env,
-  ctx: ExecutionContext
+  ctx: ExecutionContext,
+  logger: ExtendedLogger
 ): Promise<Response> {
   const customId = interaction.data?.custom_id || '';
-  console.log(`Handling modal: ${customId}`);
+  logger.info('Handling modal', { customId });
 
   // Route preset rejection modal
   if (isPresetRejectionModal(customId)) {
