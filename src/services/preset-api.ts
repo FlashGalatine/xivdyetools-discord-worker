@@ -125,6 +125,21 @@ async function request<T>(
     headers['X-User-Discord-Name'] = options.userName;
   }
 
+  // SECURITY: Add HMAC signature for bot authentication
+  // This must be done for BOTH service binding and URL-based requests,
+  // as the Presets API requires signature verification in production
+  if (env.BOT_SIGNING_SECRET) {
+    const timestamp = Math.floor(Date.now() / 1000);
+    const signature = await generateRequestSignature(
+      timestamp,
+      options.userDiscordId,
+      options.userName,
+      env.BOT_SIGNING_SECRET
+    );
+    headers['X-Request-Timestamp'] = String(timestamp);
+    headers['X-Request-Signature'] = signature;
+  }
+
   try {
     let response: Response;
 
@@ -140,19 +155,6 @@ async function request<T>(
       );
     } else {
       // Fall back to external URL (for local dev or if service binding not configured)
-      // SECURITY: Add HMAC signature for bot authentication (required after PRESETS-SEC-001 fix)
-      if (env.BOT_SIGNING_SECRET) {
-        const timestamp = Math.floor(Date.now() / 1000);
-        const signature = await generateRequestSignature(
-          timestamp,
-          options.userDiscordId,
-          options.userName,
-          env.BOT_SIGNING_SECRET
-        );
-        headers['X-Request-Timestamp'] = String(timestamp);
-        headers['X-Request-Signature'] = signature;
-      }
-
       const url = `${env.PRESETS_API_URL}${path}`;
       response = await fetch(url, {
         method,

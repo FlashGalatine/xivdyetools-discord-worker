@@ -68,7 +68,8 @@ PRESETS_API_URL = "https://xivdyetools-worker.ashejunius.workers.dev"
 # Secrets (set via wrangler secret put):
 # - DISCORD_TOKEN
 # - DISCORD_PUBLIC_KEY
-# - BOT_API_SECRET (for presets API auth)
+# - BOT_API_SECRET (for presets API auth - must match Presets API)
+# - BOT_SIGNING_SECRET (HMAC signing key - must match Presets API)
 # ============================================================================
 
 # ============================================================================
@@ -89,4 +90,25 @@ name = "xivdyetools-discord-worker"
 # Production Discord Application ID
 DISCORD_CLIENT_ID = "1447108133020369048"
 PRESETS_API_URL = "https://xivdyetools-worker.ashejunius.workers.dev"
+
+# KV Namespace for rate limiting and user preferences
+[[env.production.kv_namespaces]]
+binding = "KV"
+id = "1fcb7e037ccd4172a47fccd97cf8e753"
+
+# D1 Database (reuse existing presets database)
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "xivdyetools-presets"
+database_id = "e17d68a1-5a44-4c88-b02b-07d053cbe321"
+
+# Service Binding to Preset API Worker
+[[env.production.services]]
+binding = "PRESETS_API"
+service = "xivdyetools-presets-api"
+
+# Analytics Engine for command usage statistics
+[[env.production.analytics_engine_datasets]]
+binding = "ANALYTICS"
+dataset = "xivdyetools_bot_analytics"
 

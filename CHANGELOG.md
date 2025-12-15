@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.1] - 2025-12-15
+
+### Fixed
+
+- **Authentication**: HMAC signatures now sent with Service Binding requests, not just URL fallback
+  - Previously, HMAC signing code was inside the `else` block for URL-based requests
+  - Service Binding requests were missing signatures, causing "Valid authentication required" errors
+  - Voting and other authenticated operations now work correctly via Service Binding
+- **Production Config**: Added missing bindings to `[env.production]` in `wrangler.toml`
+  - KV namespace, D1 database, Service Binding, and Analytics Engine were not inherited
+  - Preset autocomplete and other features now work in production
+
+### Changed
+
+- Updated `wrangler.toml` documentation to clarify `BOT_SIGNING_SECRET` is required
+
+---
+
 ## [2.1.0] - 2025-12-14
 
 ### Added
