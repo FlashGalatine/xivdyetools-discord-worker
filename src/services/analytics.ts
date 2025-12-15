@@ -9,6 +9,7 @@
  */
 
 import type { Env } from '../types/env.js';
+import type { ExtendedLogger } from '@xivdyetools/logger';
 
 /**
  * Data point structure for Analytics Engine
@@ -29,8 +30,16 @@ export interface CommandEvent {
  * - blobs (up to 20): string dimensions for filtering/grouping
  * - doubles (up to 20): numeric values for aggregation
  * - indexes (up to 1): for efficient querying
+ *
+ * @param env - Environment bindings
+ * @param event - Command event to track
+ * @param logger - Optional logger for structured logging
  */
-export function trackCommand(env: Env, event: CommandEvent): void {
+export function trackCommand(
+  env: Env,
+  event: CommandEvent,
+  logger?: ExtendedLogger
+): void {
   if (!env.ANALYTICS) {
     // Analytics not configured, silently skip
     return;
@@ -57,7 +66,9 @@ export function trackCommand(env: Env, event: CommandEvent): void {
     });
   } catch (error) {
     // Don't let analytics errors affect command execution
-    console.error('Analytics tracking error:', error);
+    if (logger) {
+      logger.error('Analytics tracking error', error instanceof Error ? error : undefined);
+    }
   }
 }
 

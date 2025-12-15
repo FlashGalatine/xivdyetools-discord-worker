@@ -26,6 +26,7 @@
 
 import type { LocaleCode } from './i18n.js';
 import { resolveUserLocale } from './i18n.js';
+import type { ExtendedLogger } from '@xivdyetools/logger';
 
 // Import locale files statically (required for Cloudflare Workers)
 import enLocale from '../locales/en.json';
@@ -102,11 +103,13 @@ export class Translator {
   private locale: LocaleCode;
   private data: LocaleData;
   private fallbackData: LocaleData;
+  private logger?: ExtendedLogger;
 
-  constructor(locale: LocaleCode) {
+  constructor(locale: LocaleCode, logger?: ExtendedLogger) {
     this.locale = locale;
     this.data = locales[locale] || locales.en;
     this.fallbackData = locales.en;
+    this.logger = logger;
   }
 
   /**
@@ -131,7 +134,9 @@ export class Translator {
 
     // If still not found, return the key
     if (value === undefined || typeof value !== 'string') {
-      console.warn(`Missing translation: ${key} for locale ${this.locale}`);
+      if (this.logger) {
+        this.logger.warn(`Missing translation: ${key} for locale ${this.locale}`);
+      }
       return key;
     }
 
@@ -160,9 +165,15 @@ export class Translator {
 
 /**
  * Create a translator for a specific locale
+ *
+ * @param locale - Locale code
+ * @param logger - Optional logger for structured logging
  */
-export function createTranslator(locale: LocaleCode): Translator {
-  return new Translator(locale);
+export function createTranslator(
+  locale: LocaleCode,
+  logger?: ExtendedLogger
+): Translator {
+  return new Translator(locale, logger);
 }
 
 /**
@@ -171,6 +182,7 @@ export function createTranslator(locale: LocaleCode): Translator {
  * @param kv - KV namespace binding
  * @param userId - Discord user ID
  * @param discordLocale - Discord's detected locale
+ * @param logger - Optional logger for structured logging
  * @returns Translator instance
  *
  * @example
@@ -180,10 +192,11 @@ export function createTranslator(locale: LocaleCode): Translator {
 export async function createUserTranslator(
   kv: KVNamespace,
   userId: string,
-  discordLocale?: string
+  discordLocale?: string,
+  logger?: ExtendedLogger
 ): Promise<Translator> {
   const locale = await resolveUserLocale(kv, userId, discordLocale);
-  return new Translator(locale);
+  return new Translator(locale, logger);
 }
 
 /**
@@ -192,13 +205,15 @@ export async function createUserTranslator(
  * @param locale - Locale code
  * @param key - Translation key
  * @param variables - Optional interpolation variables
+ * @param logger - Optional logger for structured logging
  */
 export function translate(
   locale: LocaleCode,
   key: string,
-  variables?: Record<string, string | number>
+  variables?: Record<string, string | number>,
+  logger?: ExtendedLogger
 ): string {
-  const translator = new Translator(locale);
+  const translator = new Translator(locale, logger);
   return translator.t(key, variables);
 }
 

@@ -12,6 +12,7 @@
 import type { Env } from '../../types/env.js';
 import { InteractionResponseType } from '../../types/env.js';
 import { ephemeralResponse, successEmbed, errorEmbed } from '../../utils/response.js';
+import type { ExtendedLogger } from '@xivdyetools/logger';
 import { editMessage } from '../../utils/discord-api.js';
 import * as presetApi from '../../services/preset-api.js';
 import { STATUS_DISPLAY } from '../../types/preset.js';
@@ -62,7 +63,8 @@ interface ButtonInteraction {
 export async function handlePresetApproveButton(
   interaction: ButtonInteraction,
   env: Env,
-  ctx: ExecutionContext
+  ctx: ExecutionContext,
+  logger?: ExtendedLogger
 ): Promise<Response> {
   const customId = interaction.data?.custom_id || '';
   const presetId = customId.replace('preset_approve_', '');
@@ -133,7 +135,9 @@ async function processApproval(
       });
     }
   } catch (error) {
-    console.error('Failed to approve preset:', error);
+    if (logger) {
+      logger.error('Failed to approve preset', error instanceof Error ? error : undefined);
+    }
 
     // Try to update the message with error
     if (interaction.channel_id && interaction.message?.id) {
@@ -164,7 +168,8 @@ async function processApproval(
 export async function handlePresetRejectButton(
   interaction: ButtonInteraction,
   env: Env,
-  ctx: ExecutionContext
+  ctx: ExecutionContext,
+  logger?: ExtendedLogger
 ): Promise<Response> {
   const customId = interaction.data?.custom_id || '';
   const presetId = customId.replace('preset_reject_', '');
@@ -213,7 +218,8 @@ export async function handlePresetRejectButton(
 export async function handlePresetRevertButton(
   interaction: ButtonInteraction,
   env: Env,
-  ctx: ExecutionContext
+  ctx: ExecutionContext,
+  logger?: ExtendedLogger
 ): Promise<Response> {
   const customId = interaction.data?.custom_id || '';
   const presetId = customId.replace('preset_revert_', '');

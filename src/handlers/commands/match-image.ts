@@ -17,6 +17,7 @@ import {
   PaletteService,
   type PaletteMatch,
 } from '@xivdyetools/core';
+import type { ExtendedLogger } from '@xivdyetools/logger';
 import { deferredResponse, errorEmbed } from '../../utils/response.js';
 import { editOriginalResponse } from '../../utils/discord-api.js';
 import { generatePaletteGrid, type PaletteEntry } from '../../services/svg/palette-grid.js';
@@ -58,7 +59,8 @@ const DEFAULT_COLORS = 1;
 export async function handleMatchImageCommand(
   interaction: DiscordInteraction,
   env: Env,
-  ctx: ExecutionContext
+  ctx: ExecutionContext,
+  logger?: ExtendedLogger
 ): Promise<Response> {
   const userId = interaction.member?.user?.id ?? interaction.user?.id;
 
@@ -114,7 +116,7 @@ export async function handleMatchImageCommand(
   const deferResponse = deferredResponse();
 
   // Process in background
-  ctx.waitUntil(processMatchImageCommand(interaction, env, attachment.url, colorCount, locale));
+  ctx.waitUntil(processMatchImageCommand(interaction, env, attachment.url, colorCount, locale, logger));
 
   return deferResponse;
 }
@@ -127,7 +129,8 @@ async function processMatchImageCommand(
   env: Env,
   imageUrl: string,
   colorCount: number,
-  locale: LocaleCode
+  locale: LocaleCode,
+  logger?: ExtendedLogger
 ): Promise<void> {
   const t = createTranslator(locale);
 
@@ -215,7 +218,9 @@ async function processMatchImageCommand(
       },
     });
   } catch (error) {
-    console.error('Match image command error:', error);
+    if (logger) {
+      logger.error('Match image command error', error instanceof Error ? error : undefined);
+    }
 
     // Determine error message
     let errorMessage = t.t('matchImage.processingFailed');

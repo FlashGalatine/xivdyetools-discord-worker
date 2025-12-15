@@ -19,6 +19,7 @@
  */
 
 import { LocalizationService } from '@xivdyetools/core';
+import type { ExtendedLogger } from '@xivdyetools/logger';
 
 /**
  * Supported locale codes
@@ -88,11 +89,13 @@ export function discordLocaleToLocaleCode(discordLocale: string): LocaleCode | n
  *
  * @param kv - KV namespace binding
  * @param userId - Discord user ID
+ * @param logger - Optional logger for structured logging
  * @returns Locale code or null if not set
  */
 export async function getUserLanguagePreference(
   kv: KVNamespace,
-  userId: string
+  userId: string,
+  logger?: ExtendedLogger
 ): Promise<LocaleCode | null> {
   try {
     const value = await kv.get(`${KEY_PREFIX}${userId}`);
@@ -101,7 +104,9 @@ export async function getUserLanguagePreference(
     }
     return null;
   } catch (error) {
-    console.error('Failed to get user language preference:', error);
+    if (logger) {
+      logger.error('Failed to get user language preference', error instanceof Error ? error : undefined);
+    }
     return null;
   }
 }
@@ -112,17 +117,21 @@ export async function getUserLanguagePreference(
  * @param kv - KV namespace binding
  * @param userId - Discord user ID
  * @param locale - Locale code to set
+ * @param logger - Optional logger for structured logging
  */
 export async function setUserLanguagePreference(
   kv: KVNamespace,
   userId: string,
-  locale: LocaleCode
+  locale: LocaleCode,
+  logger?: ExtendedLogger
 ): Promise<boolean> {
   try {
     await kv.put(`${KEY_PREFIX}${userId}`, locale);
     return true;
   } catch (error) {
-    console.error('Failed to set user language preference:', error);
+    if (logger) {
+      logger.error('Failed to set user language preference', error instanceof Error ? error : undefined);
+    }
     return false;
   }
 }
@@ -132,16 +141,20 @@ export async function setUserLanguagePreference(
  *
  * @param kv - KV namespace binding
  * @param userId - Discord user ID
+ * @param logger - Optional logger for structured logging
  */
 export async function clearUserLanguagePreference(
   kv: KVNamespace,
-  userId: string
+  userId: string,
+  logger?: ExtendedLogger
 ): Promise<boolean> {
   try {
     await kv.delete(`${KEY_PREFIX}${userId}`);
     return true;
   } catch (error) {
-    console.error('Failed to clear user language preference:', error);
+    if (logger) {
+      logger.error('Failed to clear user language preference', error instanceof Error ? error : undefined);
+    }
     return false;
   }
 }
@@ -189,14 +202,22 @@ export async function resolveUserLocale(
  * Note: We clear the singleton's state before setting the locale to ensure
  * clean language switching. This prevents stale locale state from persisting
  * across requests in Cloudflare Workers isolates.
+ *
+ * @param locale - Locale code to initialize
+ * @param logger - Optional logger for structured logging
  */
-export async function initializeLocale(locale: LocaleCode): Promise<void> {
+export async function initializeLocale(
+  locale: LocaleCode,
+  logger?: ExtendedLogger
+): Promise<void> {
   try {
     // Clear previous state to ensure clean locale switching
     LocalizationService.clear();
     await LocalizationService.setLocale(locale);
   } catch (error) {
-    console.error('Failed to initialize locale:', error);
+    if (logger) {
+      logger.error('Failed to initialize locale', error instanceof Error ? error : undefined);
+    }
     // Fall back to English
     LocalizationService.clear();
     await LocalizationService.setLocale('en');

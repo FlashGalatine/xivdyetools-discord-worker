@@ -9,6 +9,7 @@
 import type { Env } from '../../types/env.js';
 import { InteractionResponseType } from '../../types/env.js';
 import { successEmbed, errorEmbed } from '../../utils/response.js';
+import type { ExtendedLogger } from '@xivdyetools/logger';
 import { editMessage } from '../../utils/discord-api.js';
 import * as presetApi from '../../services/preset-api.js';
 import { STATUS_DISPLAY } from '../../types/preset.js';
@@ -66,7 +67,8 @@ interface ModalInteraction {
 export async function handlePresetRejectionModal(
   interaction: ModalInteraction,
   env: Env,
-  ctx: ExecutionContext
+  ctx: ExecutionContext,
+  logger?: ExtendedLogger
 ): Promise<Response> {
   const customId = interaction.data?.custom_id || '';
   const presetId = customId.replace('preset_reject_modal_', '');
@@ -108,7 +110,7 @@ export async function handlePresetRejectionModal(
   }
 
   // Defer update (we'll edit the original moderation message)
-  ctx.waitUntil(processRejection(interaction, env, presetId, userId, userName, reason));
+  ctx.waitUntil(processRejection(interaction, env, presetId, userId, userName, reason, logger));
 
   return Response.json({
     type: InteractionResponseType.DEFERRED_UPDATE_MESSAGE,
@@ -121,7 +123,8 @@ async function processRejection(
   presetId: string,
   userId: string,
   userName: string,
-  reason: string
+  reason: string,
+  logger?: ExtendedLogger
 ): Promise<void> {
   try {
     const preset = await presetApi.rejectPreset(env, presetId, userId, reason);
@@ -165,7 +168,9 @@ async function processRejection(
       });
     }
   } catch (error) {
-    console.error('Failed to reject preset:', error);
+    if (logger) {
+      logger.error('Failed to reject preset', error instanceof Error ? error : undefined);
+    }
 
     // Try to update the message with error
     if (interaction.channel_id && interaction.message?.id) {
@@ -244,7 +249,8 @@ export function isPresetRevertModal(customId: string): boolean {
 export async function handlePresetRevertModal(
   interaction: ModalInteraction,
   env: Env,
-  ctx: ExecutionContext
+  ctx: ExecutionContext,
+  logger?: ExtendedLogger
 ): Promise<Response> {
   const customId = interaction.data?.custom_id || '';
   const presetId = customId.replace('preset_revert_modal_', '');
@@ -286,7 +292,7 @@ export async function handlePresetRevertModal(
   }
 
   // Defer update (we'll edit the original moderation message)
-  ctx.waitUntil(processRevert(interaction, env, presetId, userId, userName, reason));
+  ctx.waitUntil(processRevert(interaction, env, presetId, userId, userName, reason, logger));
 
   return Response.json({
     type: InteractionResponseType.DEFERRED_UPDATE_MESSAGE,
@@ -299,7 +305,8 @@ async function processRevert(
   presetId: string,
   userId: string,
   userName: string,
-  reason: string
+  reason: string,
+  logger?: ExtendedLogger
 ): Promise<void> {
   try {
     const preset = await presetApi.revertPreset(env, presetId, reason, userId);
@@ -343,7 +350,9 @@ async function processRevert(
       });
     }
   } catch (error) {
-    console.error('Failed to revert preset:', error);
+    if (logger) {
+      logger.error('Failed to revert preset', error instanceof Error ? error : undefined);
+    }
 
     // Try to update the message with error
     if (interaction.channel_id && interaction.message?.id) {

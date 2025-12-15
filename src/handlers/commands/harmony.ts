@@ -7,6 +7,7 @@
  */
 
 import { DyeService, dyeDatabase, type Dye } from '@xivdyetools/core';
+import type { ExtendedLogger } from '@xivdyetools/logger';
 import { deferredResponse, errorEmbed } from '../../utils/response.js';
 import { editOriginalResponse } from '../../utils/discord-api.js';
 import { generateHarmonyWheel, type HarmonyDye } from '../../services/svg/harmony-wheel.js';
@@ -99,7 +100,8 @@ function getHarmonyDyes(hex: string, type: HarmonyType): Dye[] {
 export async function handleHarmonyCommand(
   interaction: DiscordInteraction,
   env: Env,
-  ctx: ExecutionContext
+  ctx: ExecutionContext,
+  logger?: ExtendedLogger
 ): Promise<Response> {
   const userId = interaction.member?.user?.id ?? interaction.user?.id ?? 'unknown';
   const t = await createUserTranslator(env.KV, userId, interaction.locale);
@@ -145,7 +147,7 @@ export async function handleHarmonyCommand(
 
   // Process in background
   ctx.waitUntil(
-    processHarmonyCommand(interaction, env, resolved.hex, resolved.name, resolved.id, resolved.itemID, harmonyType, locale)
+    processHarmonyCommand(interaction, env, resolved.hex, resolved.name, resolved.id, resolved.itemID, harmonyType, locale, logger)
   );
 
   return deferResponse;
@@ -162,7 +164,8 @@ async function processHarmonyCommand(
   baseId: number | undefined,
   baseItemID: number | undefined,
   harmonyType: HarmonyType,
-  locale: LocaleCode
+  locale: LocaleCode,
+  logger?: ExtendedLogger
 ): Promise<void> {
   // Create translator for background processing
   const t = createTranslator(locale);
@@ -246,7 +249,9 @@ async function processHarmonyCommand(
       },
     });
   } catch (error) {
-    console.error('Harmony command error:', error);
+    if (logger) {
+      logger.error('Harmony command error', error instanceof Error ? error : undefined);
+    }
 
     // Send error response
     await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {

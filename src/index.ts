@@ -338,28 +338,28 @@ async function handleCommand(
       return handleAboutCommand(interaction, env, ctx);
 
     case 'harmony':
-      return handleHarmonyCommand(interaction, env, ctx);
+      return handleHarmonyCommand(interaction, env, ctx, logger);
 
     case 'dye':
       return handleDyeCommand(interaction, env, ctx);
 
     case 'mixer':
-      return handleMixerCommand(interaction, env, ctx);
+      return handleMixerCommand(interaction, env, ctx, logger);
 
     case 'match':
       return handleMatchCommand(interaction, env, ctx);
 
     case 'match_image':
-      return handleMatchImageCommand(interaction, env, ctx);
+      return handleMatchImageCommand(interaction, env, ctx, logger);
 
     case 'accessibility':
-      return handleAccessibilityCommand(interaction, env, ctx);
+      return handleAccessibilityCommand(interaction, env, ctx, logger);
 
     case 'manual':
       return handleManualCommand(interaction, env, ctx);
 
     case 'comparison':
-      return handleComparisonCommand(interaction, env, ctx);
+      return handleComparisonCommand(interaction, env, ctx, logger);
 
     case 'language':
       return handleLanguageCommand(interaction, env, ctx);
@@ -371,10 +371,10 @@ async function handleCommand(
       return handleCollectionCommand(interaction, env, ctx);
 
     case 'preset':
-      return handlePresetCommand(interaction, env, ctx);
+      return handlePresetCommand(interaction, env, ctx, logger);
 
     case 'stats':
-      return handleStatsCommand(interaction, env, ctx);
+      return handleStatsCommand(interaction, env, ctx, logger);
 
     default:
       // Command not yet implemented
@@ -586,7 +586,7 @@ async function handleComponent(
 
   // Buttons have component_type 2
   if (componentType === 2) {
-    return handleButtonInteraction(interaction, env, ctx);
+    return handleButtonInteraction(interaction, env, ctx, logger);
   }
 
   // Select menus and other components
@@ -607,12 +607,12 @@ async function handleModal(
 
   // Route preset rejection modal
   if (isPresetRejectionModal(customId)) {
-    return handlePresetRejectionModal(interaction, env, ctx);
+    return handlePresetRejectionModal(interaction, env, ctx, logger);
   }
 
   // Route preset revert modal
   if (isPresetRevertModal(customId)) {
-    return handlePresetRevertModal(interaction, env, ctx);
+    return handlePresetRevertModal(interaction, env, ctx, logger);
   }
 
   // Unknown modal

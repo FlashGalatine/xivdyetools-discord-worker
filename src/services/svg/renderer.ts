@@ -9,6 +9,7 @@
  */
 
 import { Resvg, initWasm } from '@resvg/resvg-wasm';
+import type { ExtendedLogger } from '@xivdyetools/logger';
 
 // Static WASM import - wrangler bundles this at build time
 // @ts-expect-error - WASM imports are handled by wrangler bundler
@@ -24,8 +25,10 @@ let wasmInitPromise: Promise<void> | null = null;
  * Initializes the WASM module.
  * Must be called before rendering SVGs.
  * Safe to call multiple times - will only initialize once.
+ *
+ * @param logger - Optional logger for structured logging
  */
-export async function initRenderer(): Promise<void> {
+export async function initRenderer(logger?: ExtendedLogger): Promise<void> {
   if (wasmInitialized) return;
 
   if (wasmInitPromise) {
@@ -39,9 +42,13 @@ export async function initRenderer(): Promise<void> {
       // In Cloudflare Workers, this is a WebAssembly.Module instance
       await initWasm(resvgWasm);
       wasmInitialized = true;
-      console.log('resvg-wasm initialized successfully');
+      if (logger) {
+        logger.info('resvg-wasm initialized successfully');
+      }
     } catch (error) {
-      console.error('WASM initialization failed:', error);
+      if (logger) {
+        logger.error('WASM initialization failed', error instanceof Error ? error : undefined);
+      }
       throw new Error(
         `Failed to initialize SVG renderer: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
@@ -53,6 +60,10 @@ export async function initRenderer(): Promise<void> {
 
 /**
  * Renders an SVG string to a PNG buffer
+ *
+ * @param svgString - SVG content to render
+ * @param options - Rendering options
+ * @param logger - Optional logger for structured logging
  */
 export async function renderSvgToPng(
   svgString: string,
@@ -61,10 +72,11 @@ export async function renderSvgToPng(
     scale?: number;
     /** Background color (default: transparent) */
     background?: string;
-  } = {}
+  } = {},
+  logger?: ExtendedLogger
 ): Promise<Uint8Array> {
   // Ensure WASM is initialized
-  await initRenderer();
+  await initRenderer(logger);
 
   const { scale = 2, background } = options;
 
@@ -88,7 +100,9 @@ export async function renderSvgToPng(
 
     return pngBuffer;
   } catch (error) {
-    console.error('SVG rendering failed:', error);
+    if (logger) {
+      logger.error('SVG rendering failed', error instanceof Error ? error : undefined);
+    }
     throw new Error(
       `Failed to render SVG: ${error instanceof Error ? error.message : 'Unknown error'}`
     );

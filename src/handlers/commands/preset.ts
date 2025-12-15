@@ -14,6 +14,7 @@
  */
 
 import { DyeService, dyeDatabase, type Dye } from '@xivdyetools/core';
+import type { ExtendedLogger } from '@xivdyetools/logger';
 import {
   deferredResponse,
   errorEmbed,
@@ -52,7 +53,8 @@ const dyeService = new DyeService(dyeDatabase);
 export async function handlePresetCommand(
   interaction: DiscordInteraction,
   env: Env,
-  ctx: ExecutionContext
+  ctx: ExecutionContext,
+  logger?: ExtendedLogger
 ): Promise<Response> {
   const userId = interaction.member?.user?.id ?? interaction.user?.id ?? 'unknown';
   const userName =
@@ -82,25 +84,25 @@ export async function handlePresetCommand(
   // Route to subcommand handler
   switch (subcommand.name) {
     case 'list':
-      return handleListSubcommand(interaction, env, ctx, t, subcommand.options);
+      return handleListSubcommand(interaction, env, ctx, t, subcommand.options, logger);
 
     case 'show':
-      return handleShowSubcommand(interaction, env, ctx, t, userId, subcommand.options);
+      return handleShowSubcommand(interaction, env, ctx, t, userId, subcommand.options, logger);
 
     case 'random':
-      return handleRandomSubcommand(interaction, env, ctx, t, userId, subcommand.options);
+      return handleRandomSubcommand(interaction, env, ctx, t, userId, subcommand.options, logger);
 
     case 'submit':
-      return handleSubmitSubcommand(interaction, env, ctx, t, userId, userName, subcommand.options);
+      return handleSubmitSubcommand(interaction, env, ctx, t, userId, userName, subcommand.options, logger);
 
     case 'vote':
-      return handleVoteSubcommand(interaction, env, ctx, t, userId, subcommand.options);
+      return handleVoteSubcommand(interaction, env, ctx, t, userId, subcommand.options, logger);
 
     case 'edit':
-      return handleEditSubcommand(interaction, env, ctx, t, userId, userName, subcommand.options);
+      return handleEditSubcommand(interaction, env, ctx, t, userId, userName, subcommand.options, logger);
 
     case 'moderate':
-      return handleModerateSubcommand(interaction, env, ctx, t, userId, subcommand.options);
+      return handleModerateSubcommand(interaction, env, ctx, t, userId, subcommand.options, logger);
 
     default:
       return ephemeralResponse(`Unknown subcommand: ${subcommand.name}`);
@@ -119,7 +121,8 @@ async function handleListSubcommand(
   env: Env,
   ctx: ExecutionContext,
   t: Translator,
-  options?: Array<{ name: string; value?: string | number | boolean }>
+  options?: Array<{ name: string; value?: string | number | boolean }>,
+  logger?: ExtendedLogger
 ): Promise<Response> {
   const categoryValue = options?.find((opt) => opt.name === 'category')?.value as string | undefined;
   const sortValue = (options?.find((opt) => opt.name === 'sort')?.value as string) || 'popular';
@@ -128,7 +131,7 @@ async function handleListSubcommand(
   const deferResponse = deferredResponse();
 
   ctx.waitUntil(
-    processListCommand(interaction, env, t, categoryValue, sortValue)
+    processListCommand(interaction, env, t, categoryValue, sortValue, logger)
   );
 
   return deferResponse;
@@ -139,7 +142,8 @@ async function processListCommand(
   env: Env,
   t: Translator,
   category: string | undefined,
-  sort: string
+  sort: string,
+  logger?: ExtendedLogger
 ): Promise<void> {
   try {
     const response = await presetApi.getPresets(env, {
@@ -197,7 +201,9 @@ async function processListCommand(
       ],
     });
   } catch (error) {
-    console.error('List presets error:', error);
+    if (logger) {
+      logger.error('List presets error', error instanceof Error ? error : undefined);
+    }
     await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [errorEmbed(t.t('common.error'), 'Failed to load presets.')],
     });
@@ -213,7 +219,8 @@ async function handleShowSubcommand(
   ctx: ExecutionContext,
   t: Translator,
   userId: string,
-  options?: Array<{ name: string; value?: string | number | boolean }>
+  options?: Array<{ name: string; value?: string | number | boolean }>,
+  logger?: ExtendedLogger
 ): Promise<Response> {
   const presetId = options?.find((opt) => opt.name === 'name')?.value as string | undefined;
 
@@ -229,7 +236,7 @@ async function handleShowSubcommand(
   // Use translator's resolved locale instead of calling resolveUserLocale again
   const locale = t.getLocale();
 
-  ctx.waitUntil(processShowCommand(interaction, env, t, presetId, locale));
+  ctx.waitUntil(processShowCommand(interaction, env, t, presetId, locale, logger));
 
   return deferResponse;
 }
@@ -239,7 +246,8 @@ async function processShowCommand(
   env: Env,
   t: Translator,
   presetId: string,
-  locale: LocaleCode
+  locale: LocaleCode,
+  logger?: ExtendedLogger
 ): Promise<void> {
   await initializeLocale(locale);
 
@@ -256,7 +264,9 @@ async function processShowCommand(
 
     await sendPresetEmbed(interaction, env, t, preset, locale);
   } catch (error) {
-    console.error('Show preset error:', error);
+    if (logger) {
+      logger.error('Show preset error', error instanceof Error ? error : undefined);
+    }
     await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [errorEmbed(t.t('common.error'), 'Failed to load preset.')],
     });
@@ -272,7 +282,8 @@ async function handleRandomSubcommand(
   ctx: ExecutionContext,
   t: Translator,
   userId: string,
-  options?: Array<{ name: string; value?: string | number | boolean }>
+  options?: Array<{ name: string; value?: string | number | boolean }>,
+  logger?: ExtendedLogger
 ): Promise<Response> {
   const category = options?.find((opt) => opt.name === 'category')?.value as string | undefined;
 
@@ -281,7 +292,7 @@ async function handleRandomSubcommand(
   // Use translator's resolved locale instead of calling resolveUserLocale again
   const locale = t.getLocale();
 
-  ctx.waitUntil(processRandomCommand(interaction, env, t, category, locale));
+  ctx.waitUntil(processRandomCommand(interaction, env, t, category, locale, logger));
 
   return deferResponse;
 }
@@ -291,7 +302,8 @@ async function processRandomCommand(
   env: Env,
   t: Translator,
   category: string | undefined,
-  locale: LocaleCode
+  locale: LocaleCode,
+  logger?: ExtendedLogger
 ): Promise<void> {
   await initializeLocale(locale);
 
@@ -312,7 +324,9 @@ async function processRandomCommand(
 
     await sendPresetEmbed(interaction, env, t, preset, locale);
   } catch (error) {
-    console.error('Random preset error:', error);
+    if (logger) {
+      logger.error('Random preset error', error instanceof Error ? error : undefined);
+    }
     await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [errorEmbed(t.t('common.error'), 'Failed to load random preset.')],
     });
@@ -329,7 +343,8 @@ async function handleSubmitSubcommand(
   t: Translator,
   userId: string,
   userName: string,
-  options?: Array<{ name: string; value?: string | number | boolean }>
+  options?: Array<{ name: string; value?: string | number | boolean }>,
+  logger?: ExtendedLogger
 ): Promise<Response> {
   // Extract all options
   const presetName = options?.find((opt) => opt.name === 'preset_name')?.value as string;
@@ -391,7 +406,7 @@ async function handleSubmitSubcommand(
       category_id: category as PresetCategory,
       dyes: dyeIds,
       tags,
-    })
+    }, logger)
   );
 
   return deferResponse;
@@ -409,7 +424,8 @@ async function processSubmitCommand(
     category_id: PresetCategory;
     dyes: number[];
     tags: string[];
-  }
+  },
+  logger?: ExtendedLogger
 ): Promise<void> {
   try {
     const response = await presetApi.submitPreset(env, submission, userId, userName);
@@ -468,7 +484,9 @@ async function processSubmitCommand(
       await notifyModerationChannel(env, preset);
     }
   } catch (error) {
-    console.error('Submit preset error:', error);
+    if (logger) {
+      logger.error('Submit preset error', error instanceof Error ? error : undefined);
+    }
     const message = error instanceof PresetAPIError
       ? error.message
       : 'Failed to submit preset.';
@@ -488,7 +506,8 @@ async function handleVoteSubcommand(
   ctx: ExecutionContext,
   t: Translator,
   userId: string,
-  options?: Array<{ name: string; value?: string | number | boolean }>
+  options?: Array<{ name: string; value?: string | number | boolean }>,
+  logger?: ExtendedLogger
 ): Promise<Response> {
   const presetId = options?.find((opt) => opt.name === 'preset')?.value as string | undefined;
 
@@ -502,7 +521,7 @@ async function handleVoteSubcommand(
   // Defer response
   const deferResponse = deferredResponse();
 
-  ctx.waitUntil(processVoteCommand(interaction, env, t, userId, presetId));
+  ctx.waitUntil(processVoteCommand(interaction, env, t, userId, presetId, logger));
 
   return deferResponse;
 }
@@ -512,7 +531,8 @@ async function processVoteCommand(
   env: Env,
   t: Translator,
   userId: string,
-  presetId: string
+  presetId: string,
+  logger?: ExtendedLogger
 ): Promise<void> {
   try {
     // Check if already voted
@@ -540,7 +560,9 @@ async function processVoteCommand(
       ],
     });
   } catch (error) {
-    console.error('Vote error:', error);
+    if (logger) {
+      logger.error('Vote error', error instanceof Error ? error : undefined);
+    }
     await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [errorEmbed(t.t('common.error'), 'Failed to process vote.')],
     });
@@ -557,7 +579,8 @@ async function handleEditSubcommand(
   t: Translator,
   userId: string,
   userName: string,
-  options?: Array<{ name: string; value?: string | number | boolean }>
+  options?: Array<{ name: string; value?: string | number | boolean }>,
+  logger?: ExtendedLogger
 ): Promise<Response> {
   const presetId = options?.find((opt) => opt.name === 'preset')?.value as string | undefined;
 
@@ -598,7 +621,7 @@ async function handleEditSubcommand(
       description: newDescription,
       tagsRaw,
       dyeNames,
-    })
+    }, logger)
   );
 
   return deferResponse;
@@ -616,7 +639,8 @@ async function processEditCommand(
     description?: string;
     tagsRaw?: string;
     dyeNames: (string | undefined)[];
-  }
+  },
+  logger?: ExtendedLogger
 ): Promise<void> {
   try {
     // First, verify the preset exists and user owns it
@@ -745,7 +769,9 @@ async function processEditCommand(
       await notifyEditModerationChannel(env, updatedPreset, existingPreset);
     }
   } catch (error) {
-    console.error('Edit preset error:', error);
+    if (logger) {
+      logger.error('Edit preset error', error instanceof Error ? error : undefined);
+    }
     const message = error instanceof PresetAPIError ? error.message : 'Failed to edit preset.';
     await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [errorEmbed(t.t('common.error'), message)],
@@ -762,7 +788,8 @@ async function handleModerateSubcommand(
   ctx: ExecutionContext,
   t: Translator,
   userId: string,
-  options?: Array<{ name: string; value?: string | number | boolean }>
+  options?: Array<{ name: string; value?: string | number | boolean }>,
+  logger?: ExtendedLogger
 ): Promise<Response> {
   // Check moderator status
   if (!presetApi.isModerator(env, userId)) {
@@ -784,7 +811,7 @@ async function handleModerateSubcommand(
   const deferResponse = deferredResponse();
 
   ctx.waitUntil(
-    processModerateCommand(interaction, env, t, userId, action, presetId, reason)
+    processModerateCommand(interaction, env, t, userId, action, presetId, reason, logger)
   );
 
   return deferResponse;
@@ -797,7 +824,8 @@ async function processModerateCommand(
   userId: string,
   action: string,
   presetId?: string,
-  reason?: string
+  reason?: string,
+  logger?: ExtendedLogger
 ): Promise<void> {
   try {
     switch (action) {
@@ -920,7 +948,9 @@ async function processModerateCommand(
         });
     }
   } catch (error) {
-    console.error('Moderate error:', error);
+    if (logger) {
+      logger.error('Moderate error', error instanceof Error ? error : undefined);
+    }
     const message = error instanceof PresetAPIError ? error.message : 'Moderation action failed.';
     await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [errorEmbed(t.t('common.error'), message)],
@@ -1009,7 +1039,8 @@ async function sendPresetEmbed(
 async function notifySubmissionChannel(
   env: Env,
   preset: CommunityPreset,
-  status: 'approved' | 'pending'
+  status: 'approved' | 'pending',
+  logger?: ExtendedLogger
 ): Promise<void> {
   if (!env.SUBMISSION_LOG_CHANNEL_ID) return;
 
@@ -1034,7 +1065,9 @@ async function notifySubmissionChannel(
       ],
     });
   } catch (error) {
-    console.error('Failed to notify submission channel:', error);
+    if (logger) {
+      logger.error('Failed to notify submission channel', error instanceof Error ? error : undefined);
+    }
   }
 }
 
@@ -1043,7 +1076,8 @@ async function notifySubmissionChannel(
  */
 async function notifyModerationChannel(
   env: Env,
-  preset: CommunityPreset
+  preset: CommunityPreset,
+  logger?: ExtendedLogger
 ): Promise<void> {
   if (!env.MODERATION_CHANNEL_ID) return;
 
@@ -1089,7 +1123,9 @@ async function notifyModerationChannel(
       ],
     });
   } catch (error) {
-    console.error('Failed to notify moderation channel:', error);
+    if (logger) {
+      logger.error('Failed to notify moderation channel', error instanceof Error ? error : undefined);
+    }
   }
 }
 
@@ -1099,7 +1135,8 @@ async function notifyModerationChannel(
 async function notifyEditModerationChannel(
   env: Env,
   updatedPreset: CommunityPreset,
-  originalPreset: CommunityPreset
+  originalPreset: CommunityPreset,
+  logger?: ExtendedLogger
 ): Promise<void> {
   if (!env.MODERATION_CHANNEL_ID) return;
 
@@ -1170,6 +1207,8 @@ async function notifyEditModerationChannel(
       ],
     });
   } catch (error) {
-    console.error('Failed to notify moderation channel about edit:', error);
+    if (logger) {
+      logger.error('Failed to notify moderation channel about edit', error instanceof Error ? error : undefined);
+    }
   }
 }

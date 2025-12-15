@@ -5,6 +5,7 @@
  */
 
 import type { Env } from '../../types/env.js';
+import type { ExtendedLogger } from '@xivdyetools/logger';
 import { ephemeralResponse } from '../../utils/response.js';
 import { handleCopyHex, handleCopyRgb, handleCopyHsv } from './copy.js';
 import {
@@ -54,11 +55,14 @@ interface ButtonInteraction {
 export async function handleButtonInteraction(
   interaction: ButtonInteraction,
   env: Env,
-  ctx: ExecutionContext
+  ctx: ExecutionContext,
+  logger?: ExtendedLogger
 ): Promise<Response> {
   const customId = interaction.data?.custom_id || '';
 
-  console.log(`Handling button: ${customId}`);
+  if (logger) {
+    logger.info('Handling button', { customId });
+  }
 
   // Copy buttons
   if (customId.startsWith('copy_hex_')) {
@@ -75,18 +79,20 @@ export async function handleButtonInteraction(
 
   // Preset moderation buttons
   if (customId.startsWith('preset_approve_')) {
-    return handlePresetApproveButton(interaction, env, ctx);
+    return handlePresetApproveButton(interaction, env, ctx, logger);
   }
 
   if (customId.startsWith('preset_reject_')) {
-    return handlePresetRejectButton(interaction, env, ctx);
+    return handlePresetRejectButton(interaction, env, ctx, logger);
   }
 
   if (customId.startsWith('preset_revert_')) {
-    return handlePresetRevertButton(interaction, env, ctx);
+    return handlePresetRevertButton(interaction, env, ctx, logger);
   }
 
   // Unknown button
-  console.warn(`Unknown button custom_id: ${customId}`);
+  if (logger) {
+    logger.warn(`Unknown button custom_id: ${customId}`);
+  }
   return ephemeralResponse('This button is not recognized.');
 }

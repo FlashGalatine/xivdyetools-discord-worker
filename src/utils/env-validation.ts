@@ -6,6 +6,7 @@
  */
 
 import type { Env } from '../types/env.js';
+import type { ExtendedLogger } from '@xivdyetools/logger';
 
 export interface EnvValidationResult {
   valid: boolean;
@@ -105,10 +106,21 @@ export function validateEnv(env: Env): EnvValidationResult {
 /**
  * Logs validation errors to console.
  * Used by the validation middleware for debugging.
+ *
+ * @param errors - Array of validation error messages
+ * @param logger - Optional logger for structured logging
  */
-export function logValidationErrors(errors: string[]): void {
-  console.error('Environment validation failed:');
-  for (const error of errors) {
-    console.error(`  - ${error}`);
+export function logValidationErrors(
+  errors: string[],
+  logger?: ExtendedLogger
+): void {
+  if (logger) {
+    logger.error('Environment validation failed', undefined, { errors });
+  } else {
+    // Fallback to console for cases where logger isn't available
+    console.error('Environment validation failed:');
+    for (const error of errors) {
+      console.error(`  - ${error}`);
+    }
   }
 }

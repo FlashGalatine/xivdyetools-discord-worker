@@ -10,6 +10,7 @@
  */
 
 import { DyeService, dyeDatabase, type Dye } from '@xivdyetools/core';
+import type { ExtendedLogger } from '@xivdyetools/logger';
 import { deferredResponse, errorEmbed } from '../../utils/response.js';
 import { editOriginalResponse } from '../../utils/discord-api.js';
 import {
@@ -116,7 +117,8 @@ function resolveDyeInput(input: string): ResolvedDye | null {
 export async function handleAccessibilityCommand(
   interaction: DiscordInteraction,
   env: Env,
-  ctx: ExecutionContext
+  ctx: ExecutionContext,
+  logger?: ExtendedLogger
 ): Promise<Response> {
   const userId = interaction.member?.user?.id ?? interaction.user?.id;
 
@@ -180,7 +182,7 @@ export async function handleAccessibilityCommand(
 
   // Process in background
   ctx.waitUntil(
-    processAccessibilityCommand(interaction, env, resolvedDyes, visionFilter, locale)
+    processAccessibilityCommand(interaction, env, resolvedDyes, visionFilter, locale, logger)
   );
 
   return deferResponse;
@@ -194,7 +196,8 @@ async function processAccessibilityCommand(
   env: Env,
   dyes: ResolvedDye[],
   visionFilter: VisionType | undefined,
-  locale: LocaleCode
+  locale: LocaleCode,
+  logger?: ExtendedLogger
 ): Promise<void> {
   const t = createTranslator(locale);
 
@@ -210,7 +213,9 @@ async function processAccessibilityCommand(
       await processMultiDyeContrast(interaction, env, dyes, t);
     }
   } catch (error) {
-    console.error('Accessibility command error:', error);
+    if (logger) {
+      logger.error('Accessibility command error', error instanceof Error ? error : undefined);
+    }
 
     await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [

@@ -6,6 +6,8 @@
  * @module services/user-storage
  */
 
+import type { ExtendedLogger } from '@xivdyetools/logger';
+
 // ============================================================================
 // Constants
 // ============================================================================
@@ -67,15 +69,22 @@ export interface Collection {
  *
  * @param kv - KV namespace binding
  * @param userId - Discord user ID
+ * @param logger - Optional logger for structured logging
  * @returns Array of dye IDs
  */
-export async function getFavorites(kv: KVNamespace, userId: string): Promise<number[]> {
+export async function getFavorites(
+  kv: KVNamespace,
+  userId: string,
+  logger?: ExtendedLogger
+): Promise<number[]> {
   try {
     const data = await kv.get(`${FAVORITES_KEY_PREFIX}${userId}`);
     if (!data) return [];
     return JSON.parse(data) as number[];
   } catch (error) {
-    console.error('Failed to get favorites:', error);
+    if (logger) {
+      logger.error('Failed to get favorites', error instanceof Error ? error : undefined);
+    }
     return [];
   }
 }
@@ -86,15 +95,17 @@ export async function getFavorites(kv: KVNamespace, userId: string): Promise<num
  * @param kv - KV namespace binding
  * @param userId - Discord user ID
  * @param dyeId - Dye ID to add
+ * @param logger - Optional logger for structured logging
  * @returns Result of the operation
  */
 export async function addFavorite(
   kv: KVNamespace,
   userId: string,
-  dyeId: number
+  dyeId: number,
+  logger?: ExtendedLogger
 ): Promise<AddResult> {
   try {
-    const favorites = await getFavorites(kv, userId);
+    const favorites = await getFavorites(kv, userId, logger);
 
     // Check if already a favorite
     if (favorites.includes(dyeId)) {
@@ -112,7 +123,9 @@ export async function addFavorite(
 
     return { success: true };
   } catch (error) {
-    console.error('Failed to add favorite:', error);
+    if (logger) {
+      logger.error('Failed to add favorite', error instanceof Error ? error : undefined);
+    }
     return { success: false, reason: 'error' };
   }
 }
@@ -123,15 +136,17 @@ export async function addFavorite(
  * @param kv - KV namespace binding
  * @param userId - Discord user ID
  * @param dyeId - Dye ID to remove
+ * @param logger - Optional logger for structured logging
  * @returns True if removed, false if not found
  */
 export async function removeFavorite(
   kv: KVNamespace,
   userId: string,
-  dyeId: number
+  dyeId: number,
+  logger?: ExtendedLogger
 ): Promise<boolean> {
   try {
-    const favorites = await getFavorites(kv, userId);
+    const favorites = await getFavorites(kv, userId, logger);
     const index = favorites.indexOf(dyeId);
 
     if (index === -1) {
@@ -143,7 +158,9 @@ export async function removeFavorite(
 
     return true;
   } catch (error) {
-    console.error('Failed to remove favorite:', error);
+    if (logger) {
+      logger.error('Failed to remove favorite', error instanceof Error ? error : undefined);
+    }
     return false;
   }
 }
@@ -170,13 +187,20 @@ export async function isFavorite(
  *
  * @param kv - KV namespace binding
  * @param userId - Discord user ID
+ * @param logger - Optional logger for structured logging
  */
-export async function clearFavorites(kv: KVNamespace, userId: string): Promise<boolean> {
+export async function clearFavorites(
+  kv: KVNamespace,
+  userId: string,
+  logger?: ExtendedLogger
+): Promise<boolean> {
   try {
     await kv.delete(`${FAVORITES_KEY_PREFIX}${userId}`);
     return true;
   } catch (error) {
-    console.error('Failed to clear favorites:', error);
+    if (logger) {
+      logger.error('Failed to clear favorites', error instanceof Error ? error : undefined);
+    }
     return false;
   }
 }
@@ -190,15 +214,22 @@ export async function clearFavorites(kv: KVNamespace, userId: string): Promise<b
  *
  * @param kv - KV namespace binding
  * @param userId - Discord user ID
+ * @param logger - Optional logger for structured logging
  * @returns Array of collections
  */
-export async function getCollections(kv: KVNamespace, userId: string): Promise<Collection[]> {
+export async function getCollections(
+  kv: KVNamespace,
+  userId: string,
+  logger?: ExtendedLogger
+): Promise<Collection[]> {
   try {
     const data = await kv.get(`${COLLECTIONS_KEY_PREFIX}${userId}`);
     if (!data) return [];
     return JSON.parse(data) as Collection[];
   } catch (error) {
-    console.error('Failed to get collections:', error);
+    if (logger) {
+      logger.error('Failed to get collections', error instanceof Error ? error : undefined);
+    }
     return [];
   }
 }
@@ -209,14 +240,16 @@ export async function getCollections(kv: KVNamespace, userId: string): Promise<C
  * @param kv - KV namespace binding
  * @param userId - Discord user ID
  * @param name - Collection name (case-insensitive)
+ * @param logger - Optional logger for structured logging
  * @returns Collection or null if not found
  */
 export async function getCollection(
   kv: KVNamespace,
   userId: string,
-  name: string
+  name: string,
+  logger?: ExtendedLogger
 ): Promise<Collection | null> {
-  const collections = await getCollections(kv, userId);
+  const collections = await getCollections(kv, userId, logger);
   return collections.find((c) => c.name.toLowerCase() === name.toLowerCase()) ?? null;
 }
 
@@ -227,13 +260,15 @@ export async function getCollection(
  * @param userId - Discord user ID
  * @param name - Collection name
  * @param description - Optional description
+ * @param logger - Optional logger for structured logging
  * @returns Result with collection if successful
  */
 export async function createCollection(
   kv: KVNamespace,
   userId: string,
   name: string,
-  description?: string
+  description?: string,
+  logger?: ExtendedLogger
 ): Promise<{ success: boolean; collection?: Collection; reason?: string }> {
   try {
     // Validate name length
@@ -246,7 +281,7 @@ export async function createCollection(
       return { success: false, reason: 'descriptionTooLong' };
     }
 
-    const collections = await getCollections(kv, userId);
+    const collections = await getCollections(kv, userId, logger);
 
     // Check for duplicate name
     if (collections.some((c) => c.name.toLowerCase() === name.toLowerCase())) {
@@ -274,7 +309,9 @@ export async function createCollection(
 
     return { success: true, collection };
   } catch (error) {
-    console.error('Failed to create collection:', error);
+    if (logger) {
+      logger.error('Failed to create collection', error instanceof Error ? error : undefined);
+    }
     return { success: false, reason: 'error' };
   }
 }
@@ -285,15 +322,17 @@ export async function createCollection(
  * @param kv - KV namespace binding
  * @param userId - Discord user ID
  * @param name - Collection name to delete
+ * @param logger - Optional logger for structured logging
  * @returns True if deleted, false if not found
  */
 export async function deleteCollection(
   kv: KVNamespace,
   userId: string,
-  name: string
+  name: string,
+  logger?: ExtendedLogger
 ): Promise<boolean> {
   try {
-    const collections = await getCollections(kv, userId);
+    const collections = await getCollections(kv, userId, logger);
     const index = collections.findIndex((c) => c.name.toLowerCase() === name.toLowerCase());
 
     if (index === -1) {
@@ -305,7 +344,9 @@ export async function deleteCollection(
 
     return true;
   } catch (error) {
-    console.error('Failed to delete collection:', error);
+    if (logger) {
+      logger.error('Failed to delete collection', error instanceof Error ? error : undefined);
+    }
     return false;
   }
 }
@@ -317,13 +358,15 @@ export async function deleteCollection(
  * @param userId - Discord user ID
  * @param oldName - Current collection name
  * @param newName - New collection name
+ * @param logger - Optional logger for structured logging
  * @returns Result of the operation
  */
 export async function renameCollection(
   kv: KVNamespace,
   userId: string,
   oldName: string,
-  newName: string
+  newName: string,
+  logger?: ExtendedLogger
 ): Promise<{ success: boolean; reason?: string }> {
   try {
     // Validate new name length
@@ -331,7 +374,7 @@ export async function renameCollection(
       return { success: false, reason: 'nameTooLong' };
     }
 
-    const collections = await getCollections(kv, userId);
+    const collections = await getCollections(kv, userId, logger);
 
     // Find the collection to rename
     const collection = collections.find((c) => c.name.toLowerCase() === oldName.toLowerCase());
@@ -352,7 +395,9 @@ export async function renameCollection(
 
     return { success: true };
   } catch (error) {
-    console.error('Failed to rename collection:', error);
+    if (logger) {
+      logger.error('Failed to rename collection', error instanceof Error ? error : undefined);
+    }
     return { success: false, reason: 'error' };
   }
 }
@@ -364,16 +409,18 @@ export async function renameCollection(
  * @param userId - Discord user ID
  * @param collectionName - Collection name
  * @param dyeId - Dye ID to add
+ * @param logger - Optional logger for structured logging
  * @returns Result of the operation
  */
 export async function addDyeToCollection(
   kv: KVNamespace,
   userId: string,
   collectionName: string,
-  dyeId: number
+  dyeId: number,
+  logger?: ExtendedLogger
 ): Promise<AddResult> {
   try {
-    const collections = await getCollections(kv, userId);
+    const collections = await getCollections(kv, userId, logger);
     const collection = collections.find((c) => c.name.toLowerCase() === collectionName.toLowerCase());
 
     if (!collection) {
@@ -398,7 +445,9 @@ export async function addDyeToCollection(
 
     return { success: true };
   } catch (error) {
-    console.error('Failed to add dye to collection:', error);
+    if (logger) {
+      logger.error('Failed to add dye to collection', error instanceof Error ? error : undefined);
+    }
     return { success: false, reason: 'error' };
   }
 }
@@ -410,16 +459,18 @@ export async function addDyeToCollection(
  * @param userId - Discord user ID
  * @param collectionName - Collection name
  * @param dyeId - Dye ID to remove
+ * @param logger - Optional logger for structured logging
  * @returns True if removed, false if not found
  */
 export async function removeDyeFromCollection(
   kv: KVNamespace,
   userId: string,
   collectionName: string,
-  dyeId: number
+  dyeId: number,
+  logger?: ExtendedLogger
 ): Promise<boolean> {
   try {
-    const collections = await getCollections(kv, userId);
+    const collections = await getCollections(kv, userId, logger);
     const collection = collections.find((c) => c.name.toLowerCase() === collectionName.toLowerCase());
 
     if (!collection) {
@@ -438,7 +489,9 @@ export async function removeDyeFromCollection(
 
     return true;
   } catch (error) {
-    console.error('Failed to remove dye from collection:', error);
+    if (logger) {
+      logger.error('Failed to remove dye from collection', error instanceof Error ? error : undefined);
+    }
     return false;
   }
 }

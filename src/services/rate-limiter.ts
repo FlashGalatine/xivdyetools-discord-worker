@@ -7,6 +7,8 @@
  * @module services/rate-limiter
  */
 
+import type { ExtendedLogger } from '@xivdyetools/logger';
+
 /**
  * Rate limit check result
  */
@@ -90,6 +92,7 @@ function getCommandLimit(commandName?: string): number {
  * @param kv - KV namespace binding
  * @param userId - Discord user ID
  * @param commandName - Optional command name for command-specific limits
+ * @param logger - Optional logger for structured logging
  * @returns Rate limit check result (check kvError flag for KV failures)
  *
  * @example
@@ -107,7 +110,8 @@ function getCommandLimit(commandName?: string): number {
 export async function checkRateLimit(
   kv: KVNamespace,
   userId: string,
-  commandName?: string
+  commandName?: string,
+  logger?: ExtendedLogger
 ): Promise<RateLimitResult> {
   const limit = getCommandLimit(commandName);
   const key = commandName
@@ -165,7 +169,9 @@ export async function checkRateLimit(
   } catch (error) {
     // DISCORD-BUG-002: On KV errors, allow the request (fail open) and flag the error
     // This prevents KV issues from blocking all commands while enabling monitoring
-    console.error('Rate limit check failed:', error);
+    if (logger) {
+      logger.error('Rate limit check failed', error instanceof Error ? error : undefined);
+    }
     return {
       allowed: true,
       remaining: limit,

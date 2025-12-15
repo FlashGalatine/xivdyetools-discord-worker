@@ -8,6 +8,7 @@
  */
 
 import { DyeService, dyeDatabase, ColorService, type Dye } from '@xivdyetools/core';
+import type { ExtendedLogger } from '@xivdyetools/logger';
 import { deferredResponse, errorEmbed, hexToDiscordColor } from '../../utils/response.js';
 import { editOriginalResponse } from '../../utils/discord-api.js';
 import {
@@ -89,7 +90,8 @@ function getColorDistance(hex1: string, hex2: string): number {
 export async function handleMixerCommand(
   interaction: DiscordInteraction,
   env: Env,
-  ctx: ExecutionContext
+  ctx: ExecutionContext,
+  logger?: ExtendedLogger
 ): Promise<Response> {
   const userId = interaction.member?.user?.id ?? interaction.user?.id;
 
@@ -162,7 +164,8 @@ export async function handleMixerCommand(
       startResolved,
       endResolved,
       stepCount,
-      locale
+      locale,
+      logger
     )
   );
 
@@ -185,7 +188,8 @@ async function processMixerCommand(
   startColor: ResolvedColor,
   endColor: ResolvedColor,
   stepCount: number,
-  locale: LocaleCode
+  locale: LocaleCode,
+  logger?: ExtendedLogger
 ): Promise<void> {
   const t = createTranslator(locale);
 
@@ -302,7 +306,9 @@ async function processMixerCommand(
       },
     });
   } catch (error) {
-    console.error('Mixer command error:', error);
+    if (logger) {
+      logger.error('Mixer command error', error instanceof Error ? error : undefined);
+    }
 
     // Send error response
     await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {

@@ -11,6 +11,7 @@
  */
 
 import type { Env } from '../types/env.js';
+import type { ExtendedLogger } from '@xivdyetools/logger';
 import {
   type CommunityPreset,
   type PresetListResponse,
@@ -94,6 +95,7 @@ async function request<T>(
     userDiscordId?: string;
     userName?: string;
     requestId?: string; // For distributed tracing across service bindings
+    logger?: ExtendedLogger;
   } = {}
 ): Promise<T> {
   // Require either service binding or URL-based configuration
@@ -175,7 +177,9 @@ async function request<T>(
       throw error;
     }
     // Network or parsing error
-    console.error('Preset API request failed:', error);
+    if (options.logger) {
+      options.logger.error('Preset API request failed', error instanceof Error ? error : undefined);
+    }
     throw new PresetAPIError(500, 'Failed to communicate with preset API', error);
   }
 }
@@ -420,19 +424,22 @@ export async function removeVote(
 export async function hasVoted(
   env: Env,
   presetId: string,
-  userDiscordId: string
+  userDiscordId: string,
+  logger?: ExtendedLogger
 ): Promise<boolean> {
   try {
     const response = await request<{ has_voted: boolean }>(
       env,
       'GET',
       `/api/v1/votes/${presetId}/check`,
-      { userDiscordId }
+      { userDiscordId, logger }
     );
     return response.has_voted;
   } catch (error) {
     // If check fails, assume not voted
-    console.error('Failed to check vote status:', error);
+    if (logger) {
+      logger.error('Failed to check vote status', error instanceof Error ? error : undefined);
+    }
     return false;
   }
 }
@@ -618,6 +625,7 @@ export async function searchPresetsForAutocomplete(
   options: {
     status?: 'approved' | 'pending';
     limit?: number;
+    logger?: ExtendedLogger;
   } = {}
 ): Promise<Array<{ name: string; value: string }>> {
   try {
@@ -643,7 +651,9 @@ export async function searchPresetsForAutocomplete(
       value: preset.id,
     }));
   } catch (error) {
-    console.error('Preset autocomplete search failed:', error);
+    if (options.logger) {
+      options.logger.error('Preset autocomplete search failed', error instanceof Error ? error : undefined);
+    }
     return [];
   }
 }

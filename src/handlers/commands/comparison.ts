@@ -6,6 +6,7 @@
  */
 
 import { DyeService, dyeDatabase, type Dye } from '@xivdyetools/core';
+import type { ExtendedLogger } from '@xivdyetools/logger';
 import { deferredResponse, errorEmbed } from '../../utils/response.js';
 import { editOriginalResponse } from '../../utils/discord-api.js';
 import { generateComparisonGrid } from '../../services/svg/comparison-grid.js';
@@ -66,7 +67,8 @@ function resolveColorInput(input: string): Dye | null {
 export async function handleComparisonCommand(
   interaction: DiscordInteraction,
   env: Env,
-  ctx: ExecutionContext
+  ctx: ExecutionContext,
+  logger?: ExtendedLogger
 ): Promise<Response> {
   const userId = interaction.member?.user?.id ?? interaction.user?.id ?? 'unknown';
   const t = await createUserTranslator(env.KV, userId, interaction.locale);
@@ -127,7 +129,7 @@ export async function handleComparisonCommand(
   const locale = t.getLocale();
 
   // Process in background
-  ctx.waitUntil(processComparisonCommand(interaction, env, dyes, locale));
+  ctx.waitUntil(processComparisonCommand(interaction, env, dyes, locale, logger));
 
   return deferResponse;
 }
@@ -139,7 +141,8 @@ async function processComparisonCommand(
   interaction: DiscordInteraction,
   env: Env,
   dyes: Dye[],
-  locale: LocaleCode
+  locale: LocaleCode,
+  logger?: ExtendedLogger
 ): Promise<void> {
   const t = createTranslator(locale);
 
@@ -196,7 +199,9 @@ async function processComparisonCommand(
       },
     });
   } catch (error) {
-    console.error('Comparison command error:', error);
+    if (logger) {
+      logger.error('Comparison command error', error instanceof Error ? error : undefined);
+    }
 
     // Send error response
     await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {

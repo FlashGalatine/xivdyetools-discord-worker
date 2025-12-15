@@ -9,6 +9,7 @@
  */
 
 import type { DiscordEmbed, DiscordActionRow } from './response.js';
+import type { ExtendedLogger } from '@xivdyetools/logger';
 
 const DISCORD_API_BASE = 'https://discord.com/api/v10';
 
@@ -58,10 +59,16 @@ export class InteractionContext {
 
   /**
    * Logs a warning if the deadline was exceeded.
+   *
+   * @param operation - Description of the operation for the log message
+   * @param logger - Optional logger for structured logging
    */
-  logDeadlineStatus(operation: string): void {
+  logDeadlineStatus(operation: string, logger?: ExtendedLogger): void {
     if (this.isDeadlineExceeded) {
-      console.warn(`DISCORD-PERF-001: ${operation} - Deadline exceeded by ${this.elapsedMs - this.deadlineMs}ms`);
+      const message = `DISCORD-PERF-001: ${operation} - Deadline exceeded by ${this.elapsedMs - this.deadlineMs}ms`;
+      if (logger) {
+        logger.warn(message);
+      }
     }
   }
 }

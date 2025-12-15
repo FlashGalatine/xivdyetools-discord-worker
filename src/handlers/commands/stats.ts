@@ -8,6 +8,7 @@
  */
 
 import type { Env, DiscordInteraction } from '../../types/env.js';
+import type { ExtendedLogger } from '@xivdyetools/logger';
 import { getStats } from '../../services/analytics.js';
 import { createUserTranslator } from '../../services/bot-i18n.js';
 
@@ -47,7 +48,8 @@ function getWorkerInfo(): string {
 export async function handleStatsCommand(
   interaction: DiscordInteraction,
   env: Env,
-  _ctx: ExecutionContext
+  _ctx: ExecutionContext,
+  logger?: ExtendedLogger
 ): Promise<Response> {
   const userId = interaction.member?.user?.id ?? interaction.user?.id;
   const t = await createUserTranslator(env.KV, userId || 'unknown', interaction.locale);
@@ -131,7 +133,9 @@ export async function handleStatsCommand(
       },
     });
   } catch (error) {
-    console.error('Error in stats command:', error);
+    if (logger) {
+      logger.error('Error in stats command', error instanceof Error ? error : undefined);
+    }
 
     return Response.json({
       type: 4,
