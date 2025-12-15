@@ -5,7 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.0.2] - 2025-12-14
+## [2.1.0] - 2025-12-14
+
+### Added
+
+- **Structured Logging**: Complete migration to `@xivdyetools/logger/worker` for structured request logging
+- **Request Logger Middleware**: New middleware for consistent request/response logging
+- **Deadline Tracking**: Added 3-second deadline tracking for Discord interaction timeout handling (DISCORD-PERF-001)
+
+### Changed
+
+- **Dependency Migration**: Migrated from `xivdyetools-core` to `@xivdyetools/core`
+- **Types Migration**: Migrated `types/preset.ts` to use `@xivdyetools/types`
+- **Logging Refactor**: Replaced all `console` calls with structured logger
+
+### Fixed
+
+- **Security**: Added HMAC signature to preset API fallback requests
+- **Security**: Strengthened SSRF protection with redirect validation
+- **Security**: Added cross-cutting security improvements
+- **Rate Limiter**: Addressed HIGH severity rate limiter audit findings
+- **Medium Severity**: Addressed MEDIUM severity audit findings
+- **Tests**: Updated test mocks and expectations for logger migration
 
 ### Deprecated
 
