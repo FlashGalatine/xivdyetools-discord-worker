@@ -7,7 +7,7 @@ import {
     generateCompactPresetSwatch,
     type PresetSwatchOptions,
 } from './preset-swatch.js';
-import type { Dye } from 'xivdyetools-core';
+import type { Dye } from '@xivdyetools/core';
 
 describe('svg/preset-swatch.ts', () => {
     const mockDye1: Dye = {

@@ -10,7 +10,7 @@
  * All subcommands exclude Facewear dyes (generic names like "Red", "Blue").
  */
 
-import { DyeService, dyeDatabase, type Dye } from 'xivdyetools-core';
+import { DyeService, dyeDatabase, type Dye } from '@xivdyetools/core';
 import { messageResponse, errorEmbed, hexToDiscordColor } from '../../utils/response.js';
 import { getDyeEmoji } from '../../services/emoji.js';
 import { createCopyButtons } from '../buttons/index.js';

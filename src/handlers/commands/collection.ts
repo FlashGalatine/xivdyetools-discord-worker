@@ -5,7 +5,7 @@
  * Subcommands: create, delete, add, remove, show, list, rename
  */
 
-import { DyeService, dyeDatabase, type Dye } from 'xivdyetools-core';
+import { DyeService, dyeDatabase, type Dye } from '@xivdyetools/core';
 import { ephemeralResponse, successEmbed, errorEmbed, infoEmbed } from '../../utils/response.js';
 import {
   getCollections,

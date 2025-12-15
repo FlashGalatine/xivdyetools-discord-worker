@@ -3,7 +3,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { generateComparisonGrid, type ComparisonGridOptions } from './comparison-grid.js';
-import type { Dye } from 'xivdyetools-core';
+import type { Dye } from '@xivdyetools/core';
 
 describe('svg/comparison-grid.ts', () => {
     const mockDye1: Dye = {

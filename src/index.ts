@@ -39,7 +39,7 @@ import {
   handlePresetRevertModal,
   isPresetRevertModal,
 } from './handlers/modals/index.js';
-import { DyeService, dyeDatabase } from 'xivdyetools-core';
+import { DyeService, dyeDatabase } from '@xivdyetools/core';
 import * as presetApi from './services/preset-api.js';
 import { sendMessage } from './utils/discord-api.js';
 import { STATUS_DISPLAY, type PresetNotificationPayload } from './types/preset.js';

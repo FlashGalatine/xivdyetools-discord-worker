@@ -18,7 +18,7 @@
  * @module services/svg/preset-swatch
  */
 
-import type { Dye } from 'xivdyetools-core';
+import type { Dye } from '@xivdyetools/core';
 import {
   createSvgDocument,
   rect,

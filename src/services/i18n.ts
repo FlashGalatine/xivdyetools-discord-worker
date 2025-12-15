@@ -18,7 +18,7 @@
  * @module services/i18n
  */
 
-import { LocalizationService } from 'xivdyetools-core';
+import { LocalizationService } from '@xivdyetools/core';
 
 /**
  * Supported locale codes

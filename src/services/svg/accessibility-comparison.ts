@@ -18,7 +18,7 @@
  * @module services/svg/accessibility-comparison
  */
 
-import { ColorService, type RGB } from 'xivdyetools-core';
+import { ColorService, type RGB } from '@xivdyetools/core';
 import {
   createSvgDocument,
   rect,

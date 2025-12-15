@@ -31,7 +31,7 @@ vi.mock('xivdyetools-core', () => ({
     },
 }));
 
-import { LocalizationService } from 'xivdyetools-core';
+import { LocalizationService } from '@xivdyetools/core';
 
 // Create mock KV namespace
 function createMockKV() {

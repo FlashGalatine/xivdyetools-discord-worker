@@ -13,7 +13,7 @@
  * - moderate: Moderator actions (pending, approve, reject, stats)
  */
 
-import { DyeService, dyeDatabase, type Dye } from 'xivdyetools-core';
+import { DyeService, dyeDatabase, type Dye } from '@xivdyetools/core';
 import {
   deferredResponse,
   errorEmbed,

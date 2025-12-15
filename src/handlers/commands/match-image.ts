@@ -16,7 +16,7 @@ import {
   dyeDatabase,
   PaletteService,
   type PaletteMatch,
-} from 'xivdyetools-core';
+} from '@xivdyetools/core';
 import { deferredResponse, errorEmbed } from '../../utils/response.js';
 import { editOriginalResponse } from '../../utils/discord-api.js';
 import { generatePaletteGrid, type PaletteEntry } from '../../services/svg/palette-grid.js';

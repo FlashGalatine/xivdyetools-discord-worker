@@ -9,7 +9,7 @@
  * for users with color vision deficiencies.
  */
 
-import { DyeService, dyeDatabase, type Dye } from 'xivdyetools-core';
+import { DyeService, dyeDatabase, type Dye } from '@xivdyetools/core';
 import { deferredResponse, errorEmbed } from '../../utils/response.js';
 import { editOriginalResponse } from '../../utils/discord-api.js';
 import {

@@ -5,7 +5,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { handleFavoritesCommand } from './favorites.js';
 import type { Env, DiscordInteraction } from '../../types/env.js';
-import { DyeService } from 'xivdyetools-core';
+import { DyeService } from '@xivdyetools/core';
 
 // Mock dependencies
 vi.mock('xivdyetools-core', async () => {

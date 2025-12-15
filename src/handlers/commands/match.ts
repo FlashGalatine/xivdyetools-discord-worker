@@ -5,7 +5,7 @@
  * Accepts hex codes or dye names, returns match quality and details.
  */
 
-import { DyeService, dyeDatabase, ColorService, type Dye } from 'xivdyetools-core';
+import { DyeService, dyeDatabase, ColorService, type Dye } from '@xivdyetools/core';
 import { messageResponse, errorEmbed, hexToDiscordColor } from '../../utils/response.js';
 import { getDyeEmoji } from '../../services/emoji.js';
 import { createCopyButtons } from '../buttons/index.js';

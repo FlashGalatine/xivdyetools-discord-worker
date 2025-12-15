@@ -7,7 +7,7 @@
  * Accepts colors as hex codes or dye names, with configurable step count.
  */
 
-import { DyeService, dyeDatabase, ColorService, type Dye } from 'xivdyetools-core';
+import { DyeService, dyeDatabase, ColorService, type Dye } from '@xivdyetools/core';
 import { deferredResponse, errorEmbed, hexToDiscordColor } from '../../utils/response.js';
 import { editOriginalResponse } from '../../utils/discord-api.js';
 import {

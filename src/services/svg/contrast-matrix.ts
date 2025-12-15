@@ -16,7 +16,7 @@
  * @module services/svg/contrast-matrix
  */
 
-import { ColorService } from 'xivdyetools-core';
+import { ColorService } from '@xivdyetools/core';
 import {
   createSvgDocument,
   rect,

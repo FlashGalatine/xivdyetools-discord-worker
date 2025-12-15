@@ -6,7 +6,7 @@
  * creates a visual wheel showing harmonious dye combinations.
  */
 
-import { DyeService, dyeDatabase, type Dye } from 'xivdyetools-core';
+import { DyeService, dyeDatabase, type Dye } from '@xivdyetools/core';
 import { deferredResponse, errorEmbed } from '../../utils/response.js';
 import { editOriginalResponse } from '../../utils/discord-api.js';
 import { generateHarmonyWheel, type HarmonyDye } from '../../services/svg/harmony-wheel.js';
