@@ -25,14 +25,14 @@
     "@cf-wasm/photon": "^0.3.4",
     "@cloudflare/workers-types": "^4.20251205.0",
     "@resvg/resvg-wasm": "^2.6.2",
-    "@xivdyetools/core": "^1.3.7",
+    "@xivdyetools/core": "^1.4.0",
     "@xivdyetools/logger": "^1.0.0",
     "@xivdyetools/types": "^1.0.0",
     "discord-interactions": "^4.4.0",
     "hono": "^4.10.7"
   },
   "devDependencies": {
-    "@types/node": "^24.10.1",
+    "@types/node": "^22.10.2",
     "@vitest/coverage-v8": "^4.0.15",
     "dotenv": "^17.2.3",
     "tsx": "^4.21.0",
