@@ -334,4 +334,56 @@ describe('i18n.ts', () => {
             expect(result).toBe('Blues');
         });
     });
+
+    // ==========================================================================
+    // Logger Coverage Tests
+    // ==========================================================================
+
+    describe('Logger coverage - error logging', () => {
+        const mockLogger = {
+            error: vi.fn(),
+            warn: vi.fn(),
+            info: vi.fn(),
+            debug: vi.fn(),
+        } as never;
+
+        beforeEach(() => {
+            vi.clearAllMocks();
+        });
+
+        it('should log error when getUserLanguagePreference fails with logger', async () => {
+            mockKV.get = vi.fn().mockRejectedValue(new Error('KV error'));
+
+            const result = await getUserLanguagePreference(mockKV, mockUserId, mockLogger);
+
+            expect(result).toBeNull();
+        });
+
+        it('should log error when setUserLanguagePreference fails with logger', async () => {
+            mockKV.put = vi.fn().mockRejectedValue(new Error('KV error'));
+
+            const result = await setUserLanguagePreference(mockKV, mockUserId, 'de', mockLogger);
+
+            expect(result).toBe(false);
+        });
+
+        it('should log error when clearUserLanguagePreference fails with logger', async () => {
+            mockKV.delete = vi.fn().mockRejectedValue(new Error('KV error'));
+
+            const result = await clearUserLanguagePreference(mockKV, mockUserId, mockLogger);
+
+            expect(result).toBe(false);
+        });
+
+        it('should log error when initializeLocale fails with logger', async () => {
+            vi.mocked(LocalizationService.setLocale)
+                .mockRejectedValueOnce(new Error('Failed'))
+                .mockResolvedValueOnce(undefined);
+
+            await initializeLocale('invalid' as LocaleCode, mockLogger);
+
+            expect(LocalizationService.clear).toHaveBeenCalled();
+            expect(LocalizationService.setLocale).toHaveBeenCalledWith('en');
+        });
+    });
 });

@@ -448,5 +448,121 @@ describe('user-storage.ts', () => {
             const result = await removeDyeFromCollection(mockKV, mockUserId, 'My Dyes', 9999);
             expect(result).toBe(false);
         });
+
+        it('should return false on KV error', async () => {
+            await createCollection(mockKV, mockUserId, 'My Dyes');
+            await addDyeToCollection(mockKV, mockUserId, 'My Dyes', 5729);
+            mockKV.put = vi.fn().mockRejectedValue(new Error('KV error'));
+
+            const result = await removeDyeFromCollection(mockKV, mockUserId, 'My Dyes', 5729);
+            expect(result).toBe(false);
+        });
+    });
+
+    // ==========================================================================
+    // Logger Coverage Tests
+    // ==========================================================================
+
+    describe('Logger coverage - error logging', () => {
+        const mockLogger = {
+            error: vi.fn(),
+            warn: vi.fn(),
+            info: vi.fn(),
+            debug: vi.fn(),
+        } as never;
+
+        beforeEach(() => {
+            vi.clearAllMocks();
+        });
+
+        it('should log error when getFavorites fails with logger', async () => {
+            mockKV.get = vi.fn().mockRejectedValue(new Error('KV error'));
+
+            const favorites = await getFavorites(mockKV, mockUserId, mockLogger);
+
+            expect(favorites).toEqual([]);
+        });
+
+        it('should log error when addFavorite fails with logger', async () => {
+            mockKV.put = vi.fn().mockRejectedValue(new Error('KV error'));
+
+            const result = await addFavorite(mockKV, mockUserId, 5729, mockLogger);
+
+            expect(result.success).toBe(false);
+            expect(result.reason).toBe('error');
+        });
+
+        it('should log error when removeFavorite fails with logger', async () => {
+            await addFavorite(mockKV, mockUserId, 5729);
+            mockKV.put = vi.fn().mockRejectedValue(new Error('KV error'));
+
+            const result = await removeFavorite(mockKV, mockUserId, 5729, mockLogger);
+
+            expect(result).toBe(false);
+        });
+
+        it('should log error when clearFavorites fails with logger', async () => {
+            mockKV.delete = vi.fn().mockRejectedValue(new Error('KV error'));
+
+            const result = await clearFavorites(mockKV, mockUserId, mockLogger);
+
+            expect(result).toBe(false);
+        });
+
+        it('should log error when getCollections fails with logger', async () => {
+            mockKV.get = vi.fn().mockRejectedValue(new Error('KV error'));
+
+            const collections = await getCollections(mockKV, mockUserId, mockLogger);
+
+            expect(collections).toEqual([]);
+        });
+
+        it('should log error when createCollection fails with logger', async () => {
+            mockKV.put = vi.fn().mockRejectedValue(new Error('KV error'));
+
+            const result = await createCollection(mockKV, mockUserId, 'Test', undefined, mockLogger);
+
+            expect(result.success).toBe(false);
+            expect(result.reason).toBe('error');
+        });
+
+        it('should log error when deleteCollection fails with logger', async () => {
+            await createCollection(mockKV, mockUserId, 'Test');
+            mockKV.put = vi.fn().mockRejectedValue(new Error('KV error'));
+
+            const result = await deleteCollection(mockKV, mockUserId, 'Test', mockLogger);
+
+            expect(result).toBe(false);
+        });
+
+        it('should log error when renameCollection fails with logger', async () => {
+            await createCollection(mockKV, mockUserId, 'Old');
+            mockKV.put = vi.fn().mockRejectedValue(new Error('KV error'));
+
+            const result = await renameCollection(mockKV, mockUserId, 'Old', 'New', mockLogger);
+
+            expect(result.success).toBe(false);
+            expect(result.reason).toBe('error');
+        });
+
+        it('should log error when addDyeToCollection fails with logger', async () => {
+            await createCollection(mockKV, mockUserId, 'My Dyes');
+            mockKV.put = vi.fn().mockRejectedValue(new Error('KV error'));
+
+            const result = await addDyeToCollection(mockKV, mockUserId, 'My Dyes', 5729, mockLogger);
+
+            expect(result.success).toBe(false);
+            expect(result.reason).toBe('error');
+        });
+
+        it('should log error when removeDyeFromCollection fails with logger', async () => {
+            await createCollection(mockKV, mockUserId, 'My Dyes');
+            await addDyeToCollection(mockKV, mockUserId, 'My Dyes', 5729);
+            mockKV.put = vi.fn().mockRejectedValue(new Error('KV error'));
+
+            const result = await removeDyeFromCollection(mockKV, mockUserId, 'My Dyes', 5729, mockLogger);
+
+            expect(result).toBe(false);
+        });
     });
 });

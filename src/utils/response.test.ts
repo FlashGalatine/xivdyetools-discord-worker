@@ -95,6 +95,42 @@ describe('response.ts', () => {
             expect(body.data.content).toBe('Secret message');
             expect(body.data.flags).toBe(MessageFlags.EPHEMERAL);
         });
+
+        it('should accept InteractionResponseData object', async () => {
+            const response = ephemeralResponse({
+                content: 'Complex message',
+                embeds: [{ title: 'Embed Title' }],
+            });
+            const body = await response.json();
+
+            expect(body.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
+            expect(body.data.content).toBe('Complex message');
+            expect(body.data.embeds).toHaveLength(1);
+            expect(body.data.embeds[0].title).toBe('Embed Title');
+            expect(body.data.flags).toBe(MessageFlags.EPHEMERAL);
+        });
+
+        it('should preserve existing flags when adding ephemeral flag', async () => {
+            const response = ephemeralResponse({
+                content: 'Message with existing flags',
+                flags: 0, // No existing flags
+            });
+            const body = await response.json();
+
+            expect(body.data.flags).toBe(MessageFlags.EPHEMERAL);
+        });
+
+        it('should combine existing flags with ephemeral using bitwise OR', async () => {
+            // Hypothetical existing flag value
+            const response = ephemeralResponse({
+                content: 'Message',
+                flags: 128, // Some other flag
+            });
+            const body = await response.json();
+
+            // Should have both the ephemeral flag (64) and the original flag (128)
+            expect(body.data.flags).toBe(128 | MessageFlags.EPHEMERAL);
+        });
     });
 
     describe('embedResponse', () => {
