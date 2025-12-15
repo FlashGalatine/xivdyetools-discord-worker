@@ -19,6 +19,9 @@ export interface Env {
   /** Shared secret for authenticating with the Presets API */
   BOT_API_SECRET?: string;
 
+  /** HMAC signing key for bot request verification */
+  BOT_SIGNING_SECRET?: string;
+
   /** Shared secret for incoming webhook notifications */
   INTERNAL_WEBHOOK_SECRET?: string;
 
