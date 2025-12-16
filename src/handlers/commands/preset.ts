@@ -39,6 +39,7 @@ import {
 } from '../../types/preset.js';
 import * as presetApi from '../../services/preset-api.js';
 import type { DiscordInteraction } from '../../types/env.js';
+import { handleBanUserSubcommand, handleUnbanUserSubcommand } from './preset-ban.js';
 
 // Initialize DyeService
 const dyeService = new DyeService(dyeDatabase);
@@ -103,6 +104,12 @@ export async function handlePresetCommand(
 
     case 'moderate':
       return handleModerateSubcommand(interaction, env, ctx, t, userId, subcommand.options, logger);
+
+    case 'ban_user':
+      return handleBanUserSubcommand(interaction, env, ctx, t, userId, subcommand.options, logger);
+
+    case 'unban_user':
+      return handleUnbanUserSubcommand(interaction, env, ctx, t, userId, subcommand.options, logger);
 
     default:
       return ephemeralResponse(`Unknown subcommand: ${subcommand.name}`);

@@ -128,4 +128,5 @@ export const STATUS_DISPLAY: Record<PresetStatus, { icon: string; color: number 
   approved: { icon: '🟢', color: 0x57f287 },
   rejected: { icon: '🔴', color: 0xed4245 },
   flagged: { icon: '🟠', color: 0xf5a623 },
+  hidden: { icon: '🚫', color: 0x747f8d }, // Hidden due to user ban
 };

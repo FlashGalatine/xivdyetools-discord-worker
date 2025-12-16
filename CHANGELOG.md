@@ -5,6 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] - 2025-12-15
+
+### Added
+
+#### User Ban System
+- `/preset ban_user` - Ban a user from Preset Palettes (moderators only)
+  - Autocomplete searches preset authors by username
+  - Shows confirmation embed with user details and last 3 presets
+  - Modal for entering ban reason
+  - Hides all user's presets on ban
+- `/preset unban_user` - Unban a user (moderators only)
+  - Autocomplete searches currently banned users
+  - Restores hidden presets on unban
+
+#### New Files
+- `src/types/ban.ts` - Type definitions for ban system
+- `src/services/ban-service.ts` - Core ban operations (check, search, ban, unban)
+- `src/handlers/commands/preset-ban.ts` - Subcommand handlers
+- `src/handlers/buttons/ban-confirmation.ts` - Confirmation button handlers
+- `src/handlers/modals/ban-reason.ts` - Ban reason modal handler
+
+### Changed
+
+- Updated `/preset` command registration with ban_user and unban_user subcommands
+- Added `hidden` status to STATUS_DISPLAY for banned user presets
+- Added autocomplete routing for ban/unban user searches
+- Added modal routing for ban reason input
+
+---
+
 ## [2.1.1] - 2025-12-15
 
 ### Fixed

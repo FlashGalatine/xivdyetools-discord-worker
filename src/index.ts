@@ -40,8 +40,10 @@ import {
   handlePresetRevertModal,
   isPresetRevertModal,
 } from './handlers/modals/index.js';
+import { handleBanReasonModal, isBanReasonModal } from './handlers/modals/ban-reason.js';
 import { DyeService, dyeDatabase } from '@xivdyetools/core';
 import * as presetApi from './services/preset-api.js';
+import * as banService from './services/ban-service.js';
 import { sendMessage } from './utils/discord-api.js';
 import { STATUS_DISPLAY, type PresetNotificationPayload } from './types/preset.js';
 import { getLocalizedDyeName } from './services/i18n.js';
@@ -455,6 +457,14 @@ async function handleAutocomplete(
     else if (focusedName?.startsWith('dye')) {
       choices = getDyeAutocompleteChoices(query);
     }
+    // User autocomplete for ban_user/unban_user subcommands
+    else if (focusedName === 'user') {
+      if (subcommandName === 'ban_user') {
+        choices = await getBanUserAutocompleteChoices(env, query, logger);
+      } else if (subcommandName === 'unban_user') {
+        choices = await getUnbanUserAutocompleteChoices(env, query, logger);
+      }
+    }
   }
   // Default: Dye autocomplete for other commands
   else {
@@ -571,6 +581,54 @@ async function getMyPresetsAutocompleteChoices(
 }
 
 /**
+ * Get users for ban_user autocomplete (search preset authors)
+ */
+async function getBanUserAutocompleteChoices(
+  env: Env,
+  query: string,
+  logger: ExtendedLogger
+): Promise<Array<{ name: string; value: string }>> {
+  try {
+    const users = await banService.searchPresetAuthors(env.DB, query);
+
+    return users.map((user) => ({
+      // Format: "Username (discord:123456789) - 5 presets"
+      name: `${user.username} (discord:${user.discordId}) - ${user.presetCount} presets`,
+      value: user.discordId,
+    }));
+  } catch (error) {
+    logger.error('Failed to get ban user autocomplete', error instanceof Error ? error : undefined);
+    return [];
+  }
+}
+
+/**
+ * Get banned users for unban_user autocomplete
+ */
+async function getUnbanUserAutocompleteChoices(
+  env: Env,
+  query: string,
+  logger: ExtendedLogger
+): Promise<Array<{ name: string; value: string }>> {
+  try {
+    const users = await banService.searchBannedUsers(env.DB, query);
+
+    return users.map((user) => {
+      const idSuffix = user.discordId
+        ? `discord:${user.discordId}`
+        : `xivauth:${user.xivAuthId}`;
+      return {
+        name: `${user.username} (${idSuffix})`,
+        value: user.discordId || user.xivAuthId || '',
+      };
+    });
+  } catch (error) {
+    logger.error('Failed to get unban user autocomplete', error instanceof Error ? error : undefined);
+    return [];
+  }
+}
+
+/**
  * Handle button/select menu interactions
  */
 async function handleComponent(
@@ -613,6 +671,11 @@ async function handleModal(
   // Route preset revert modal
   if (isPresetRevertModal(customId)) {
     return handlePresetRevertModal(interaction, env, ctx, logger);
+  }
+
+  // Route ban reason modal
+  if (isBanReasonModal(customId)) {
+    return handleBanReasonModal(interaction, env, ctx, logger);
   }
 
   // Unknown modal

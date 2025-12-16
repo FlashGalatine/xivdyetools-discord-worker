@@ -13,6 +13,10 @@ import {
   handlePresetRejectButton,
   handlePresetRevertButton,
 } from './preset-moderation.js';
+import {
+  handleBanConfirmButton,
+  handleBanCancelButton,
+} from './ban-confirmation.js';
 
 // Re-export button creation helpers
 export { createCopyButtons, createHexButton } from './copy.js';
@@ -88,6 +92,15 @@ export async function handleButtonInteraction(
 
   if (customId.startsWith('preset_revert_')) {
     return handlePresetRevertButton(interaction, env, ctx, logger);
+  }
+
+  // Ban confirmation buttons
+  if (customId.startsWith('ban_confirm_')) {
+    return handleBanConfirmButton(interaction, env, ctx, logger);
+  }
+
+  if (customId.startsWith('ban_cancel_')) {
+    return handleBanCancelButton(interaction, env, ctx, logger);
   }
 
   // Unknown button

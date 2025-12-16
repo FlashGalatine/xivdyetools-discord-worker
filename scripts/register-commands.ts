@@ -798,6 +798,34 @@ const commands = [
           },
         ],
       },
+      {
+        name: 'ban_user',
+        description: 'Ban a user from Preset Palettes (moderators only)',
+        type: OptionType.SUB_COMMAND,
+        options: [
+          {
+            name: 'user',
+            description: 'User to ban (search by username)',
+            type: OptionType.STRING,
+            required: true,
+            autocomplete: true,
+          },
+        ],
+      },
+      {
+        name: 'unban_user',
+        description: 'Unban a user from Preset Palettes (moderators only)',
+        type: OptionType.SUB_COMMAND,
+        options: [
+          {
+            name: 'user',
+            description: 'User to unban (search by username)',
+            type: OptionType.STRING,
+            required: true,
+            autocomplete: true,
+          },
+        ],
+      },
     ],
   },
 ];
