@@ -6,6 +6,11 @@ main = "src/index.ts"
 compatibility_date = "2024-12-01"
 compatibility_flags = ["nodejs_compat"]
 
+# Custom domain routing
+routes = [
+  { pattern = "bot.xivdyetools.projectgalatine.com", custom_domain = true }
+]
+
 # ============================================================================
 # KV Namespace for rate limiting and user preferences
 # ============================================================================
@@ -62,7 +67,7 @@ service = "xivdyetools-presets-api"
 DISCORD_CLIENT_ID = "1447108133020369048"
 
 # Presets API URL (existing worker)
-PRESETS_API_URL = "https://xivdyetools-worker.ashejunius.workers.dev"
+PRESETS_API_URL = "https://api.xivdyetools.projectgalatine.com"
 
 # ============================================================================
 # Secrets (set via wrangler secret put):
@@ -89,7 +94,7 @@ name = "xivdyetools-discord-worker"
 [env.production.vars]
 # Production Discord Application ID
 DISCORD_CLIENT_ID = "1447108133020369048"
-PRESETS_API_URL = "https://xivdyetools-worker.ashejunius.workers.dev"
+PRESETS_API_URL = "https://api.xivdyetools.projectgalatine.com"
 
 # KV Namespace for rate limiting and user preferences
 [[env.production.kv_namespaces]]
