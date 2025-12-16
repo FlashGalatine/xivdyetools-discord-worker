@@ -1,6 +1,6 @@
 # XIV Dye Tools Discord Worker
 
-**v2.0.1** | Discord bot for FFXIV dye color exploration, running on Cloudflare Workers using HTTP Interactions.
+**v2.2.0** | Discord bot for FFXIV dye color exploration, running on Cloudflare Workers using HTTP Interactions.
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3%2B-blue)](https://www.typescriptlang.org/)
 [![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers-F38020)](https://workers.cloudflare.com/)
