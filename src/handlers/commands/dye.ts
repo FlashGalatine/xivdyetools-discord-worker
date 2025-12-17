@@ -29,23 +29,6 @@ function excludeFacewear(dyes: Dye[]): Dye[] {
 }
 
 /**
- * Formats a dye for display in an embed field (with localized name)
- */
-function formatDyeField(dye: Dye, index?: number): { name: string; value: string; inline: boolean } {
-  const emoji = getDyeEmoji(dye.id);
-  const emojiPrefix = emoji ? `${emoji} ` : '';
-  const indexPrefix = index !== undefined ? `**${index + 1}.** ` : '';
-  const localizedName = getLocalizedDyeName(dye.itemID, dye.name);
-  const localizedCategory = getLocalizedCategory(dye.category);
-
-  return {
-    name: `${indexPrefix}${emojiPrefix}${localizedName}`,
-    value: `\`${dye.hex.toUpperCase()}\` • ${localizedCategory}`,
-    inline: true,
-  };
-}
-
-/**
  * Formats a dye for a compact list display (with localized name)
  */
 function formatDyeListItem(dye: Dye): string {

@@ -281,5 +281,12 @@ describe('verify.ts', () => {
             expect(result1).toBe(true);
             expect(result2).toBe(false);
         });
+
+        it('should return false when padded content matches but original lengths differ', async () => {
+            // 'abc' will be padded to match length of 'abc\x00\x00'
+            // After padding both have [97, 98, 99, 0, 0] but original lengths differ
+            const result = await timingSafeEqual('abc', 'abc\x00\x00');
+            expect(result).toBe(false);
+        });
     });
 });

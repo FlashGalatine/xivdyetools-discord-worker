@@ -48,6 +48,23 @@ describe('copy.ts', () => {
             const body = await response.json();
             expect(body.data.content).toBeDefined();
         });
+
+        it('should handle missing data gracefully', async () => {
+            const interaction = {};
+            const response = handleCopyHex(interaction);
+
+            const body = await response.json();
+            // With no custom_id, the hex extracted is 'copy_hex_' replaced with '', leaving '#'
+            expect(body.data.content).toBeDefined();
+        });
+
+        it('should handle undefined custom_id gracefully', async () => {
+            const interaction = { data: {} };
+            const response = handleCopyHex(interaction);
+
+            const body = await response.json();
+            expect(body.data.content).toBeDefined();
+        });
     });
 
     describe('handleCopyRgb', () => {
@@ -86,6 +103,23 @@ describe('copy.ts', () => {
             const body = await response.json();
             expect(body.data.content).toBe('Invalid RGB format.');
         });
+
+        it('should handle missing data gracefully', async () => {
+            const interaction = {};
+            const response = handleCopyRgb(interaction);
+
+            const body = await response.json();
+            // With no custom_id, split results in wrong parts count
+            expect(body.data.content).toBe('Invalid RGB format.');
+        });
+
+        it('should handle undefined custom_id gracefully', async () => {
+            const interaction = { data: {} };
+            const response = handleCopyRgb(interaction);
+
+            const body = await response.json();
+            expect(body.data.content).toBe('Invalid RGB format.');
+        });
     });
 
     describe('handleCopyHsv', () => {
@@ -114,6 +148,23 @@ describe('copy.ts', () => {
             const body = await response.json();
             expect(body.data.content).toBe('Invalid HSV format.');
             expect(body.data.flags).toBe(64);
+        });
+
+        it('should handle missing data gracefully', async () => {
+            const interaction = {};
+            const response = handleCopyHsv(interaction);
+
+            const body = await response.json();
+            // With no custom_id, split results in wrong parts count
+            expect(body.data.content).toBe('Invalid HSV format.');
+        });
+
+        it('should handle undefined custom_id gracefully', async () => {
+            const interaction = { data: {} };
+            const response = handleCopyHsv(interaction);
+
+            const body = await response.json();
+            expect(body.data.content).toBe('Invalid HSV format.');
         });
     });
 

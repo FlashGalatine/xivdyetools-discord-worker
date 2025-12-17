@@ -526,6 +526,60 @@ describe('accessibility.ts', () => {
       expect(data.type).toBe(4);
       expect(data.data.embeds[0].description).toContain('facewear');
     });
+
+    it('should log error when logger is provided', async () => {
+      vi.mocked(renderSvgToPng).mockRejectedValueOnce(new Error('Render failed'));
+      const mockLogger = { error: vi.fn() };
+
+      const interaction: DiscordInteraction = {
+        type: 2,
+        data: {
+          name: 'accessibility',
+          options: [
+            { name: 'dye1', value: 'snow white', type: 3 },
+          ],
+        },
+        user: { id: 'user-123' },
+        id: 'int-1',
+        application_id: 'app-1',
+        token: 'token-1',
+      };
+
+      await handleAccessibilityCommand(interaction, mockEnv, mockCtx, mockLogger as any);
+      await Promise.all(waitUntilPromises);
+
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        'Accessibility command error',
+        expect.any(Error)
+      );
+    });
+
+    it('should log undefined when non-Error is thrown', async () => {
+      vi.mocked(renderSvgToPng).mockRejectedValueOnce('string error');
+      const mockLogger = { error: vi.fn() };
+
+      const interaction: DiscordInteraction = {
+        type: 2,
+        data: {
+          name: 'accessibility',
+          options: [
+            { name: 'dye1', value: 'snow white', type: 3 },
+          ],
+        },
+        user: { id: 'user-123' },
+        id: 'int-1',
+        application_id: 'app-1',
+        token: 'token-1',
+      };
+
+      await handleAccessibilityCommand(interaction, mockEnv, mockCtx, mockLogger as any);
+      await Promise.all(waitUntilPromises);
+
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        'Accessibility command error',
+        undefined
+      );
+    });
   });
 
   describe('locale handling', () => {

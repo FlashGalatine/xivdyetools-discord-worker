@@ -149,7 +149,8 @@ async function sendFollowUpWithFile(
   if (options.ephemeral) payload.flags = 64;
 
   // If we have embeds with image references, we need to reference the attachment
-  if (options.embeds && options.file) {
+  // Note: options.file is guaranteed truthy since this function is only called when file exists
+  if (options.embeds) {
     payload.embeds = options.embeds.map((embed) => {
       // If the embed has an image placeholder, replace with attachment reference
       if (embed.image?.url === 'attachment://image.png') {
@@ -160,8 +161,6 @@ async function sendFollowUpWithFile(
       }
       return embed;
     });
-  } else if (options.embeds) {
-    payload.embeds = options.embeds;
   }
 
   if (options.components) payload.components = options.components;
@@ -236,7 +235,8 @@ async function editResponseWithFile(
   if (options.content) payload.content = options.content;
 
   // Handle embeds with image attachments
-  if (options.embeds && options.file) {
+  // Note: options.file is guaranteed truthy since this function is only called when file exists
+  if (options.embeds) {
     payload.embeds = options.embeds.map((embed) => {
       if (embed.image?.url === 'attachment://image.png') {
         return {
@@ -246,8 +246,6 @@ async function editResponseWithFile(
       }
       return embed;
     });
-  } else if (options.embeds) {
-    payload.embeds = options.embeds;
   }
 
   if (options.components) payload.components = options.components;

@@ -324,6 +324,107 @@ describe('handleHarmonyCommand', () => {
     await Promise.all(waitUntilCalls);
     expect(response.status).toBe(200);
   });
+
+  it('handles rendering error gracefully', async () => {
+    const { ctx, waitUntilCalls } = createContext();
+    renderSvgToPngMock.mockRejectedValueOnce(new Error('Render failed'));
+
+    const interaction = {
+      ...baseInteraction,
+      data: {
+        options: [
+          { name: 'color', value: '#FF0000' },
+          { name: 'type', value: 'triadic' },
+        ]
+      },
+    } as unknown as DiscordInteraction;
+
+    const response = await handleHarmonyCommand(interaction, env, ctx);
+    await Promise.all(waitUntilCalls);
+    expect(response.status).toBe(200);
+    // Should have called editOriginalResponse with error
+    expect(editOriginalResponseMock).toHaveBeenCalled();
+  });
+
+  it('handles rendering error with logger', async () => {
+    const { ctx, waitUntilCalls } = createContext();
+    renderSvgToPngMock.mockRejectedValueOnce(new Error('Render failed'));
+    const mockLogger = { error: vi.fn() };
+
+    const interaction = {
+      ...baseInteraction,
+      data: {
+        options: [
+          { name: 'color', value: '#FF0000' },
+          { name: 'type', value: 'triadic' },
+        ]
+      },
+    } as unknown as DiscordInteraction;
+
+    await handleHarmonyCommand(interaction, env, ctx, mockLogger as any);
+    await Promise.all(waitUntilCalls);
+
+    expect(mockLogger.error).toHaveBeenCalledWith(
+      'Harmony command error',
+      expect.any(Error)
+    );
+  });
+
+  it('handles case when no harmony dyes are found', async () => {
+    // Override the mock to return null for complementary
+    const { DyeService } = await import('@xivdyetools/core');
+    const originalFindComplementaryPair = DyeService.prototype.findComplementaryPair;
+    vi.spyOn(DyeService.prototype, 'findComplementaryPair').mockReturnValueOnce(null);
+
+    const { ctx, waitUntilCalls } = createContext();
+
+    const interaction = {
+      ...baseInteraction,
+      data: {
+        options: [
+          { name: 'color', value: '#000000' },
+          { name: 'type', value: 'complementary' },
+        ]
+      },
+    } as unknown as DiscordInteraction;
+
+    const response = await handleHarmonyCommand(interaction, env, ctx);
+    await Promise.all(waitUntilCalls);
+    expect(response.status).toBe(200);
+    // Should have sent error about no matches found
+    expect(editOriginalResponseMock).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      expect.objectContaining({
+        embeds: expect.arrayContaining([
+          expect.objectContaining({
+            description: 'errors.noMatchFound',
+          }),
+        ]),
+      })
+    );
+
+    // Restore original
+    vi.spyOn(DyeService.prototype, 'findComplementaryPair').mockRestore();
+  });
+
+  it('uses default triadic type for unknown harmony type', async () => {
+    const { ctx, waitUntilCalls } = createContext();
+
+    const interaction = {
+      ...baseInteraction,
+      data: {
+        options: [
+          { name: 'color', value: '#FF0000' },
+          // No type specified - should default to triadic
+        ]
+      },
+    } as unknown as DiscordInteraction;
+
+    const response = await handleHarmonyCommand(interaction, env, ctx);
+    await Promise.all(waitUntilCalls);
+    expect(response.status).toBe(200);
+  });
 });
 
 describe('getHarmonyTypeChoices', () => {

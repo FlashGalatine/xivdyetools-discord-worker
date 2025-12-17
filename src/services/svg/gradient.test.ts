@@ -185,5 +185,18 @@ describe('svg/gradient.ts', () => {
             expect(svg).toContain('fill="#222222"');
             expect(svg).toContain('fill="#333333"');
         });
+
+        it('should include tick marks when showTicks is true', () => {
+            const steps: GradientStep[] = [
+                { hex: '#000000' },
+                { hex: '#808080' },
+                { hex: '#ffffff' },
+            ];
+
+            const svg = generateGradientBar({ steps, showTicks: true });
+
+            // Tick marks are drawn as lines
+            expect(svg).toContain('<line');
+        });
     });
 });

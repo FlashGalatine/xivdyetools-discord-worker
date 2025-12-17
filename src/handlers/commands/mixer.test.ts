@@ -65,7 +65,12 @@ vi.mock('../../services/svg/gradient.js', () => ({
     generateGradientColors: (start: string, end: string, steps: number) => {
         const colors: string[] = [];
         for (let i = 0; i < steps; i++) {
-            colors.push(i === 0 ? start : i === steps - 1 ? end : '#808080');
+            // If start contains 88, keep 88 in middle colors to trigger facewear logic
+            if (start.includes('88')) {
+                colors.push('#888888');
+            } else {
+                colors.push(i === 0 ? start : i === steps - 1 ? end : '#808080');
+            }
         }
         return colors;
     },
@@ -340,6 +345,114 @@ describe('/mixer command', () => {
             ...baseInteraction,
             member: undefined,
             user: { id: 'dm-user-1', username: 'dm-tester' },
+            data: {
+                ...baseInteraction.data,
+                options: [
+                    { name: 'start_color', value: '#FF0000' },
+                    { name: 'end_color', value: '#0000FF' },
+                ],
+            },
+        };
+
+        const res = await handleMixerCommand(interaction, env, ctx);
+        const body = await res.json();
+
+        expect(body.type).toBe(5);
+    });
+
+    it('skips facewear dyes when finding closest match', async () => {
+        // Use colors that will trigger the facewear dye check (hex contains '88')
+        const interaction: DiscordInteraction = {
+            ...baseInteraction,
+            data: {
+                ...baseInteraction.data,
+                options: [
+                    { name: 'start_color', value: '#888888' }, // Gray - triggers facewear in mock
+                    { name: 'end_color', value: '#888888' },
+                ],
+            },
+        };
+
+        const res = await handleMixerCommand(interaction, env, ctx);
+        const body = await res.json();
+
+        expect(body.type).toBe(5);
+
+        // Wait for background processing
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
+        // Should still succeed, having skipped facewear dye
+        expect(mockEditOriginalResponse).toHaveBeenCalled();
+    });
+
+    it('handles rendering error gracefully', async () => {
+        // Make render fail
+        mockRenderSvgToPng.mockRejectedValueOnce(new Error('Render failed'));
+
+        const interaction: DiscordInteraction = {
+            ...baseInteraction,
+            data: {
+                ...baseInteraction.data,
+                options: [
+                    { name: 'start_color', value: '#FF0000' },
+                    { name: 'end_color', value: '#0000FF' },
+                ],
+            },
+        };
+
+        const res = await handleMixerCommand(interaction, env, ctx);
+        expect((await res.json()).type).toBe(5);
+
+        // Wait for background processing
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
+        // Should have sent error response
+        expect(mockEditOriginalResponse).toHaveBeenCalledWith(
+            expect.anything(),
+            expect.anything(),
+            expect.objectContaining({
+                embeds: expect.arrayContaining([
+                    expect.objectContaining({
+                        description: 'Generation failed',
+                    }),
+                ]),
+            })
+        );
+    });
+
+    it('handles rendering error with logger', async () => {
+        // Make render fail
+        mockRenderSvgToPng.mockRejectedValueOnce(new Error('Render failed'));
+        const mockLogger = { error: vi.fn() };
+
+        const interaction: DiscordInteraction = {
+            ...baseInteraction,
+            data: {
+                ...baseInteraction.data,
+                options: [
+                    { name: 'start_color', value: '#FF0000' },
+                    { name: 'end_color', value: '#0000FF' },
+                ],
+            },
+        };
+
+        await handleMixerCommand(interaction, env, ctx, mockLogger as any);
+
+        // Wait for background processing
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
+        // Logger should have been called
+        expect(mockLogger.error).toHaveBeenCalledWith(
+            'Mixer command error',
+            expect.any(Error)
+        );
+    });
+
+    it('falls back to default translator when no user ID', async () => {
+        const interaction: DiscordInteraction = {
+            ...baseInteraction,
+            member: undefined,
+            user: undefined,
             data: {
                 ...baseInteraction.data,
                 options: [

@@ -564,5 +564,36 @@ describe('user-storage.ts', () => {
 
             expect(result).toBe(false);
         });
+
+        // Tests for non-Error exceptions (covers the `error instanceof Error ? error : undefined` branches)
+        it('should handle non-Error exception in renameCollection', async () => {
+            await createCollection(mockKV, mockUserId, 'Old');
+            mockKV.put = vi.fn().mockRejectedValue('string error');
+
+            const result = await renameCollection(mockKV, mockUserId, 'Old', 'New', mockLogger);
+
+            expect(result.success).toBe(false);
+            expect(result.reason).toBe('error');
+        });
+
+        it('should handle non-Error exception in addDyeToCollection', async () => {
+            await createCollection(mockKV, mockUserId, 'My Dyes');
+            mockKV.put = vi.fn().mockRejectedValue({ message: 'object error' });
+
+            const result = await addDyeToCollection(mockKV, mockUserId, 'My Dyes', 5729, mockLogger);
+
+            expect(result.success).toBe(false);
+            expect(result.reason).toBe('error');
+        });
+
+        it('should handle non-Error exception in removeDyeFromCollection', async () => {
+            await createCollection(mockKV, mockUserId, 'My Dyes');
+            await addDyeToCollection(mockKV, mockUserId, 'My Dyes', 5729);
+            mockKV.put = vi.fn().mockRejectedValue(null);
+
+            const result = await removeDyeFromCollection(mockKV, mockUserId, 'My Dyes', 5729, mockLogger);
+
+            expect(result).toBe(false);
+        });
     });
 });

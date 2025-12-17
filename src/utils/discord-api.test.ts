@@ -136,6 +136,49 @@ describe('discord-api.ts', () => {
 
             expect(mockFetch).toHaveBeenCalled();
         });
+
+        it('should preserve embed without image placeholder when file is present', async () => {
+            const options: FollowUpOptions = {
+                embeds: [{
+                    title: 'Text Only Embed',
+                    description: 'No image here',
+                }],
+                file: {
+                    name: 'result.png',
+                    data: new Uint8Array([1, 2, 3]),
+                    contentType: 'image/png',
+                },
+            };
+
+            await sendFollowUp(mockApplicationId, mockInteractionToken, options);
+
+            const callArgs = mockFetch.mock.calls[0];
+            const formData = callArgs[1].body as FormData;
+            const payloadJson = formData.get('payload_json');
+            const payload = JSON.parse(payloadJson as string);
+
+            // Embed should remain unchanged (no image.url replacement)
+            expect(payload.embeds[0].title).toBe('Text Only Embed');
+            expect(payload.embeds[0].image).toBeUndefined();
+        });
+
+        it('should include embeds without file', async () => {
+            // Test the branch where embeds exist but no file (covers line 163-164)
+            const options: FollowUpOptions = {
+                embeds: [{
+                    title: 'No File Embed',
+                    description: 'Just text',
+                }],
+                ephemeral: true,
+            };
+
+            await sendFollowUp(mockApplicationId, mockInteractionToken, options);
+
+            const callArgs = mockFetch.mock.calls[0];
+            const body = JSON.parse(callArgs[1].body);
+            expect(body.embeds).toHaveLength(1);
+            expect(body.embeds[0].title).toBe('No File Embed');
+        });
     });
 
     describe('editOriginalResponse', () => {
@@ -193,6 +236,52 @@ describe('discord-api.ts', () => {
             const payload = JSON.parse(payloadJson as string);
 
             expect(payload.embeds[0].image.url).toBe('attachment://updated.png');
+        });
+
+        it('should preserve embed without image placeholder when file is present', async () => {
+            const options: FollowUpOptions = {
+                embeds: [{
+                    title: 'Text Only Embed',
+                    description: 'No image placeholder',
+                }],
+                file: {
+                    name: 'updated.png',
+                    data: new Uint8Array([7, 8, 9]),
+                    contentType: 'image/png',
+                },
+            };
+
+            await editOriginalResponse(mockApplicationId, mockInteractionToken, options);
+
+            const callArgs = mockFetch.mock.calls[0];
+            const formData = callArgs[1].body as FormData;
+            const payloadJson = formData.get('payload_json');
+            const payload = JSON.parse(payloadJson as string);
+
+            // Embed should remain unchanged
+            expect(payload.embeds[0].title).toBe('Text Only Embed');
+            expect(payload.embeds[0].image).toBeUndefined();
+        });
+
+        it('should handle embeds without file for edit (else branch)', async () => {
+            // This test specifically targets the else branch at lines 249-250
+            // where we have embeds but no file in the multipart path
+            // Note: This won't hit that branch directly since we need a file to enter
+            // the multipart code path. The JSON path handles embeds without file.
+            const options: FollowUpOptions = {
+                embeds: [{
+                    title: 'JSON Only Edit',
+                    description: 'No file attached',
+                }],
+            };
+
+            await editOriginalResponse(mockApplicationId, mockInteractionToken, options);
+
+            const callArgs = mockFetch.mock.calls[0];
+            // This should be JSON, not FormData
+            expect(callArgs[1].headers['Content-Type']).toBe('application/json');
+            const body = JSON.parse(callArgs[1].body);
+            expect(body.embeds).toHaveLength(1);
         });
     });
 

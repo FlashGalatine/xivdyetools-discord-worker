@@ -237,5 +237,32 @@ describe('svg/preset-swatch.ts', () => {
             expect(svg).toContain('fill="#AA1111"');
             expect(svg).toContain('fill="#000000"');
         });
+
+    });
+
+    describe('dye name truncation', () => {
+        it('should truncate long dye names in full swatch view', () => {
+            const longNameDye: Dye = {
+                id: 99,
+                itemID: 9999,
+                name: 'A Very Long Dye Name That Exceeds The Maximum Allowed Length',
+                hex: '#FF00FF',
+                rgb: { r: 255, g: 0, b: 255 },
+                hsv: { h: 300, s: 100, v: 100 },
+                category: 'Purple',
+            };
+
+            // Use a smaller width so the truncation kicks in sooner
+            const svg = generatePresetSwatch({
+                ...baseOptions,
+                dyes: [longNameDye],
+                width: 200, // Small width = smaller swatch = shorter max name length
+            });
+
+            // Should be truncated with ".."
+            expect(svg).toContain('..');
+            // Should not contain the full name
+            expect(svg).not.toContain('A Very Long Dye Name That Exceeds The Maximum Allowed Length');
+        });
     });
 });

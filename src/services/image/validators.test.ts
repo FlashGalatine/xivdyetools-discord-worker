@@ -102,6 +102,25 @@ describe('validators.ts', () => {
             expect(validateImageUrl('https://192.168.1.1/image.png').valid).toBe(false);
         });
 
+        it('should reject IPv6 addresses', () => {
+            expect(validateImageUrl('https://[::1]/image.png').valid).toBe(false);
+            expect(validateImageUrl('https://[fe80::1]/image.png').valid).toBe(false);
+            expect(validateImageUrl('https://[fc00::1]/image.png').valid).toBe(false);
+        });
+
+        it('should reject cloud metadata endpoints', () => {
+            expect(validateImageUrl('https://169.254.169.254/image.png').valid).toBe(false);
+            expect(validateImageUrl('https://metadata.google.internal/image.png').valid).toBe(false);
+        });
+
+        it('should reject 0.x.x.x IP ranges', () => {
+            expect(validateImageUrl('https://0.0.0.1/image.png').valid).toBe(false);
+        });
+
+        it('should reject unique local IPv6 addresses (fd prefix)', () => {
+            expect(validateImageUrl('https://[fd12::1]/image.png').valid).toBe(false);
+        });
+
         it('should normalize URLs', () => {
             const result = validateImageUrl('https://cdn.discordapp.com/path/../attachments/image.png');
             expect(result.valid).toBe(true);
@@ -173,6 +192,24 @@ describe('validators.ts', () => {
             const result = validateDimensions(4096, 3000);
             expect(result).toBeUndefined();
         });
+
+        // Note: With current constants (MAX_IMAGE_DIMENSION=4096, MAX_PIXEL_COUNT=16*1024*1024=16777216),
+        // the max valid pixel count is 4096*4096=16777216 which exactly equals MAX_PIXEL_COUNT.
+        // This makes the pixel count branch unreachable - dimension check always triggers first.
+        // The tests below verify the dimension check behavior instead.
+
+        it('should reject height exceeding dimension limit', () => {
+            // 4097 > 4096, so dimension check triggers
+            const result = validateDimensions(4096, 4097);
+            expect(result).toContain('Image too large');
+            expect(result).toContain('4096px');
+        });
+
+        it('should allow exactly at dimension limit', () => {
+            // 4096x4096 is exactly at both limits
+            const result = validateDimensions(4096, 4096);
+            expect(result).toBeUndefined();
+        });
     });
 
     // ==========================================================================
@@ -203,6 +240,16 @@ describe('validators.ts', () => {
                 0x57, 0x45, 0x42, 0x50, // WEBP
             ]);
             expect(detectImageFormat(webpMagic)).toBe('webp');
+        });
+
+        it('should not detect RIFF without WEBP as WebP', () => {
+            // RIFF but not WEBP (could be AVI, WAV, etc.)
+            const riffNotWebp = new Uint8Array([
+                0x52, 0x49, 0x46, 0x46, // RIFF
+                0, 0, 0, 0,             // size placeholder
+                0x41, 0x56, 0x49, 0x20, // AVI (not WEBP)
+            ]);
+            expect(detectImageFormat(riffNotWebp)).toBeUndefined();
         });
 
         it('should detect BMP format', () => {
@@ -321,6 +368,98 @@ describe('validators.ts', () => {
 
             const calls = mockFetch.mock.calls;
             expect(calls[0][1].headers['User-Agent']).toBe('XIV Dye Tools Discord Bot/1.0');
+        });
+
+        it('should handle redirect to valid Discord CDN URL', async () => {
+            const mockBuffer = new Uint8Array([1, 2, 3, 4]);
+
+            // First call returns redirect
+            mockFetch
+                .mockResolvedValueOnce({
+                    ok: false,
+                    status: 302,
+                    headers: new Headers({ 'Location': 'https://cdn.discordapp.com/new-location.png' }),
+                })
+                .mockResolvedValueOnce({
+                    ok: true,
+                    headers: new Headers(),
+                    arrayBuffer: () => Promise.resolve(mockBuffer.buffer),
+                });
+
+            const result = await fetchImageWithTimeout('https://cdn.discordapp.com/test.png');
+            expect(result).toBeInstanceOf(Uint8Array);
+            expect(mockFetch).toHaveBeenCalledTimes(2);
+        });
+
+        it('should reject redirect without Location header', async () => {
+            mockFetch.mockResolvedValue({
+                ok: false,
+                status: 302,
+                headers: new Headers(), // No Location header
+            });
+
+            await expect(fetchImageWithTimeout('https://cdn.discordapp.com/test.png'))
+                .rejects.toThrow('Redirect without Location header');
+        });
+
+        it('should reject redirect to unsafe URL', async () => {
+            mockFetch.mockResolvedValue({
+                ok: false,
+                status: 301,
+                headers: new Headers({ 'Location': 'https://evil.com/malicious.png' }),
+            });
+
+            await expect(fetchImageWithTimeout('https://cdn.discordapp.com/test.png'))
+                .rejects.toThrow('Unsafe redirect target');
+        });
+
+        it('should handle 304 redirect status', async () => {
+            const mockBuffer = new Uint8Array([1, 2, 3, 4]);
+
+            mockFetch
+                .mockResolvedValueOnce({
+                    ok: false,
+                    status: 304,
+                    headers: new Headers({ 'Location': 'https://media.discordapp.net/redirect.png' }),
+                })
+                .mockResolvedValueOnce({
+                    ok: true,
+                    headers: new Headers(),
+                    arrayBuffer: () => Promise.resolve(mockBuffer.buffer),
+                });
+
+            const result = await fetchImageWithTimeout('https://cdn.discordapp.com/test.png');
+            expect(result).toBeInstanceOf(Uint8Array);
+        });
+
+        it('should throw on redirect to private IP', async () => {
+            mockFetch.mockResolvedValue({
+                ok: false,
+                status: 302,
+                headers: new Headers({ 'Location': 'https://192.168.1.1/image.png' }),
+            });
+
+            await expect(fetchImageWithTimeout('https://cdn.discordapp.com/test.png'))
+                .rejects.toThrow('Unsafe redirect target');
+        });
+
+        it('should propagate non-abort errors', async () => {
+            mockFetch.mockRejectedValue(new Error('Network error'));
+
+            await expect(fetchImageWithTimeout('https://cdn.discordapp.com/test.png'))
+                .rejects.toThrow('Network error');
+        });
+
+        it('should handle fetch without Content-Length header', async () => {
+            const mockBuffer = new Uint8Array([1, 2, 3, 4]);
+            mockFetch.mockResolvedValue({
+                ok: true,
+                headers: new Headers(), // No Content-Length
+                arrayBuffer: () => Promise.resolve(mockBuffer.buffer),
+            });
+
+            const result = await fetchImageWithTimeout('https://cdn.discordapp.com/test.png');
+            expect(result).toBeInstanceOf(Uint8Array);
         });
     });
 

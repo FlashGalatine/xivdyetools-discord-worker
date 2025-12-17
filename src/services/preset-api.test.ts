@@ -38,6 +38,7 @@ function createMockEnv(options: {
     withServiceBinding?: boolean;
     withUrlConfig?: boolean;
     moderatorIds?: string;
+    withBotSigningSecret?: boolean;
 } = {}): any {
     const env: any = {};
 
@@ -54,6 +55,10 @@ function createMockEnv(options: {
 
     if (options.moderatorIds) {
         env.MODERATOR_IDS = options.moderatorIds;
+    }
+
+    if (options.withBotSigningSecret) {
+        env.BOT_SIGNING_SECRET = 'test-signing-secret';
     }
 
     return env;
@@ -204,6 +209,18 @@ describe('preset-api.ts', () => {
             const result = await getPreset(env, 'nonexistent');
 
             expect(result).toBeNull();
+        });
+
+        it('should rethrow non-404 errors', async () => {
+            const env = createMockEnv({ withUrlConfig: true });
+
+            mockFetch.mockResolvedValueOnce({
+                ok: false,
+                status: 500,
+                json: () => Promise.resolve({ message: 'Server error' }),
+            });
+
+            await expect(getPreset(env, 'abc123')).rejects.toThrow(PresetAPIError);
         });
     });
 
@@ -403,6 +420,23 @@ describe('preset-api.ts', () => {
             const result = await hasVoted(env, 'preset123', 'user123');
 
             expect(result).toBe(false);
+        });
+
+        it('should log error when logger is provided and error occurs', async () => {
+            const env = createMockEnv({ withUrlConfig: true });
+            const mockLogger = {
+                error: vi.fn(),
+            };
+
+            mockFetch.mockRejectedValueOnce(new Error('Network error'));
+
+            const result = await hasVoted(env, 'preset123', 'user123', mockLogger as any);
+
+            expect(result).toBe(false);
+            expect(mockLogger.error).toHaveBeenCalledWith(
+                'Failed to check vote status',
+                expect.any(Error)
+            );
         });
     });
 
@@ -804,6 +838,25 @@ describe('preset-api.ts', () => {
 
             expect(result).toEqual([]);
         });
+
+        it('should log error when logger is provided and error occurs', async () => {
+            const env = createMockEnv({ withUrlConfig: true });
+            const mockLogger = {
+                error: vi.fn(),
+            };
+
+            mockFetch.mockRejectedValueOnce(new Error('Network error'));
+
+            const result = await searchPresetsForAutocomplete(env, 'test', {
+                logger: mockLogger as any,
+            });
+
+            expect(result).toEqual([]);
+            expect(mockLogger.error).toHaveBeenCalledWith(
+                'Preset autocomplete search failed',
+                expect.any(Error)
+            );
+        });
     });
 
     // ==========================================================================
@@ -840,6 +893,23 @@ describe('preset-api.ts', () => {
 
             const calledRequest = env.PRESETS_API.fetch.mock.calls[0][0];
             expect(calledRequest.url).toContain('https://internal');
+        });
+
+        it('should add signature headers when BOT_SIGNING_SECRET is set', async () => {
+            const env = createMockEnv({ withUrlConfig: true, withBotSigningSecret: true });
+            const mockResponse = { presets: [], total: 0 };
+
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                json: () => Promise.resolve(mockResponse),
+            });
+
+            await getPresets(env);
+
+            // Verify the fetch was called with signature headers
+            const calledOptions = mockFetch.mock.calls[0][1];
+            expect(calledOptions.headers['X-Request-Timestamp']).toBeDefined();
+            expect(calledOptions.headers['X-Request-Signature']).toBeDefined();
         });
     });
 });

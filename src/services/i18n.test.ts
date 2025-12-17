@@ -385,5 +385,64 @@ describe('i18n.ts', () => {
             expect(LocalizationService.clear).toHaveBeenCalled();
             expect(LocalizationService.setLocale).toHaveBeenCalledWith('en');
         });
+
+        // Tests for non-Error exceptions (covers the `error instanceof Error ? error : undefined` branches)
+        it('should pass Error to logger in getUserLanguagePreference', async () => {
+            const testError = new Error('Test error');
+            mockKV.get = vi.fn().mockRejectedValue(testError);
+
+            await getUserLanguagePreference(mockKV, mockUserId, mockLogger);
+
+            expect((mockLogger as { error: typeof vi.fn }).error).toHaveBeenCalledWith(
+                'Failed to get user language preference',
+                testError
+            );
+        });
+
+        it('should pass undefined to logger for non-Error in getUserLanguagePreference', async () => {
+            mockKV.get = vi.fn().mockRejectedValue('string error');
+
+            await getUserLanguagePreference(mockKV, mockUserId, mockLogger);
+
+            expect((mockLogger as { error: typeof vi.fn }).error).toHaveBeenCalledWith(
+                'Failed to get user language preference',
+                undefined
+            );
+        });
+
+        it('should pass undefined to logger for non-Error in setUserLanguagePreference', async () => {
+            mockKV.put = vi.fn().mockRejectedValue({ custom: 'error' });
+
+            await setUserLanguagePreference(mockKV, mockUserId, 'de', mockLogger);
+
+            expect((mockLogger as { error: typeof vi.fn }).error).toHaveBeenCalledWith(
+                'Failed to set user language preference',
+                undefined
+            );
+        });
+
+        it('should pass undefined to logger for non-Error in clearUserLanguagePreference', async () => {
+            mockKV.delete = vi.fn().mockRejectedValue(null);
+
+            await clearUserLanguagePreference(mockKV, mockUserId, mockLogger);
+
+            expect((mockLogger as { error: typeof vi.fn }).error).toHaveBeenCalledWith(
+                'Failed to clear user language preference',
+                undefined
+            );
+        });
+
+        it('should pass undefined to logger for non-Error in initializeLocale', async () => {
+            vi.mocked(LocalizationService.setLocale)
+                .mockRejectedValueOnce('string error')
+                .mockResolvedValueOnce(undefined);
+
+            await initializeLocale('invalid' as LocaleCode, mockLogger);
+
+            expect((mockLogger as { error: typeof vi.fn }).error).toHaveBeenCalledWith(
+                'Failed to initialize locale',
+                undefined
+            );
+        });
     });
 });

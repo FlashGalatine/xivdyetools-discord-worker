@@ -173,6 +173,33 @@ describe('analytics.ts', () => {
         expect.any(Error)
       );
     });
+
+    it('should pass undefined to logger for non-Error exceptions', () => {
+      mockAnalytics.writeDataPoint.mockImplementation(() => {
+        throw 'string error'; // Non-Error exception
+      });
+
+      const mockLogger = {
+        error: vi.fn(),
+        info: vi.fn(),
+        warn: vi.fn(),
+        debug: vi.fn(),
+        child: vi.fn().mockReturnThis(),
+      } as any;
+
+      const event: CommandEvent = {
+        commandName: 'harmony',
+        userId: 'user-123',
+        success: true,
+      };
+
+      trackCommand(mockEnv, event, mockLogger);
+
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        'Analytics tracking error',
+        undefined
+      );
+    });
   });
 
   describe('incrementCounter', () => {

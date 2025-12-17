@@ -69,6 +69,23 @@ describe('bot-i18n.ts', () => {
                 expect(result).toBe('nonexistent.key.path');
             });
 
+            it('should log warning for missing translations when logger is provided', () => {
+                const mockLogger = {
+                    warn: vi.fn(),
+                    info: vi.fn(),
+                    error: vi.fn(),
+                    debug: vi.fn(),
+                } as any;
+
+                const translator = new Translator('en', mockLogger);
+
+                translator.t('nonexistent.key.path');
+
+                expect(mockLogger.warn).toHaveBeenCalledWith(
+                    'Missing translation: nonexistent.key.path for locale en'
+                );
+            });
+
             it('should interpolate variables', () => {
                 // Create a translator and test interpolation
                 const translator = createTranslator('en');

@@ -136,6 +136,33 @@ describe('rate-limiter.ts', () => {
             expect(result.remaining).toBe(15); // Default limit
         });
 
+        it('should log error on KV failure when logger is provided', async () => {
+            mockKV.get = vi.fn().mockRejectedValue(new Error('KV unavailable'));
+            const mockLogger = { error: vi.fn() };
+
+            const result = await checkRateLimit(mockKV, mockUserId, 'harmony', mockLogger as any);
+
+            expect(result.allowed).toBe(true);
+            expect(result.kvError).toBe(true);
+            expect(mockLogger.error).toHaveBeenCalledWith(
+                'Rate limit check failed',
+                expect.any(Error)
+            );
+        });
+
+        it('should log undefined when non-Error is thrown with logger', async () => {
+            mockKV.get = vi.fn().mockRejectedValue('string error');
+            const mockLogger = { error: vi.fn() };
+
+            const result = await checkRateLimit(mockKV, mockUserId, 'harmony', mockLogger as any);
+
+            expect(result.allowed).toBe(true);
+            expect(mockLogger.error).toHaveBeenCalledWith(
+                'Rate limit check failed',
+                undefined
+            );
+        });
+
         it('should include correct resetAt timestamp', async () => {
             const now = Date.now();
             const result = await checkRateLimit(mockKV, mockUserId, 'harmony');

@@ -394,4 +394,131 @@ describe('preset-moderation.ts', () => {
             expect(body.type).toBe(InteractionResponseType.MODAL);
         });
     });
+
+    describe('logger integration', () => {
+        it('should log error when approval fails with logger', async () => {
+            const { approvePreset } = await import('../../services/preset-api.js');
+            vi.mocked(approvePreset).mockRejectedValueOnce(new Error('API error'));
+            const mockLogger = { error: vi.fn() };
+
+            const interaction = {
+                id: '123',
+                token: 'token',
+                application_id: 'app',
+                data: { custom_id: 'preset_approve_abc123' },
+                member: { user: { id: 'mod123', username: 'Mod' } },
+                channel_id: 'channel123',
+                message: { id: 'msg123', embeds: [{ title: 'Test', fields: [] }] },
+            };
+
+            await handlePresetApproveButton(interaction, mockEnv, mockCtx, mockLogger as any);
+            await new Promise(resolve => setTimeout(resolve, 50));
+
+            expect(mockLogger.error).toHaveBeenCalledWith(
+                'Failed to approve preset',
+                expect.any(Error)
+            );
+        });
+
+        it('should log undefined when non-Error is thrown with logger', async () => {
+            const { approvePreset } = await import('../../services/preset-api.js');
+            vi.mocked(approvePreset).mockRejectedValueOnce('string error');
+            const mockLogger = { error: vi.fn() };
+
+            const interaction = {
+                id: '123',
+                token: 'token',
+                application_id: 'app',
+                data: { custom_id: 'preset_approve_abc123' },
+                member: { user: { id: 'mod123', username: 'Mod' } },
+                channel_id: 'channel123',
+                message: { id: 'msg123', embeds: [{ title: 'Test', fields: [] }] },
+            };
+
+            await handlePresetApproveButton(interaction, mockEnv, mockCtx, mockLogger as any);
+            await new Promise(resolve => setTimeout(resolve, 50));
+
+            expect(mockLogger.error).toHaveBeenCalledWith(
+                'Failed to approve preset',
+                undefined
+            );
+        });
+    });
+
+    describe('edge cases for missing data branches', () => {
+        it('should handle missing data in handlePresetRevertButton', async () => {
+            const interaction = {
+                id: '123',
+                token: 'token',
+                application_id: 'app',
+                // No data property - triggers || '' fallback
+                member: { user: { id: 'mod123', username: 'Mod' } },
+            };
+
+            const response = await handlePresetRevertButton(interaction as any, mockEnv, mockCtx);
+            const body = await response.json();
+
+            expect(body.data.content).toContain('Invalid');
+        });
+
+        it('should handle embed with footer.text in success case', async () => {
+            const { editMessage } = await import('../../utils/discord-api.js');
+            const interaction = {
+                id: '123',
+                token: 'token',
+                application_id: 'app',
+                data: { custom_id: 'preset_approve_abc123' },
+                member: { user: { id: 'mod123', username: 'Mod' } },
+                channel_id: 'channel123',
+                message: {
+                    id: 'msg123',
+                    embeds: [{
+                        title: 'Test Preset',
+                        description: 'Test description',
+                        fields: [{ name: 'Status', value: 'Pending' }],
+                        footer: { text: 'Preset ID: abc123' }, // Has footer.text
+                        timestamp: '2024-01-01T00:00:00.000Z',
+                    }],
+                },
+            };
+
+            await handlePresetApproveButton(interaction, mockEnv, mockCtx);
+            await new Promise(resolve => setTimeout(resolve, 50));
+
+            // Check that editMessage was called with the footer preserved
+            expect(editMessage).toHaveBeenCalled();
+            const callArgs = vi.mocked(editMessage).mock.calls[0];
+            const embedArg = callArgs[3]?.embeds?.[0];
+            expect(embedArg?.footer).toEqual({ text: 'Preset ID: abc123' });
+        });
+
+        it('should handle embed without footer.text in success case', async () => {
+            const { editMessage } = await import('../../utils/discord-api.js');
+            const interaction = {
+                id: '123',
+                token: 'token',
+                application_id: 'app',
+                data: { custom_id: 'preset_approve_abc123' },
+                member: { user: { id: 'mod123', username: 'Mod' } },
+                channel_id: 'channel123',
+                message: {
+                    id: 'msg123',
+                    embeds: [{
+                        title: 'Test Preset',
+                        description: 'Test description',
+                        fields: [],
+                        // No footer - triggers undefined path
+                    }],
+                },
+            };
+
+            await handlePresetApproveButton(interaction, mockEnv, mockCtx);
+            await new Promise(resolve => setTimeout(resolve, 50));
+
+            expect(editMessage).toHaveBeenCalled();
+            const callArgs = vi.mocked(editMessage).mock.calls[0];
+            const embedArg = callArgs[3]?.embeds?.[0];
+            expect(embedArg?.footer).toBeUndefined();
+        });
+    });
 });

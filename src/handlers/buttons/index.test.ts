@@ -19,12 +19,21 @@ vi.mock('./preset-moderation.js', () => ({
     handlePresetRevertButton: vi.fn(() => new Response(JSON.stringify({ type: 4, data: { content: 'reverted' } }))),
 }));
 
+vi.mock('./ban-confirmation.js', () => ({
+    handleBanConfirmButton: vi.fn(() => new Response(JSON.stringify({ type: 4, data: { content: 'ban confirmed' } }))),
+    handleBanCancelButton: vi.fn(() => new Response(JSON.stringify({ type: 4, data: { content: 'ban cancelled' } }))),
+}));
+
 import { handleCopyHex, handleCopyRgb, handleCopyHsv } from './copy.js';
 import {
     handlePresetApproveButton,
     handlePresetRejectButton,
     handlePresetRevertButton,
 } from './preset-moderation.js';
+import {
+    handleBanConfirmButton,
+    handleBanCancelButton,
+} from './ban-confirmation.js';
 
 describe('buttons/index.ts', () => {
     const mockEnv = {} as any;
@@ -154,6 +163,60 @@ describe('buttons/index.ts', () => {
             const body = await response.json();
 
             expect(body.data.content).toBe('This button is not recognized.');
+        });
+
+        it('should route ban_confirm_ buttons to handleBanConfirmButton', async () => {
+            const interaction = {
+                id: '123',
+                token: 'token',
+                application_id: 'app_id',
+                data: { custom_id: 'ban_confirm_user123' },
+            };
+
+            await handleButtonInteraction(interaction, mockEnv, mockCtx);
+
+            expect(handleBanConfirmButton).toHaveBeenCalledWith(interaction, mockEnv, mockCtx, undefined);
+        });
+
+        it('should route ban_cancel_ buttons to handleBanCancelButton', async () => {
+            const interaction = {
+                id: '123',
+                token: 'token',
+                application_id: 'app_id',
+                data: { custom_id: 'ban_cancel_user123' },
+            };
+
+            await handleButtonInteraction(interaction, mockEnv, mockCtx);
+
+            expect(handleBanCancelButton).toHaveBeenCalledWith(interaction, mockEnv, mockCtx, undefined);
+        });
+
+        it('should log info when logger is provided', async () => {
+            const mockLogger = { info: vi.fn(), warn: vi.fn() };
+            const interaction = {
+                id: '123',
+                token: 'token',
+                application_id: 'app_id',
+                data: { custom_id: 'copy_hex_FF5733' },
+            };
+
+            await handleButtonInteraction(interaction, mockEnv, mockCtx, mockLogger as any);
+
+            expect(mockLogger.info).toHaveBeenCalledWith('Handling button', { customId: 'copy_hex_FF5733' });
+        });
+
+        it('should log warning for unknown buttons when logger is provided', async () => {
+            const mockLogger = { info: vi.fn(), warn: vi.fn() };
+            const interaction = {
+                id: '123',
+                token: 'token',
+                application_id: 'app_id',
+                data: { custom_id: 'unknown_button_xyz' },
+            };
+
+            await handleButtonInteraction(interaction, mockEnv, mockCtx, mockLogger as any);
+
+            expect(mockLogger.warn).toHaveBeenCalledWith('Unknown button custom_id: unknown_button_xyz');
         });
     });
 });

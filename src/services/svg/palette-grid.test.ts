@@ -232,5 +232,65 @@ describe('svg/palette-grid.ts', () => {
             // Arrow includes a polygon for the arrowhead
             expect(svg).toContain('<polygon');
         });
+
+        it('should show EXACT badge for distance 0', () => {
+            const entries: PaletteEntry[] = [
+                {
+                    extracted: { r: 170, g: 17, b: 17 },
+                    matchedDye: mockDye,
+                    distance: 0,
+                    dominance: 100,
+                },
+            ];
+
+            const svg = generatePaletteGrid({ entries });
+
+            expect(svg).toContain('EXACT');
+        });
+
+        it('should show FAIR badge for distance 25-49', () => {
+            const entries: PaletteEntry[] = [
+                {
+                    extracted: { r: 180, g: 20, b: 20 },
+                    matchedDye: mockDye,
+                    distance: 35,
+                    dominance: 30,
+                },
+            ];
+
+            const svg = generatePaletteGrid({ entries });
+
+            expect(svg).toContain('FAIR');
+        });
+
+        it('should show POOR badge for distance >= 50', () => {
+            const entries: PaletteEntry[] = [
+                {
+                    extracted: { r: 180, g: 20, b: 20 },
+                    matchedDye: mockDye,
+                    distance: 75,
+                    dominance: 30,
+                },
+            ];
+
+            const svg = generatePaletteGrid({ entries });
+
+            expect(svg).toContain('POOR');
+        });
+
+        it('should show GOOD badge for distance 10-24', () => {
+            const entries: PaletteEntry[] = [
+                {
+                    extracted: { r: 180, g: 20, b: 20 },
+                    matchedDye: mockDye,
+                    distance: 15,
+                    dominance: 30,
+                },
+            ];
+
+            const svg = generatePaletteGrid({ entries });
+
+            expect(svg).toContain('GOOD');
+        });
     });
 });

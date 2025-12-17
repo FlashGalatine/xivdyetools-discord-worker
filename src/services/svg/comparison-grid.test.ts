@@ -245,5 +245,123 @@ describe('svg/comparison-grid.ts', () => {
             // Should contain some contrast rating
             expect(svg).toContain('Contrast:');
         });
+
+        it('should handle pure black color (max === 0 in rgbToHsv)', () => {
+            // Pure black where r=g=b=0 (max === 0)
+            const blackDye: Dye = {
+                id: 14,
+                itemID: 5744,
+                name: 'Pure Black',
+                hex: '#000000',
+                rgb: { r: 0, g: 0, b: 0 },
+                hsv: { h: 0, s: 0, v: 0 },
+                category: 'Black',
+            };
+
+            const svg = generateComparisonGrid({ dyes: [blackDye, mockDye3] });
+
+            expect(svg).toContain('Pure Black');
+            expect(svg).toContain('#000000');
+        });
+
+        it('should handle red-dominant color (max === r branch in rgbToHsv)', () => {
+            // Pure red dye to hit max === r branch in rgbToHsv
+            const redDye: Dye = {
+                id: 15,
+                itemID: 5745,
+                name: 'Pure Red',
+                hex: '#FF0000',
+                rgb: { r: 255, g: 0, b: 0 },
+                hsv: { h: 0, s: 100, v: 100 },
+                category: 'Red',
+            };
+
+            const svg = generateComparisonGrid({ dyes: [redDye, mockDye2] });
+
+            expect(svg).toContain('Pure Red');
+            expect(svg).toContain('#FF0000');
+        });
+
+        it('should use success color for very similar colors (distance < 30)', () => {
+            // Two very similar red colors
+            const red1: Dye = {
+                id: 16,
+                itemID: 5746,
+                name: 'Red One',
+                hex: '#FF0000',
+                rgb: { r: 255, g: 0, b: 0 },
+                hsv: { h: 0, s: 100, v: 100 },
+                category: 'Red',
+            };
+            const red2: Dye = {
+                id: 17,
+                itemID: 5747,
+                name: 'Red Two',
+                hex: '#FF1010', // Very similar to red1
+                rgb: { r: 255, g: 16, b: 16 },
+                hsv: { h: 0, s: 94, v: 100 },
+                category: 'Red',
+            };
+
+            const svg = generateComparisonGrid({ dyes: [red1, red2] });
+
+            // Distance < 30 should use success color (#57f287)
+            expect(svg).toContain('#57f287');
+        });
+
+        it('should use green color for moderately similar colors (distance 30-80)', () => {
+            // Two somewhat similar colors
+            const red: Dye = {
+                id: 18,
+                itemID: 5748,
+                name: 'Bright Red',
+                hex: '#FF0000',
+                rgb: { r: 255, g: 0, b: 0 },
+                hsv: { h: 0, s: 100, v: 100 },
+                category: 'Red',
+            };
+            const orange: Dye = {
+                id: 19,
+                itemID: 5749,
+                name: 'Reddish Orange',
+                hex: '#FF4400', // Distance ~68 from pure red
+                rgb: { r: 255, g: 68, b: 0 },
+                hsv: { h: 16, s: 100, v: 100 },
+                category: 'Orange',
+            };
+
+            const svg = generateComparisonGrid({ dyes: [red, orange] });
+
+            // Distance 30-80 should use green color (#22c55e)
+            expect(svg).toContain('#22c55e');
+        });
+
+        it('should use amber color for different colors (distance 80-150)', () => {
+            // Two different but not opposite colors
+            const red: Dye = {
+                id: 20,
+                itemID: 5750,
+                name: 'Bright Red',
+                hex: '#FF0000',
+                rgb: { r: 255, g: 0, b: 0 },
+                hsv: { h: 0, s: 100, v: 100 },
+                category: 'Red',
+            };
+            // Use #FF6600 for distance ~102 from red
+            const midOrange: Dye = {
+                id: 23,
+                itemID: 5753,
+                name: 'Mid Orange',
+                hex: '#FF6600', // Distance ~102 from pure red
+                rgb: { r: 255, g: 102, b: 0 },
+                hsv: { h: 24, s: 100, v: 100 },
+                category: 'Orange',
+            };
+
+            const svg = generateComparisonGrid({ dyes: [red, midOrange] });
+
+            // Distance 80-150 should use amber color (#f59e0b)
+            expect(svg).toContain('#f59e0b');
+        });
     });
 });

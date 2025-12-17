@@ -722,4 +722,130 @@ describe('/match_image command', () => {
             })
         );
     });
+
+    it('logs error when logger is provided', async () => {
+        mockValidateAndFetchImage.mockRejectedValueOnce(new Error('Test error'));
+        const mockLogger = { error: vi.fn() };
+
+        const interaction: DiscordInteraction = {
+            ...baseInteraction,
+            data: {
+                ...baseInteraction.data,
+                options: [
+                    { name: 'image', value: 'attachment-id-123' },
+                ],
+                resolved: {
+                    attachments: {
+                        'attachment-id-123': {
+                            id: 'attachment-id-123',
+                            filename: 'test.png',
+                            url: 'https://cdn.discordapp.com/attachments/test.png',
+                            size: 1000,
+                            content_type: 'image/png',
+                        },
+                    },
+                },
+            },
+        };
+
+        await handleMatchImageCommand(interaction, env, ctx, mockLogger as any);
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
+        expect(mockLogger.error).toHaveBeenCalledWith(
+            'Match image command error',
+            expect.any(Error)
+        );
+    });
+
+    it('logs error with non-Error type when logger is provided', async () => {
+        mockValidateAndFetchImage.mockRejectedValueOnce('non-error string');
+        const mockLogger = { error: vi.fn() };
+
+        const interaction: DiscordInteraction = {
+            ...baseInteraction,
+            data: {
+                ...baseInteraction.data,
+                options: [
+                    { name: 'image', value: 'attachment-id-123' },
+                ],
+                resolved: {
+                    attachments: {
+                        'attachment-id-123': {
+                            id: 'attachment-id-123',
+                            filename: 'test.png',
+                            url: 'https://cdn.discordapp.com/attachments/test.png',
+                            size: 1000,
+                            content_type: 'image/png',
+                        },
+                    },
+                },
+            },
+        };
+
+        await handleMatchImageCommand(interaction, env, ctx, mockLogger as any);
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
+        expect(mockLogger.error).toHaveBeenCalledWith(
+            'Match image command error',
+            undefined
+        );
+    });
+
+    it('falls back to default translator when no user ID', async () => {
+        const interaction: DiscordInteraction = {
+            ...baseInteraction,
+            member: undefined,
+            user: undefined,
+            data: {
+                ...baseInteraction.data,
+                options: [
+                    { name: 'image', value: 'attachment-id-123' },
+                ],
+                resolved: {
+                    attachments: {
+                        'attachment-id-123': {
+                            id: 'attachment-id-123',
+                            filename: 'test.png',
+                            url: 'https://cdn.discordapp.com/attachments/test.png',
+                            size: 1000,
+                            content_type: 'image/png',
+                        },
+                    },
+                },
+            },
+        };
+
+        const res = await handleMatchImageCommand(interaction, env, ctx);
+        const body = await res.json();
+
+        expect(body.type).toBe(5);
+    });
+
+    it('clamps color count to minimum', async () => {
+        const interaction: DiscordInteraction = {
+            ...baseInteraction,
+            data: {
+                ...baseInteraction.data,
+                options: [
+                    { name: 'image', value: 'attachment-id-123' },
+                    { name: 'colors', value: 0 }, // Below min
+                ],
+                resolved: {
+                    attachments: {
+                        'attachment-id-123': {
+                            id: 'attachment-id-123',
+                            filename: 'test.png',
+                            url: 'https://cdn.discordapp.com/attachments/test.png',
+                            size: 1000,
+                            content_type: 'image/png',
+                        },
+                    },
+                },
+            },
+        };
+
+        const res = await handleMatchImageCommand(interaction, env, ctx);
+        expect(res).toBeDefined();
+        expect(ctx.waitUntil).toHaveBeenCalled();
+    });
 });

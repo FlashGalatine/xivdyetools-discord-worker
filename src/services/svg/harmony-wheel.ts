@@ -219,26 +219,3 @@ function generateFilledColorWheel(
   return segments.join('\n');
 }
 
-/**
- * Formats harmony type for display
- */
-function formatHarmonyType(type: string): string {
-  const formats: Record<string, string> = {
-    complementary: 'Complementary',
-    analogous: 'Analogous',
-    triadic: 'Triadic',
-    'split-complementary': 'Split-Complementary',
-    tetradic: 'Tetradic',
-    square: 'Square',
-    monochromatic: 'Monochromatic',
-  };
-  return formats[type] || type.charAt(0).toUpperCase() + type.slice(1);
-}
-
-/**
- * Truncates a name to fit within the legend
- */
-function truncateName(name: string, maxLength: number): string {
-  if (name.length <= maxLength) return name;
-  return name.slice(0, maxLength - 2) + '..';
-}

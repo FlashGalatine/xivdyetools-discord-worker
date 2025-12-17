@@ -548,6 +548,136 @@ describe('preset-rejection.ts', () => {
 
             expect(body.type).toBe(InteractionResponseType.DEFERRED_UPDATE_MESSAGE);
         });
+
+        it('should log error during rejection when logger is provided', async () => {
+            const { rejectPreset } = await import('../../services/preset-api.js');
+            vi.mocked(rejectPreset).mockRejectedValueOnce(new Error('API error'));
+            const mockLogger = { error: vi.fn() };
+
+            const interaction = {
+                id: '123',
+                token: 'token',
+                application_id: 'app',
+                data: {
+                    custom_id: 'preset_reject_modal_abc123',
+                    components: [
+                        {
+                            type: 1,
+                            components: [{ type: 4, custom_id: 'rejection_reason', value: 'This is a valid rejection reason' }],
+                        },
+                    ],
+                },
+                member: { user: { id: 'mod123', username: 'Mod' } },
+                channel_id: 'channel123',
+                message: { id: 'msg123', embeds: [{ title: 'Test', fields: [] }] },
+            };
+
+            await handlePresetRejectionModal(interaction, mockEnv, mockCtx, mockLogger as any);
+            // Wait for async processing
+            await new Promise(resolve => setTimeout(resolve, 50));
+
+            expect(mockLogger.error).toHaveBeenCalledWith(
+                'Failed to reject preset',
+                expect.any(Error)
+            );
+        });
+
+        it('should log error during revert when logger is provided', async () => {
+            const { revertPreset } = await import('../../services/preset-api.js');
+            vi.mocked(revertPreset).mockRejectedValueOnce(new Error('API error'));
+            const mockLogger = { error: vi.fn() };
+
+            const interaction = {
+                id: '123',
+                token: 'token',
+                application_id: 'app',
+                data: {
+                    custom_id: 'preset_revert_modal_abc123',
+                    components: [
+                        {
+                            type: 1,
+                            components: [{ type: 4, custom_id: 'revert_reason', value: 'This is a valid revert reason' }],
+                        },
+                    ],
+                },
+                member: { user: { id: 'mod123', username: 'Mod' } },
+                channel_id: 'channel123',
+                message: { id: 'msg123', embeds: [{ title: 'Test', fields: [] }] },
+            };
+
+            await handlePresetRevertModal(interaction, mockEnv, mockCtx, mockLogger as any);
+            // Wait for async processing
+            await new Promise(resolve => setTimeout(resolve, 50));
+
+            expect(mockLogger.error).toHaveBeenCalledWith(
+                'Failed to revert preset',
+                expect.any(Error)
+            );
+        });
+
+        it('should log undefined when non-Error is thrown during rejection', async () => {
+            const { rejectPreset } = await import('../../services/preset-api.js');
+            vi.mocked(rejectPreset).mockRejectedValueOnce('string error');
+            const mockLogger = { error: vi.fn() };
+
+            const interaction = {
+                id: '123',
+                token: 'token',
+                application_id: 'app',
+                data: {
+                    custom_id: 'preset_reject_modal_abc123',
+                    components: [
+                        {
+                            type: 1,
+                            components: [{ type: 4, custom_id: 'rejection_reason', value: 'This is a valid rejection reason' }],
+                        },
+                    ],
+                },
+                member: { user: { id: 'mod123', username: 'Mod' } },
+                channel_id: 'channel123',
+                message: { id: 'msg123', embeds: [{ title: 'Test', fields: [] }] },
+            };
+
+            await handlePresetRejectionModal(interaction, mockEnv, mockCtx, mockLogger as any);
+            await new Promise(resolve => setTimeout(resolve, 50));
+
+            expect(mockLogger.error).toHaveBeenCalledWith(
+                'Failed to reject preset',
+                undefined
+            );
+        });
+
+        it('should log undefined when non-Error is thrown during revert', async () => {
+            const { revertPreset } = await import('../../services/preset-api.js');
+            vi.mocked(revertPreset).mockRejectedValueOnce('string error');
+            const mockLogger = { error: vi.fn() };
+
+            const interaction = {
+                id: '123',
+                token: 'token',
+                application_id: 'app',
+                data: {
+                    custom_id: 'preset_revert_modal_abc123',
+                    components: [
+                        {
+                            type: 1,
+                            components: [{ type: 4, custom_id: 'revert_reason', value: 'This is a valid revert reason' }],
+                        },
+                    ],
+                },
+                member: { user: { id: 'mod123', username: 'Mod' } },
+                channel_id: 'channel123',
+                message: { id: 'msg123', embeds: [{ title: 'Test', fields: [] }] },
+            };
+
+            await handlePresetRevertModal(interaction, mockEnv, mockCtx, mockLogger as any);
+            await new Promise(resolve => setTimeout(resolve, 50));
+
+            expect(mockLogger.error).toHaveBeenCalledWith(
+                'Failed to revert preset',
+                undefined
+            );
+        });
     });
 
     describe('extractTextInputValue edge cases', () => {

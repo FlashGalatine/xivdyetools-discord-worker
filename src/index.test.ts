@@ -29,6 +29,7 @@ vi.mock('./handlers/commands/index.js', () => ({
   handleFavoritesCommand: vi.fn(),
   handleCollectionCommand: vi.fn(),
   handlePresetCommand: vi.fn(),
+  handleStatsCommand: vi.fn(),
 }));
 
 vi.mock('./handlers/buttons/index.js', () => ({
@@ -40,6 +41,20 @@ vi.mock('./handlers/modals/index.js', () => ({
   isPresetRejectionModal: vi.fn(),
   handlePresetRevertModal: vi.fn(),
   isPresetRevertModal: vi.fn(),
+}));
+
+vi.mock('./handlers/modals/ban-reason.js', () => ({
+  handleBanReasonModal: vi.fn(),
+  isBanReasonModal: vi.fn(),
+}));
+
+vi.mock('./services/ban-service.js', () => ({
+  searchPresetAuthors: vi.fn(),
+  searchBannedUsers: vi.fn(),
+}));
+
+vi.mock('./services/analytics.js', () => ({
+  trackCommandWithKV: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock('./services/rate-limiter.js', () => ({
@@ -1205,6 +1220,572 @@ describe('index.ts', () => {
 
         const res = await app.fetch(req, mockEnv, mockCtx);
         expect(res.status).toBe(400);
+      });
+    });
+
+    describe('Ban user autocomplete', () => {
+      it('should handle ban_user autocomplete', async () => {
+        const { verifyDiscordRequest } = await import('./utils/verify.js');
+        const { searchPresetAuthors } = await import('./services/ban-service.js');
+
+        vi.mocked(verifyDiscordRequest).mockResolvedValue({
+          isValid: true,
+          body: JSON.stringify({
+            type: InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE,
+            data: {
+              name: 'preset',
+              options: [
+                {
+                  name: 'ban_user',
+                  type: 1,
+                  options: [{ name: 'user', value: 'test', focused: true }],
+                },
+              ],
+            },
+            user: { id: 'user-123' },
+          }),
+          error: '',
+        });
+        vi.mocked(searchPresetAuthors).mockResolvedValue([
+          { discordId: 'user-456', username: 'TestUser', presetCount: 5 },
+        ]);
+
+        const req = new Request('http://localhost/', {
+          method: 'POST',
+          body: JSON.stringify({
+            type: InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE,
+            data: {
+              name: 'preset',
+              options: [
+                {
+                  name: 'ban_user',
+                  type: 1,
+                  options: [{ name: 'user', value: 'test', focused: true }],
+                },
+              ],
+            },
+            user: { id: 'user-123' },
+          }),
+        });
+
+        const res = await app.fetch(req, mockEnv, mockCtx);
+        expect(res.status).toBe(200);
+        const data = await res.json();
+        expect(searchPresetAuthors).toHaveBeenCalled();
+        expect(data.data.choices[0].name).toContain('TestUser');
+      });
+
+      it('should handle ban_user autocomplete error gracefully', async () => {
+        const { verifyDiscordRequest } = await import('./utils/verify.js');
+        const { searchPresetAuthors } = await import('./services/ban-service.js');
+
+        vi.mocked(verifyDiscordRequest).mockResolvedValue({
+          isValid: true,
+          body: JSON.stringify({
+            type: InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE,
+            data: {
+              name: 'preset',
+              options: [
+                {
+                  name: 'ban_user',
+                  type: 1,
+                  options: [{ name: 'user', value: 'test', focused: true }],
+                },
+              ],
+            },
+            user: { id: 'user-123' },
+          }),
+          error: '',
+        });
+        vi.mocked(searchPresetAuthors).mockRejectedValue(new Error('DB error'));
+
+        const req = new Request('http://localhost/', {
+          method: 'POST',
+          body: JSON.stringify({
+            type: InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE,
+            data: {
+              name: 'preset',
+              options: [
+                {
+                  name: 'ban_user',
+                  type: 1,
+                  options: [{ name: 'user', value: 'test', focused: true }],
+                },
+              ],
+            },
+            user: { id: 'user-123' },
+          }),
+        });
+
+        const res = await app.fetch(req, mockEnv, mockCtx);
+        expect(res.status).toBe(200);
+        const data = await res.json();
+        expect(data.data.choices).toEqual([]);
+      });
+
+      it('should handle unban_user autocomplete', async () => {
+        const { verifyDiscordRequest } = await import('./utils/verify.js');
+        const { searchBannedUsers } = await import('./services/ban-service.js');
+
+        vi.mocked(verifyDiscordRequest).mockResolvedValue({
+          isValid: true,
+          body: JSON.stringify({
+            type: InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE,
+            data: {
+              name: 'preset',
+              options: [
+                {
+                  name: 'unban_user',
+                  type: 1,
+                  options: [{ name: 'user', value: 'test', focused: true }],
+                },
+              ],
+            },
+            user: { id: 'user-123' },
+          }),
+          error: '',
+        });
+        vi.mocked(searchBannedUsers).mockResolvedValue([
+          { discordId: 'user-789', xivAuthId: null, username: 'BannedUser' },
+        ]);
+
+        const req = new Request('http://localhost/', {
+          method: 'POST',
+          body: JSON.stringify({
+            type: InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE,
+            data: {
+              name: 'preset',
+              options: [
+                {
+                  name: 'unban_user',
+                  type: 1,
+                  options: [{ name: 'user', value: 'test', focused: true }],
+                },
+              ],
+            },
+            user: { id: 'user-123' },
+          }),
+        });
+
+        const res = await app.fetch(req, mockEnv, mockCtx);
+        expect(res.status).toBe(200);
+        const data = await res.json();
+        expect(searchBannedUsers).toHaveBeenCalled();
+        expect(data.data.choices[0].name).toContain('BannedUser');
+      });
+
+      it('should handle unban_user autocomplete with xivAuthId instead of discordId', async () => {
+        const { verifyDiscordRequest } = await import('./utils/verify.js');
+        const { searchBannedUsers } = await import('./services/ban-service.js');
+
+        vi.mocked(verifyDiscordRequest).mockResolvedValue({
+          isValid: true,
+          body: JSON.stringify({
+            type: InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE,
+            data: {
+              name: 'preset',
+              options: [
+                {
+                  name: 'unban_user',
+                  type: 1,
+                  options: [{ name: 'user', value: 'test', focused: true }],
+                },
+              ],
+            },
+            user: { id: 'user-123' },
+          }),
+          error: '',
+        });
+        vi.mocked(searchBannedUsers).mockResolvedValue([
+          { discordId: null, xivAuthId: 'xiv-123', username: 'XIVUser' },
+        ]);
+
+        const req = new Request('http://localhost/', {
+          method: 'POST',
+          body: JSON.stringify({
+            type: InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE,
+            data: {
+              name: 'preset',
+              options: [
+                {
+                  name: 'unban_user',
+                  type: 1,
+                  options: [{ name: 'user', value: 'test', focused: true }],
+                },
+              ],
+            },
+            user: { id: 'user-123' },
+          }),
+        });
+
+        const res = await app.fetch(req, mockEnv, mockCtx);
+        expect(res.status).toBe(200);
+        const data = await res.json();
+        expect(data.data.choices[0].name).toContain('xivauth:xiv-123');
+      });
+
+      it('should handle unban_user autocomplete error gracefully', async () => {
+        const { verifyDiscordRequest } = await import('./utils/verify.js');
+        const { searchBannedUsers } = await import('./services/ban-service.js');
+
+        vi.mocked(verifyDiscordRequest).mockResolvedValue({
+          isValid: true,
+          body: JSON.stringify({
+            type: InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE,
+            data: {
+              name: 'preset',
+              options: [
+                {
+                  name: 'unban_user',
+                  type: 1,
+                  options: [{ name: 'user', value: 'test', focused: true }],
+                },
+              ],
+            },
+            user: { id: 'user-123' },
+          }),
+          error: '',
+        });
+        vi.mocked(searchBannedUsers).mockRejectedValue(new Error('DB error'));
+
+        const req = new Request('http://localhost/', {
+          method: 'POST',
+          body: JSON.stringify({
+            type: InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE,
+            data: {
+              name: 'preset',
+              options: [
+                {
+                  name: 'unban_user',
+                  type: 1,
+                  options: [{ name: 'user', value: 'test', focused: true }],
+                },
+              ],
+            },
+            user: { id: 'user-123' },
+          }),
+        });
+
+        const res = await app.fetch(req, mockEnv, mockCtx);
+        expect(res.status).toBe(200);
+        const data = await res.json();
+        expect(data.data.choices).toEqual([]);
+      });
+    });
+
+    describe('Ban reason modal', () => {
+      it('should route ban reason modal', async () => {
+        const { verifyDiscordRequest } = await import('./utils/verify.js');
+        const { isPresetRejectionModal, isPresetRevertModal } = await import('./handlers/modals/index.js');
+        const { isBanReasonModal, handleBanReasonModal } = await import('./handlers/modals/ban-reason.js');
+
+        vi.mocked(verifyDiscordRequest).mockResolvedValue({
+          isValid: true,
+          body: JSON.stringify({
+            type: InteractionType.MODAL_SUBMIT,
+            data: { custom_id: 'ban_reason_modal_user-123' },
+            user: { id: 'mod-123' },
+          }),
+          error: '',
+        });
+        vi.mocked(isPresetRejectionModal).mockReturnValue(false);
+        vi.mocked(isPresetRevertModal).mockReturnValue(false);
+        vi.mocked(isBanReasonModal).mockReturnValue(true);
+        vi.mocked(handleBanReasonModal).mockResolvedValue(new Response());
+
+        const req = new Request('http://localhost/', {
+          method: 'POST',
+          body: JSON.stringify({
+            type: InteractionType.MODAL_SUBMIT,
+            data: { custom_id: 'ban_reason_modal_user-123' },
+            user: { id: 'mod-123' },
+          }),
+        });
+
+        await app.fetch(req, mockEnv, mockCtx);
+        expect(handleBanReasonModal).toHaveBeenCalled();
+      });
+    });
+
+    describe('Webhook without secret', () => {
+      it('should reject webhook when INTERNAL_WEBHOOK_SECRET is not configured', async () => {
+        const envWithoutSecret = { ...mockEnv, INTERNAL_WEBHOOK_SECRET: '' };
+
+        const req = new Request('http://localhost/webhooks/preset-submission', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer some-secret' },
+          body: JSON.stringify({ type: 'submission' }),
+        });
+
+        const res = await app.fetch(req, envWithoutSecret, mockCtx);
+        expect(res.status).toBe(401);
+      });
+    });
+
+    describe('Analytics error handling', () => {
+      it('should handle analytics tracking failure gracefully', async () => {
+        const { verifyDiscordRequest } = await import('./utils/verify.js');
+        const { checkRateLimit } = await import('./services/rate-limiter.js');
+        const { trackCommandWithKV } = await import('./services/analytics.js');
+        const { handleDyeCommand } = await import('./handlers/commands/index.js');
+
+        vi.mocked(verifyDiscordRequest).mockResolvedValue({
+          isValid: true,
+          body: JSON.stringify({
+            type: InteractionType.APPLICATION_COMMAND,
+            data: { name: 'dye' },
+            member: { user: { id: 'user-123' } },
+          }),
+          error: '',
+        });
+        vi.mocked(checkRateLimit).mockResolvedValue({ allowed: true });
+        vi.mocked(trackCommandWithKV).mockRejectedValue(new Error('Analytics failed'));
+        vi.mocked(handleDyeCommand).mockResolvedValue(new Response());
+
+        const req = new Request('http://localhost/', {
+          method: 'POST',
+          body: JSON.stringify({
+            type: InteractionType.APPLICATION_COMMAND,
+            data: { name: 'dye' },
+            member: { user: { id: 'user-123' } },
+          }),
+        });
+
+        // Should not throw, command should still work
+        const res = await app.fetch(req, mockEnv, mockCtx);
+        expect(res).toBeDefined();
+        expect(handleDyeCommand).toHaveBeenCalled();
+      });
+    });
+
+    describe('Collection autocomplete without user', () => {
+      it('should return empty choices when no user ID available', async () => {
+        const { verifyDiscordRequest } = await import('./utils/verify.js');
+
+        vi.mocked(verifyDiscordRequest).mockResolvedValue({
+          isValid: true,
+          body: JSON.stringify({
+            type: InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE,
+            data: {
+              name: 'collection',
+              options: [
+                {
+                  name: 'show',
+                  type: 1,
+                  options: [{ name: 'name', value: 'test', focused: true }],
+                },
+              ],
+            },
+            // No user or member
+          }),
+          error: '',
+        });
+
+        const req = new Request('http://localhost/', {
+          method: 'POST',
+          body: JSON.stringify({
+            type: InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE,
+            data: {
+              name: 'collection',
+              options: [
+                {
+                  name: 'show',
+                  type: 1,
+                  options: [{ name: 'name', value: 'test', focused: true }],
+                },
+              ],
+            },
+          }),
+        });
+
+        const res = await app.fetch(req, mockEnv, mockCtx);
+        expect(res.status).toBe(200);
+        const data = await res.json();
+        expect(data.data.choices).toEqual([]);
+      });
+    });
+
+    describe('Preset edit autocomplete without user', () => {
+      it('should return empty choices when no user ID available for edit', async () => {
+        const { verifyDiscordRequest } = await import('./utils/verify.js');
+
+        vi.mocked(verifyDiscordRequest).mockResolvedValue({
+          isValid: true,
+          body: JSON.stringify({
+            type: InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE,
+            data: {
+              name: 'preset',
+              options: [
+                {
+                  name: 'edit',
+                  type: 1,
+                  options: [{ name: 'preset', value: 'test', focused: true }],
+                },
+              ],
+            },
+            // No user or member
+          }),
+          error: '',
+        });
+
+        const req = new Request('http://localhost/', {
+          method: 'POST',
+          body: JSON.stringify({
+            type: InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE,
+            data: {
+              name: 'preset',
+              options: [
+                {
+                  name: 'edit',
+                  type: 1,
+                  options: [{ name: 'preset', value: 'test', focused: true }],
+                },
+              ],
+            },
+          }),
+        });
+
+        const res = await app.fetch(req, mockEnv, mockCtx);
+        expect(res.status).toBe(200);
+        const data = await res.json();
+        expect(data.data.choices).toEqual([]);
+      });
+    });
+
+    describe('Command routing', () => {
+      it('should route to all command handlers', async () => {
+        const { verifyDiscordRequest } = await import('./utils/verify.js');
+        const { checkRateLimit } = await import('./services/rate-limiter.js');
+        const commands = await import('./handlers/commands/index.js');
+
+        const commandHandlers = [
+          { name: 'dye', handler: commands.handleDyeCommand },
+          { name: 'mixer', handler: commands.handleMixerCommand },
+          { name: 'match', handler: commands.handleMatchCommand },
+          { name: 'match_image', handler: commands.handleMatchImageCommand },
+          { name: 'accessibility', handler: commands.handleAccessibilityCommand },
+          { name: 'manual', handler: commands.handleManualCommand },
+          { name: 'comparison', handler: commands.handleComparisonCommand },
+          { name: 'language', handler: commands.handleLanguageCommand },
+          { name: 'favorites', handler: commands.handleFavoritesCommand },
+          { name: 'collection', handler: commands.handleCollectionCommand },
+          { name: 'preset', handler: commands.handlePresetCommand },
+        ];
+
+        for (const { name, handler } of commandHandlers) {
+          vi.clearAllMocks();
+          vi.mocked(verifyDiscordRequest).mockResolvedValue({
+            isValid: true,
+            body: JSON.stringify({
+              type: InteractionType.APPLICATION_COMMAND,
+              data: { name },
+              user: { id: 'user-123' },
+            }),
+            error: '',
+          });
+          vi.mocked(checkRateLimit).mockResolvedValue({ allowed: true });
+          vi.mocked(handler).mockResolvedValue(new Response());
+
+          const req = new Request('http://localhost/', {
+            method: 'POST',
+            body: JSON.stringify({
+              type: InteractionType.APPLICATION_COMMAND,
+              data: { name },
+              user: { id: 'user-123' },
+            }),
+          });
+
+          await app.fetch(req, mockEnv, mockCtx);
+          expect(handler).toHaveBeenCalled();
+        }
+      });
+
+      it('should route stats command handler', async () => {
+        const { verifyDiscordRequest } = await import('./utils/verify.js');
+
+        // Import stats handler - need to add it to the mock
+        vi.doMock('./handlers/commands/index.js', async (importOriginal) => {
+          const original = await importOriginal() as Record<string, unknown>;
+          return {
+            ...original,
+            handleStatsCommand: vi.fn().mockResolvedValue(new Response()),
+          };
+        });
+
+        vi.mocked(verifyDiscordRequest).mockResolvedValue({
+          isValid: true,
+          body: JSON.stringify({
+            type: InteractionType.APPLICATION_COMMAND,
+            data: { name: 'stats' },
+            user: { id: 'user-123' },
+          }),
+          error: '',
+        });
+
+        const req = new Request('http://localhost/', {
+          method: 'POST',
+          body: JSON.stringify({
+            type: InteractionType.APPLICATION_COMMAND,
+            data: { name: 'stats' },
+            user: { id: 'user-123' },
+          }),
+        });
+
+        const res = await app.fetch(req, mockEnv, mockCtx);
+        expect(res).toBeDefined();
+      });
+    });
+
+    describe('Collection autocomplete with query filter', () => {
+      it('should filter collections with empty query', async () => {
+        const { verifyDiscordRequest } = await import('./utils/verify.js');
+        const { getCollections } = await import('./services/user-storage.js');
+
+        vi.mocked(verifyDiscordRequest).mockResolvedValue({
+          isValid: true,
+          body: JSON.stringify({
+            type: InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE,
+            data: {
+              name: 'collection',
+              options: [
+                {
+                  name: 'show',
+                  type: 1,
+                  options: [{ name: 'name', value: '', focused: true }], // Empty query
+                },
+              ],
+            },
+            user: { id: 'user-123' },
+          }),
+          error: '',
+        });
+        vi.mocked(getCollections).mockResolvedValue([
+          { name: 'Collection A', dyes: [1], created_at: Date.now() },
+          { name: 'Collection B', dyes: [2], created_at: Date.now() },
+        ]);
+
+        const req = new Request('http://localhost/', {
+          method: 'POST',
+          body: JSON.stringify({
+            type: InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE,
+            data: {
+              name: 'collection',
+              options: [
+                {
+                  name: 'show',
+                  type: 1,
+                  options: [{ name: 'name', value: '', focused: true }],
+                },
+              ],
+            },
+            user: { id: 'user-123' },
+          }),
+        });
+
+        const res = await app.fetch(req, mockEnv, mockCtx);
+        expect(res.status).toBe(200);
+        const data = await res.json();
+        expect(data.data.choices.length).toBe(2); // All collections returned
       });
     });
   });
