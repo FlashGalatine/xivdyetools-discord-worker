@@ -168,7 +168,6 @@ app.post('/webhooks/preset-submission', async (c) => {
   }
 
   const { preset } = payload;
-  const logger = c.get('logger');
   logger.info('Received preset webhook', { presetName: preset.name, presetId: preset.id, source: preset.source });
 
   // Pending presets go to moderation channel with approve/reject buttons
