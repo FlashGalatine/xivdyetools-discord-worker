@@ -140,10 +140,17 @@ app.post('/webhooks/preset-submission', async (c) => {
   // Verify webhook secret using constant-time comparison to prevent timing attacks
   const authHeader = c.req.header('Authorization') || '';
   const expectedAuth = `Bearer ${env.INTERNAL_WEBHOOK_SECRET}`;
+  const logger = c.get('logger');
 
-  // First check if secret is configured, then use timing-safe comparison
-  if (!env.INTERNAL_WEBHOOK_SECRET || !(await timingSafeEqual(authHeader, expectedAuth))) {
-    const logger = c.get('logger');
+  // DISCORD-CRITICAL-003: Separate checks to prevent timing oracle attack
+  // Check if secret is configured first (this is a configuration error, not an auth attempt)
+  if (!env.INTERNAL_WEBHOOK_SECRET) {
+    logger.error('Webhook secret not configured');
+    return c.json({ error: 'Unauthorized' }, 401);
+  }
+
+  // Always use timing-safe comparison for auth verification
+  if (!(await timingSafeEqual(authHeader, expectedAuth))) {
     logger.error('Webhook authentication failed');
     return c.json({ error: 'Unauthorized' }, 401);
   }
@@ -318,72 +325,97 @@ async function handleCommand(
     }
   }
 
-  // Track command usage (fire-and-forget, don't await)
-  // DISCORD-BUG-004: Add error handling to prevent silent analytics failures
-  if (userId && commandName) {
-    ctx.waitUntil(
-      trackCommandWithKV(env, {
-        commandName,
-        userId,
-        guildId: interaction.guild_id,
-        success: true, // Will be updated if command fails
-      }).catch((error) => {
-        logger.error('Analytics tracking failed', error instanceof Error ? error : undefined, { error: String(error) });
-      })
-    );
-  }
+  // DISCORD-CRITICAL-001: Track analytics AFTER command execution with actual success status
+  let success = true;
+  let response: Response;
 
-  // TODO: Route to specific command handlers
-  // For now, respond with a placeholder message
-  switch (commandName) {
-    case 'about':
-      return handleAboutCommand(interaction, env, ctx);
+  try {
+    // Route to specific command handlers
+    switch (commandName) {
+      case 'about':
+        response = await handleAboutCommand(interaction, env, ctx);
+        break;
 
-    case 'harmony':
-      return handleHarmonyCommand(interaction, env, ctx, logger);
+      case 'harmony':
+        response = await handleHarmonyCommand(interaction, env, ctx, logger);
+        break;
 
-    case 'dye':
-      return handleDyeCommand(interaction, env, ctx);
+      case 'dye':
+        response = await handleDyeCommand(interaction, env, ctx);
+        break;
 
-    case 'mixer':
-      return handleMixerCommand(interaction, env, ctx, logger);
+      case 'mixer':
+        response = await handleMixerCommand(interaction, env, ctx, logger);
+        break;
 
-    case 'match':
-      return handleMatchCommand(interaction, env, ctx);
+      case 'match':
+        response = await handleMatchCommand(interaction, env, ctx);
+        break;
 
-    case 'match_image':
-      return handleMatchImageCommand(interaction, env, ctx, logger);
+      case 'match_image':
+        response = await handleMatchImageCommand(interaction, env, ctx, logger);
+        break;
 
-    case 'accessibility':
-      return handleAccessibilityCommand(interaction, env, ctx, logger);
+      case 'accessibility':
+        response = await handleAccessibilityCommand(interaction, env, ctx, logger);
+        break;
 
-    case 'manual':
-      return handleManualCommand(interaction, env, ctx);
+      case 'manual':
+        response = await handleManualCommand(interaction, env, ctx);
+        break;
 
-    case 'comparison':
-      return handleComparisonCommand(interaction, env, ctx, logger);
+      case 'comparison':
+        response = await handleComparisonCommand(interaction, env, ctx, logger);
+        break;
 
-    case 'language':
-      return handleLanguageCommand(interaction, env, ctx);
+      case 'language':
+        response = await handleLanguageCommand(interaction, env, ctx);
+        break;
 
-    case 'favorites':
-      return handleFavoritesCommand(interaction, env, ctx);
+      case 'favorites':
+        response = await handleFavoritesCommand(interaction, env, ctx);
+        break;
 
-    case 'collection':
-      return handleCollectionCommand(interaction, env, ctx);
+      case 'collection':
+        response = await handleCollectionCommand(interaction, env, ctx);
+        break;
 
-    case 'preset':
-      return handlePresetCommand(interaction, env, ctx, logger);
+      case 'preset':
+        response = await handlePresetCommand(interaction, env, ctx, logger);
+        break;
 
-    case 'stats':
-      return handleStatsCommand(interaction, env, ctx, logger);
+      case 'stats':
+        response = await handleStatsCommand(interaction, env, ctx, logger);
+        break;
 
-    default:
-      // Command not yet implemented
-      return ephemeralResponse(
-        `The \`/${commandName}\` command is not yet implemented in the Workers version.`
+      default:
+        // Command not yet implemented
+        response = ephemeralResponse(
+          `The \`/${commandName}\` command is not yet implemented in the Workers version.`
+        );
+        break;
+    }
+  } catch (error) {
+    success = false;
+    logger.error('Command execution failed', error instanceof Error ? error : undefined, { command: commandName });
+    response = ephemeralResponse('An error occurred while processing your command.');
+  } finally {
+    // Track command usage with actual success status (fire-and-forget)
+    if (userId && commandName) {
+      ctx.waitUntil(
+        trackCommandWithKV(env, {
+          commandName,
+          userId,
+          guildId: interaction.guild_id,
+          success,
+        }).catch((error) => {
+          logger.error('Analytics tracking failed', error instanceof Error ? error : undefined, { error: String(error) });
+        })
       );
+    }
   }
+
+  return response;
 }
 
 /**
@@ -479,6 +511,13 @@ async function handleAutocomplete(
 
 /**
  * Get collection autocomplete choices for the given query
+ *
+ * DISCORD-CRITICAL-002: Note on race conditions
+ * This function reads collections without a locking mechanism. If a user modifies
+ * their collection while autocomplete is running, they may see slightly stale dye counts.
+ * This is acceptable for autocomplete UX - the user can refresh to see updated counts.
+ * A full fix would require adding version/etag to collection metadata for optimistic
+ * concurrency, which is beyond the scope of a quick fix.
  */
 async function getCollectionAutocompleteChoices(
   interaction: DiscordInteraction,

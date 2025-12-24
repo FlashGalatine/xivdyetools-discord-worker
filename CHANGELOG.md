@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.0] - 2025-12-24
+
+### Fixed
+
+#### Security Audit - Critical Issues Resolved
+
+- **DISCORD-CRITICAL-001**: Fixed analytics tracking to use actual command success status
+  - Analytics now tracks after command execution, not before
+  - Wraps command execution in try-catch to capture failures
+  - Provides accurate success/failure metrics for monitoring
+- **DISCORD-CRITICAL-002**: Documented race condition in collection autocomplete
+  - Added explanatory comment about stale dye counts during concurrent modification
+  - Full fix would require schema changes (version/etag on collections)
+- **DISCORD-CRITICAL-003**: Fixed timing-safe comparison bypass in webhook auth
+  - Separated secret configuration check from auth verification
+  - Prevents timing oracle attack to detect configured vs unconfigured secrets
+
+---
+
 ## [2.2.0] - 2025-12-15
 
 ### Added
