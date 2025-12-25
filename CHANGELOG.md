@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.3.0] - 2025-12-24
 
+### Changed
+
+#### Low Priority Audit Fixes
+
+- **DISCORD-MED-003**: Added KV schema versioning for future data migrations
+  - Added `KV_SCHEMA_VERSION` constant (`v1`) to key prefixes in `user-storage.ts`
+  - Keys now follow pattern: `xivdye:favorites:v1:userId`
+  - Enables non-breaking schema evolution when data format changes
+  - **Note**: Existing user favorites/collections reset (users can rebuild)
+
 ### Fixed
 
 #### Security Audit - Critical Issues Resolved
