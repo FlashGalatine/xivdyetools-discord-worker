@@ -18,3 +18,15 @@ export {
 } from './universalis-client.js';
 
 export type { UniversalisWorld, UniversalisDataCenter } from './universalis-client.js';
+
+// Price cache
+export {
+  CACHE_TTL_SECONDS,
+  getCachedPrice,
+  getCachedPriceWithStale,
+  setCachedPrice,
+  getCachedPrices,
+  setCachedPrices,
+  fetchWithCache,
+  invalidateCachedPrice,
+} from './price-cache.js';
