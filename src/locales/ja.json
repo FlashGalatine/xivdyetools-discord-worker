@@ -314,5 +314,47 @@
       "aesthetics": "美学",
       "community": "コミュニティ"
     }
+  },
+  "budget": {
+    "title": "お手頃カラー検索",
+    "findTitle": "{dyeName}の代替カラー",
+    "noAlternatives": "条件に合う安価な代替品が見つかりませんでした。",
+    "targetDye": "対象カラー",
+    "targetPrice": "対象価格",
+    "alternative": "代替品",
+    "alternatives": "お手頃な代替品",
+    "price": "価格",
+    "savings": "節約額",
+    "colorMatch": "色の一致度",
+    "valueScore": "コスパスコア",
+    "noListings": "出品なし",
+    "worldUsed": "{world}の価格",
+    "pricesUpdated": "価格更新: {time}",
+    "worldSet": "デフォルトワールドを**{world}**に設定しました。",
+    "worldSetNote": "今後の`/budget`コマンドではこのワールドがデフォルトで使用されます。",
+    "quickPick": "クイックピック: {name}",
+    "sortedBy": "並び順: {method}",
+    "sortMethods": {
+      "price": "価格が安い順",
+      "color_match": "色の一致度順",
+      "value_score": "コスパ順"
+    },
+    "distanceQuality": {
+      "perfect": "完璧",
+      "excellent": "優秀",
+      "good": "良好",
+      "fair": "普通",
+      "approximate": "近似"
+    },
+    "errors": {
+      "notConfigured": "このサーバーではお手頃カラー機能は利用できません。マーケットボード連携が設定されていません。",
+      "noWorldSet": "まず`/budget set_world <world>`でワールドを設定するか、`world`オプションでワールドを指定してください。",
+      "worldNotFound": "ワールドまたはデータセンター「{world}」が見つかりませんでした。\n\nスペルを確認するか、「Mana」や「Elemental」などのデータセンター名をお試しください。",
+      "missingDye": "対象カラーを指定してください。",
+      "dyeNotFound": "カラー「{name}」が見つかりませんでした。",
+      "presetNotFound": "クイックピックプリセット「{id}」が見つかりませんでした。",
+      "apiError": "マーケットボードデータを取得できませんでした。後でもう一度お試しください。",
+      "rateLimited": "リクエストが多すぎます。しばらくしてから価格を確認してください。"
+    }
   }
 }

@@ -314,5 +314,47 @@
       "aesthetics": "Esthétique",
       "community": "Communauté"
     }
+  },
+  "budget": {
+    "title": "Recherche de teintures économiques",
+    "findTitle": "Alternatives économiques pour {dyeName}",
+    "noAlternatives": "Aucune alternative moins chère trouvée selon vos critères.",
+    "targetDye": "Teinture cible",
+    "targetPrice": "Prix cible",
+    "alternative": "Alternative",
+    "alternatives": "Alternatives moins chères",
+    "price": "Prix",
+    "savings": "Économies",
+    "colorMatch": "Correspondance de couleur",
+    "valueScore": "Rapport qualité-prix",
+    "noListings": "Pas d'offres",
+    "worldUsed": "Prix de {world}",
+    "pricesUpdated": "Prix mis à jour {time}",
+    "worldSet": "Votre monde par défaut a été défini sur **{world}**.",
+    "worldSetNote": "Les prochaines commandes `/budget` utiliseront ce monde par défaut.",
+    "quickPick": "Sélection rapide: {name}",
+    "sortedBy": "Trié par: {method}",
+    "sortMethods": {
+      "price": "Prix le plus bas",
+      "color_match": "Meilleure correspondance de couleur",
+      "value_score": "Meilleur rapport qualité-prix"
+    },
+    "distanceQuality": {
+      "perfect": "Parfait",
+      "excellent": "Excellent",
+      "good": "Bon",
+      "fair": "Acceptable",
+      "approximate": "Approximatif"
+    },
+    "errors": {
+      "notConfigured": "La fonction budget n'est pas disponible sur ce serveur. L'intégration du tableau des ventes n'est pas configurée.",
+      "noWorldSet": "Veuillez d'abord définir votre monde avec `/budget set_world <monde>` ou spécifier un monde avec l'option `world`.",
+      "worldNotFound": "Impossible de trouver le monde ou le centre de données \"{world}\".\n\nVeuillez vérifier l'orthographe ou essayer un nom de centre de données comme \"Chaos\" ou \"Light\".",
+      "missingDye": "Veuillez spécifier une teinture cible.",
+      "dyeNotFound": "Impossible de trouver la teinture \"{name}\".",
+      "presetNotFound": "Impossible de trouver le préréglage rapide \"{id}\".",
+      "apiError": "Impossible de récupérer les données du tableau des ventes. Veuillez réessayer plus tard.",
+      "rateLimited": "Trop de requêtes. Veuillez patienter avant de vérifier à nouveau les prix."
+    }
   }
 }

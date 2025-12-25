@@ -342,5 +342,47 @@
       "aesthetics": "Aesthetics",
       "community": "Community"
     }
+  },
+  "budget": {
+    "title": "Budget Dye Finder",
+    "findTitle": "Budget Alternatives for {dyeName}",
+    "noAlternatives": "No cheaper alternatives found within your criteria.",
+    "targetDye": "Target Dye",
+    "targetPrice": "Target Price",
+    "alternative": "Alternative",
+    "alternatives": "Cheaper Alternatives",
+    "price": "Price",
+    "savings": "Savings",
+    "colorMatch": "Color Match",
+    "valueScore": "Value Score",
+    "noListings": "No listings",
+    "worldUsed": "Prices from {world}",
+    "pricesUpdated": "Prices updated {time}",
+    "worldSet": "Your default world has been set to **{world}**.",
+    "worldSetNote": "Future `/budget` commands will use this world by default.",
+    "quickPick": "Quick Pick: {name}",
+    "sortedBy": "Sorted by: {method}",
+    "sortMethods": {
+      "price": "Lowest Price",
+      "color_match": "Best Color Match",
+      "value_score": "Best Value"
+    },
+    "distanceQuality": {
+      "perfect": "Perfect",
+      "excellent": "Excellent",
+      "good": "Good",
+      "fair": "Fair",
+      "approximate": "Approximate"
+    },
+    "errors": {
+      "notConfigured": "The budget feature is not available on this server. Market board integration is not configured.",
+      "noWorldSet": "Please set your world first with `/budget set_world <world>` or specify a world with the `world` option.",
+      "worldNotFound": "Could not find world or datacenter \"{world}\".\n\nPlease check the spelling or try a datacenter name like \"Crystal\" or \"Chaos\".",
+      "missingDye": "Please specify a target dye.",
+      "dyeNotFound": "Could not find dye \"{name}\".",
+      "presetNotFound": "Could not find quick pick preset \"{id}\".",
+      "apiError": "Could not fetch market board data. Please try again later.",
+      "rateLimited": "Too many requests. Please wait a moment before checking prices again."
+    }
   }
 }

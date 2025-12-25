@@ -314,5 +314,47 @@
       "aesthetics": "美学",
       "community": "社区"
     }
+  },
+  "budget": {
+    "title": "实惠染料查找",
+    "findTitle": "{dyeName}的实惠替代品",
+    "noAlternatives": "未找到符合条件的更实惠替代品。",
+    "targetDye": "目标染料",
+    "targetPrice": "目标价格",
+    "alternative": "替代品",
+    "alternatives": "更实惠的替代品",
+    "price": "价格",
+    "savings": "节省金额",
+    "colorMatch": "颜色匹配度",
+    "valueScore": "性价比得分",
+    "noListings": "无上架",
+    "worldUsed": "来自{world}的价格",
+    "pricesUpdated": "价格更新时间：{time}",
+    "worldSet": "您的默认服务器已设置为**{world}**。",
+    "worldSetNote": "今后的`/budget`命令将默认使用此服务器。",
+    "quickPick": "快速选择：{name}",
+    "sortedBy": "排序方式：{method}",
+    "sortMethods": {
+      "price": "价格最低",
+      "color_match": "颜色最匹配",
+      "value_score": "性价比最高"
+    },
+    "distanceQuality": {
+      "perfect": "完美",
+      "excellent": "优秀",
+      "good": "良好",
+      "fair": "一般",
+      "approximate": "近似"
+    },
+    "errors": {
+      "notConfigured": "此服务器不支持实惠染料功能。市场板集成未配置。",
+      "noWorldSet": "请先使用`/budget set_world <服务器>`设置您的服务器，或使用`world`选项指定服务器。",
+      "worldNotFound": "找不到服务器或数据中心"{world}"。\n\n请检查拼写，或尝试使用数据中心名称，如"陆行鸟"或"莫古力"。",
+      "missingDye": "请指定目标染料。",
+      "dyeNotFound": "找不到染料"{name}"。",
+      "presetNotFound": "找不到快速选择预设"{id}"。",
+      "apiError": "无法获取市场板数据。请稍后再试。",
+      "rateLimited": "请求过多。请稍等片刻后再查询价格。"
+    }
   }
 }
