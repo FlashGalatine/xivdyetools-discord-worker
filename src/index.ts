@@ -155,6 +155,14 @@ app.post('/webhooks/preset-submission', async (c) => {
     return c.json({ error: 'Unauthorized' }, 401);
   }
 
+  // DISCORD-HIGH-001: Validate request body size to prevent OOM attacks
+  const contentLength = parseInt(c.req.header('content-length') || '0', 10);
+  if (contentLength > 10240) {
+    // 10KB limit
+    logger.warn('Webhook payload too large', { contentLength });
+    return c.json({ error: 'Payload too large' }, 413);
+  }
+
   // Parse payload
   let payload: PresetNotificationPayload;
   try {
@@ -313,10 +321,17 @@ async function handleCommand(
 ): Promise<Response> {
   const commandName = interaction.data?.name;
   const userId = interaction.member?.user?.id ?? interaction.user?.id;
+
+  // DISCORD-HIGH-003: Guard against missing userId to prevent rate limit bypass
+  if (!userId) {
+    logger.error('Unable to identify user from interaction', { commandName });
+    return ephemeralResponse('Unable to identify user. Please try again.');
+  }
+
   logger.info('Handling command', { command: commandName, userId });
 
   // Check rate limit (skip for utility commands)
-  if (userId && commandName && !['about', 'manual', 'stats'].includes(commandName)) {
+  if (commandName && !['about', 'manual', 'stats'].includes(commandName)) {
     const rateLimitResult = await checkRateLimit(env.KV, userId, commandName);
     if (!rateLimitResult.allowed) {
       logger.info('User rate limited', { userId, command: commandName });

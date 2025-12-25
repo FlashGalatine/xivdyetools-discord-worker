@@ -317,6 +317,7 @@ export async function sendMessage(
   if (options.embeds) body.embeds = options.embeds;
   if (options.components) body.components = options.components;
 
+  // DISCORD-HIGH-002: Add 5 second timeout to prevent worker hang
   return fetch(url, {
     method: 'POST',
     headers: {
@@ -324,6 +325,7 @@ export async function sendMessage(
       Authorization: `Bot ${botToken}`,
     },
     body: JSON.stringify(body),
+    signal: AbortSignal.timeout(5000),
   });
 }
 
@@ -349,6 +351,7 @@ export async function editMessage(
   if (options.embeds) body.embeds = options.embeds;
   if (options.components) body.components = options.components;
 
+  // DISCORD-HIGH-002: Add 5 second timeout to prevent worker hang
   return fetch(url, {
     method: 'PATCH',
     headers: {
@@ -356,6 +359,7 @@ export async function editMessage(
       Authorization: `Bot ${botToken}`,
     },
     body: JSON.stringify(body),
+    signal: AbortSignal.timeout(5000),
   });
 }
 
