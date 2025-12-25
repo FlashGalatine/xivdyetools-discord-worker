@@ -67,6 +67,12 @@ export interface Env {
   /** Service Binding to Presets API Worker (for Worker-to-Worker communication) */
   PRESETS_API?: Fetcher;
 
+  /** Service Binding to Universalis Proxy Worker (for market board prices) */
+  UNIVERSALIS_PROXY?: Fetcher;
+
+  /** Fallback URL for Universalis Proxy (for local development) */
+  UNIVERSALIS_PROXY_URL?: string;
+
   /** Analytics Engine for command usage tracking */
   ANALYTICS?: AnalyticsEngineDataset;
 
