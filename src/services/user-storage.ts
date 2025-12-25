@@ -12,8 +12,14 @@ import type { ExtendedLogger } from '@xivdyetools/logger';
 // Constants
 // ============================================================================
 
-const FAVORITES_KEY_PREFIX = 'xivdye:favorites:';
-const COLLECTIONS_KEY_PREFIX = 'xivdye:collections:';
+/**
+ * KV schema version for data format evolution
+ * Increment when changing the data structure stored in KV
+ */
+const KV_SCHEMA_VERSION = 'v1';
+
+const FAVORITES_KEY_PREFIX = `xivdye:favorites:${KV_SCHEMA_VERSION}:`;
+const COLLECTIONS_KEY_PREFIX = `xivdye:collections:${KV_SCHEMA_VERSION}:`;
 
 /** Maximum number of favorite dyes per user */
 export const MAX_FAVORITES = 20;
