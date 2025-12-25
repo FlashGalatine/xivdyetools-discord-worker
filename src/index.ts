@@ -29,6 +29,8 @@ import {
   handleCollectionCommand,
   handlePresetCommand,
   handleStatsCommand,
+  handleBudgetCommand,
+  handleBudgetAutocomplete,
 } from './handlers/commands/index.js';
 import { checkRateLimit, formatRateLimitMessage } from './services/rate-limiter.js';
 import { trackCommandWithKV } from './services/analytics.js';
@@ -402,6 +404,10 @@ async function handleCommand(
         response = await handleStatsCommand(interaction, env, ctx, logger);
         break;
 
+      case 'budget':
+        response = await handleBudgetCommand(interaction, env, ctx, logger);
+        break;
+
       default:
         // Command not yet implemented
         response = ephemeralResponse(
@@ -511,6 +517,10 @@ async function handleAutocomplete(
         choices = await getUnbanUserAutocompleteChoices(env, query, logger);
       }
     }
+  }
+  // Handle budget command autocomplete (returns its own Response)
+  else if (commandName === 'budget') {
+    return handleBudgetAutocomplete(interaction, env, logger);
   }
   // Default: Dye autocomplete for other commands
   else {

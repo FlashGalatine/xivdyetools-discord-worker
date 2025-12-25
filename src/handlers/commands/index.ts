@@ -18,3 +18,4 @@ export { handleFavoritesCommand } from './favorites.js';
 export { handleCollectionCommand } from './collection.js';
 export { handlePresetCommand } from './preset.js';
 export { handleStatsCommand } from './stats.js';
+export { handleBudgetCommand, handleBudgetAutocomplete } from './budget.js';

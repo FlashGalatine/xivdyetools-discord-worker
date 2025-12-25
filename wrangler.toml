@@ -60,6 +60,14 @@ binding = "PRESETS_API"
 service = "xivdyetools-presets-api"
 
 # ============================================================================
+# Service Binding to Universalis Proxy Worker
+# For market board price lookups in the budget command.
+# ============================================================================
+[[services]]
+binding = "UNIVERSALIS_PROXY"
+service = "xivdyetools-universalis-proxy"
+
+# ============================================================================
 # Environment Variables (non-sensitive)
 # ============================================================================
 [vars]
@@ -111,6 +119,11 @@ database_id = "e17d68a1-5a44-4c88-b02b-07d053cbe321"
 [[env.production.services]]
 binding = "PRESETS_API"
 service = "xivdyetools-presets-api"
+
+# Service Binding to Universalis Proxy Worker
+[[env.production.services]]
+binding = "UNIVERSALIS_PROXY"
+service = "xivdyetools-universalis-proxy"
 
 # Analytics Engine for command usage statistics
 [[env.production.analytics_engine_datasets]]

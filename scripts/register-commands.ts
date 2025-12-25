@@ -828,6 +828,105 @@ const commands = [
       },
     ],
   },
+
+  // =========================================================================
+  // Phase 5: Budget/Market integration
+  // =========================================================================
+  {
+    name: 'budget',
+    description: 'Find affordable dye alternatives using market board prices',
+    options: [
+      {
+        name: 'find',
+        description: 'Find cheaper alternatives to an expensive dye',
+        type: OptionType.SUB_COMMAND,
+        options: [
+          {
+            name: 'target_dye',
+            description: 'The expensive dye you want alternatives for',
+            type: OptionType.STRING,
+            required: true,
+            autocomplete: true,
+          },
+          {
+            name: 'world',
+            description: 'World or datacenter for prices (uses saved preference if not set)',
+            type: OptionType.STRING,
+            required: false,
+            autocomplete: true,
+          },
+          {
+            name: 'max_price',
+            description: 'Maximum price in gil (default: no limit)',
+            type: OptionType.INTEGER,
+            required: false,
+            min_value: 100,
+            max_value: 10000000,
+          },
+          {
+            name: 'max_distance',
+            description: 'Maximum color distance (0-100, default: 50)',
+            type: OptionType.INTEGER,
+            required: false,
+            min_value: 0,
+            max_value: 100,
+          },
+          {
+            name: 'sort_by',
+            description: 'How to sort results',
+            type: OptionType.STRING,
+            required: false,
+            choices: [
+              { name: '💰 Lowest Price', value: 'price' },
+              { name: '🎨 Best Color Match', value: 'color_match' },
+              { name: '⚖️ Best Value (Recommended)', value: 'value_score' },
+            ],
+          },
+        ],
+      },
+      {
+        name: 'set_world',
+        description: 'Save your preferred world/datacenter for price lookups',
+        type: OptionType.SUB_COMMAND,
+        options: [
+          {
+            name: 'world',
+            description: 'World or datacenter name',
+            type: OptionType.STRING,
+            required: true,
+            autocomplete: true,
+          },
+        ],
+      },
+      {
+        name: 'quick',
+        description: 'Quick budget check for popular expensive dyes',
+        type: OptionType.SUB_COMMAND,
+        options: [
+          {
+            name: 'preset',
+            description: 'Popular expensive dye to find alternatives for',
+            type: OptionType.STRING,
+            required: true,
+            choices: [
+              { name: '⚪ Pure White', value: 'pure_white' },
+              { name: '⚫ Jet Black', value: 'jet_black' },
+              { name: '🪙 Metallic Silver', value: 'metallic_silver' },
+              { name: '🥇 Metallic Gold', value: 'metallic_gold' },
+              { name: '🌸 Pastel Pink', value: 'pastel_pink' },
+            ],
+          },
+          {
+            name: 'world',
+            description: 'World or datacenter for prices (uses saved preference if not set)',
+            type: OptionType.STRING,
+            required: false,
+            autocomplete: true,
+          },
+        ],
+      },
+    ],
+  },
 ];
 
 // ============================================================================

@@ -90,7 +90,7 @@ async function handleFindSubcommand(
   interaction: DiscordInteraction,
   env: Env,
   ctx: ExecutionContext,
-  options: Array<{ name: string; value?: string | number }>,
+  options: Array<{ name: string; value?: string | number | boolean }>,
   t: Translator,
   userId: string,
   logger?: ExtendedLogger
@@ -269,7 +269,7 @@ async function processFindCommand(
  */
 async function handleSetWorldSubcommand(
   env: Env,
-  options: Array<{ name: string; value?: string | number }>,
+  options: Array<{ name: string; value?: string | number | boolean }>,
   t: Translator,
   userId: string,
   logger?: ExtendedLogger
@@ -308,7 +308,7 @@ async function handleQuickSubcommand(
   interaction: DiscordInteraction,
   env: Env,
   ctx: ExecutionContext,
-  options: Array<{ name: string; value?: string | number }>,
+  options: Array<{ name: string; value?: string | number | boolean }>,
   t: Translator,
   userId: string,
   logger?: ExtendedLogger

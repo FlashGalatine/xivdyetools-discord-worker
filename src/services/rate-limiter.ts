@@ -33,6 +33,8 @@ const COMMAND_LIMITS: Record<string, number> = {
   // Image processing commands are more expensive
   match_image: 5,
   accessibility: 10,
+  // API-dependent commands (external rate limits apply)
+  budget: 10,
   // Standard commands
   harmony: 15,
   match: 15,
