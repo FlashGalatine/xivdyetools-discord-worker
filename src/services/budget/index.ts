@@ -30,3 +30,17 @@ export {
   fetchWithCache,
   invalidateCachedPrice,
 } from './price-cache.js';
+
+// Budget calculator
+export {
+  findCheaperAlternatives,
+  searchDyes,
+  getDyeById,
+  getDyeByName,
+  getDyeAutocomplete,
+  getAllDyes,
+  getCategories,
+} from './budget-calculator.js';
+
+// Quick picks
+export { QUICK_PICKS, getQuickPickById, getQuickPickChoices } from './quick-picks.js';
