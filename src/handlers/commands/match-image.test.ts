@@ -216,7 +216,7 @@ describe('/match_image command', () => {
         };
 
         const res = await handleMatchImageCommand(interaction, env, ctx);
-        const body = await res.json();
+        const body = (await res.json()) as InteractionResponseBody;
 
         expect(body.data.embeds[0].description).toBe('Please attach an image');
         expect(body.data.flags).toBe(64);
@@ -237,7 +237,7 @@ describe('/match_image command', () => {
         };
 
         const res = await handleMatchImageCommand(interaction, env, ctx);
-        const body = await res.json();
+        const body = (await res.json()) as InteractionResponseBody;
 
         expect(body.data.embeds[0].description).toBe('Invalid attachment');
         expect(body.data.flags).toBe(64);
@@ -266,7 +266,7 @@ describe('/match_image command', () => {
         };
 
         const res = await handleMatchImageCommand(interaction, env, ctx);
-        const body = await res.json();
+        const body = (await res.json()) as InteractionResponseBody;
 
         expect(body.type).toBe(5); // DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE
         expect(ctx.waitUntil).toHaveBeenCalled();
@@ -556,7 +556,7 @@ describe('/match_image command', () => {
         };
 
         const res = await handleMatchImageCommand(interaction, env, ctx);
-        const body = await res.json();
+        const body = (await res.json()) as InteractionResponseBody;
 
         expect(body.type).toBe(5);
     });
@@ -816,7 +816,7 @@ describe('/match_image command', () => {
         };
 
         const res = await handleMatchImageCommand(interaction, env, ctx);
-        const body = await res.json();
+        const body = (await res.json()) as InteractionResponseBody;
 
         expect(body.type).toBe(5);
     });

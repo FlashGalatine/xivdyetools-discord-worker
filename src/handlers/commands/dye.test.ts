@@ -133,7 +133,7 @@ describe('dye.ts', () => {
       };
 
       const response = await handleDyeCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
 
       expect(data.data.embeds[0].title).toContain('Error');
       expect(data.data.embeds[0].description).toBe('Missing subcommand');
@@ -153,7 +153,7 @@ describe('dye.ts', () => {
       };
 
       const response = await handleDyeCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
 
       expect(data.data.embeds[0].title).toContain('Error');
       expect(data.data.embeds[0].description).toContain('Unknown subcommand');
@@ -181,7 +181,7 @@ describe('dye.ts', () => {
       };
 
       const response = await handleDyeCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
 
       expect(data.data.embeds[0].title).toContain('Search Results: snow');
       expect(data.data.embeds[0].description).toContain('Snow White');
@@ -207,7 +207,7 @@ describe('dye.ts', () => {
       };
 
       const response = await handleDyeCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
 
       expect(data.data.embeds[0].title).toContain('No results for: notfound');
     });
@@ -232,7 +232,7 @@ describe('dye.ts', () => {
       };
 
       const response = await handleDyeCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
 
       expect(data.data.embeds[0].title).toContain('Error');
       expect(data.data.embeds[0].description).toBe('Missing query');
@@ -260,7 +260,7 @@ describe('dye.ts', () => {
       };
 
       const response = await handleDyeCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
 
       // Facewear dyes should be filtered out
       expect(data.data.embeds[0].description).not.toContain('Facewear');
@@ -288,7 +288,7 @@ describe('dye.ts', () => {
       };
 
       const response = await handleDyeCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
 
       expect(data.data.embeds[0].title).toContain('Snow White');
       expect(data.data.embeds[0].fields).toBeDefined();
@@ -315,7 +315,7 @@ describe('dye.ts', () => {
       };
 
       const response = await handleDyeCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
 
       expect(data.data.embeds[0].title).toContain('Error');
       expect(data.data.embeds[0].description).toBe('Missing name');
@@ -341,7 +341,7 @@ describe('dye.ts', () => {
       };
 
       const response = await handleDyeCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
 
       expect(data.data.embeds[0].title).toContain('Error');
       expect(data.data.embeds[0].description).toContain('Dye not found');
@@ -369,7 +369,7 @@ describe('dye.ts', () => {
       };
 
       const response = await handleDyeCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
 
       expect(data.data.embeds[0].title).toBe('Dye Categories');
       expect(data.data.embeds[0].description).toContain('Standard');
@@ -397,7 +397,7 @@ describe('dye.ts', () => {
       };
 
       const response = await handleDyeCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
 
       expect(data.data.embeds[0].title).toContain('Category: Standard');
       expect(data.data.embeds[0].description).toContain('Snow White');
@@ -424,7 +424,7 @@ describe('dye.ts', () => {
       };
 
       const response = await handleDyeCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
 
       expect(data.data.embeds[0].title).toContain('Error');
       expect(data.data.embeds[0].description).toContain('No dyes in category');
@@ -452,7 +452,7 @@ describe('dye.ts', () => {
       };
 
       const response = await handleDyeCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
 
       expect(data.data.embeds[0].title).toBe('Random Dyes');
       expect(data.data.embeds[0].description).toContain('random dyes');
@@ -478,7 +478,7 @@ describe('dye.ts', () => {
       };
 
       const response = await handleDyeCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
 
       expect(data.data.embeds[0].title).toBe('Random Dyes (Unique Categories)');
       expect(data.data.embeds[0].description).toContain('different categories');
@@ -506,7 +506,7 @@ describe('dye.ts', () => {
         };
 
         const response = await handleDyeCommand(interaction, mockEnv, mockCtx);
-        const data = await response.json();
+        const data = (await response.json()) as InteractionResponseBody;
 
         // Should never contain Facewear dyes
         expect(data.data.embeds[0].description).not.toContain('Red (#FF0000)');

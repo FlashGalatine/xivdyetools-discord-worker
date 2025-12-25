@@ -132,7 +132,7 @@ describe('buttons/index.ts', () => {
             };
 
             const response = await handleButtonInteraction(interaction, mockEnv, mockCtx);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.data.content).toBe('This button is not recognized.');
             expect(body.data.flags).toBe(64);
@@ -147,7 +147,7 @@ describe('buttons/index.ts', () => {
             };
 
             const response = await handleButtonInteraction(interaction, mockEnv, mockCtx);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.data.content).toBe('This button is not recognized.');
         });
@@ -160,7 +160,7 @@ describe('buttons/index.ts', () => {
             };
 
             const response = await handleButtonInteraction(interaction, mockEnv, mockCtx);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.data.content).toBe('This button is not recognized.');
         });

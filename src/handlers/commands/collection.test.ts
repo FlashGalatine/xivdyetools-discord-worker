@@ -134,14 +134,14 @@ describe('/collection command', () => {
 
   it('returns error when user is missing', async () => {
     const res = await handleCollectionCommand({ ...baseInteraction }, env, ctx);
-    const body = await res.json();
+    const body = (await res.json()) as InteractionResponseBody;
     expect(body.data.content).toBe('user not found');
   });
 
   it('returns error when subcommand missing', async () => {
     const interaction = { ...baseInteraction, member: { user: { id: 'u1', username: 't' } } };
     const res = await handleCollectionCommand(interaction, env, ctx);
-    const body = await res.json();
+    const body = (await res.json()) as InteractionResponseBody;
     expect(body.data.content).toBe('missing subcommand');
   });
 
@@ -152,7 +152,7 @@ describe('/collection command', () => {
       data: { ...baseInteraction.data, options: [{ type: 1, name: 'mystery', options: [] }] },
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
-    const body = await res.json();
+    const body = (await res.json()) as InteractionResponseBody;
     expect(body.data.content).toContain('unknown subcommand');
   });
 
@@ -164,7 +164,7 @@ describe('/collection command', () => {
       data: { ...baseInteraction.data, options: [{ type: 1, name: 'create', options: [{ name: 'name', value: 'MyCol' }] }] },
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
-    const body = await res.json();
+    const body = (await res.json()) as InteractionResponseBody;
     expect(body.data.embeds[0].description).toContain('created MyCol');
   });
 
@@ -181,7 +181,7 @@ describe('/collection command', () => {
       },
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
-    const body = await res.json();
+    const body = (await res.json()) as InteractionResponseBody;
     expect(body.data.embeds[0].description).toContain('already in MyCol');
   });
 
@@ -193,7 +193,7 @@ describe('/collection command', () => {
       data: { ...baseInteraction.data, options: [{ type: 1, name: 'show', options: [{ name: 'name', value: 'MyCol' }] }] },
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
-    const body = await res.json();
+    const body = (await res.json()) as InteractionResponseBody;
     expect(body.data.embeds[0].description).toContain('collection empty');
   });
 
@@ -205,7 +205,7 @@ describe('/collection command', () => {
       data: { ...baseInteraction.data, options: [{ type: 1, name: 'list', options: [] }] },
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
-    const body = await res.json();
+    const body = (await res.json()) as InteractionResponseBody;
     expect(body.data.embeds[0].description).toContain('no collections');
   });
 
@@ -220,7 +220,7 @@ describe('/collection command', () => {
       },
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
-    const body = await res.json();
+    const body = (await res.json()) as InteractionResponseBody;
     expect(body.data.embeds[0].description).toContain('collection not found');
   });
 
@@ -233,7 +233,7 @@ describe('/collection command', () => {
       data: { ...baseInteraction.data, options: [{ type: 1, name: 'create', options: [{ name: 'name', value: 'VeryLongCollectionName' }] }] },
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
-    const body = await res.json();
+    const body = (await res.json()) as InteractionResponseBody;
     expect(body.data.embeds[0].description).toContain('name too long');
   });
 
@@ -245,7 +245,7 @@ describe('/collection command', () => {
       data: { ...baseInteraction.data, options: [{ type: 1, name: 'create', options: [{ name: 'name', value: 'MyCol' }] }] },
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
-    const body = await res.json();
+    const body = (await res.json()) as InteractionResponseBody;
     expect(body.data.embeds[0].description).toContain('collection exists');
   });
 
@@ -257,7 +257,7 @@ describe('/collection command', () => {
       data: { ...baseInteraction.data, options: [{ type: 1, name: 'create', options: [{ name: 'name', value: 'NewCol' }] }] },
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
-    const body = await res.json();
+    const body = (await res.json()) as InteractionResponseBody;
     expect(body.data.embeds[0].description).toContain('collection limit');
   });
 
@@ -269,7 +269,7 @@ describe('/collection command', () => {
       data: { ...baseInteraction.data, options: [{ type: 1, name: 'create', options: [{ name: 'name', value: 'MyCol' }] }] },
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
-    const body = await res.json();
+    const body = (await res.json()) as InteractionResponseBody;
     expect(body.data.embeds[0].description).toContain('failed to save');
   });
 
@@ -280,7 +280,7 @@ describe('/collection command', () => {
       data: { ...baseInteraction.data, options: [{ type: 1, name: 'create', options: [] }] },
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
-    const body = await res.json();
+    const body = (await res.json()) as InteractionResponseBody;
     expect(body.data.embeds[0].description).toContain('missing name');
   });
 
@@ -292,7 +292,7 @@ describe('/collection command', () => {
       data: { ...baseInteraction.data, options: [{ type: 1, name: 'create', options: [{ name: 'name', value: 'MyCol' }, { name: 'description', value: 'My awesome collection' }] }] },
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
-    const body = await res.json();
+    const body = (await res.json()) as InteractionResponseBody;
     expect(body.data.embeds[0].description).toContain('created MyCol');
     expect(body.data.embeds[0].description).toContain('My awesome collection');
   });
@@ -305,7 +305,7 @@ describe('/collection command', () => {
       data: { ...baseInteraction.data, options: [{ type: 1, name: 'delete', options: [] }] },
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
-    const body = await res.json();
+    const body = (await res.json()) as InteractionResponseBody;
     expect(body.data.embeds[0].description).toContain('missing name');
   });
 
@@ -317,7 +317,7 @@ describe('/collection command', () => {
       data: { ...baseInteraction.data, options: [{ type: 1, name: 'delete', options: [{ name: 'name', value: 'MyCol' }] }] },
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
-    const body = await res.json();
+    const body = (await res.json()) as InteractionResponseBody;
     expect(body.data.embeds[0].title).toContain('Success');
   });
 
@@ -329,7 +329,7 @@ describe('/collection command', () => {
       data: { ...baseInteraction.data, options: [{ type: 1, name: 'delete', options: [{ name: 'name', value: 'Missing' }] }] },
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
-    const body = await res.json();
+    const body = (await res.json()) as InteractionResponseBody;
     expect(body.data.embeds[0].description).toContain('collection not found');
   });
 
@@ -341,7 +341,7 @@ describe('/collection command', () => {
       data: { ...baseInteraction.data, options: [{ type: 1, name: 'add', options: [] }] },
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
-    const body = await res.json();
+    const body = (await res.json()) as InteractionResponseBody;
     expect(body.data.embeds[0].description).toContain('missing input');
   });
 
@@ -355,7 +355,7 @@ describe('/collection command', () => {
       },
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
-    const body = await res.json();
+    const body = (await res.json()) as InteractionResponseBody;
     expect(body.data.embeds[0].description).toContain('dye not found');
   });
 
@@ -370,7 +370,7 @@ describe('/collection command', () => {
       },
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
-    const body = await res.json();
+    const body = (await res.json()) as InteractionResponseBody;
     expect(body.data.embeds[0].description).toContain('added to MyCol');
   });
 
@@ -385,7 +385,7 @@ describe('/collection command', () => {
       },
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
-    const body = await res.json();
+    const body = (await res.json()) as InteractionResponseBody;
     expect(body.data.embeds[0].description).toContain('added to MyCol');
   });
 
@@ -400,7 +400,7 @@ describe('/collection command', () => {
       },
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
-    const body = await res.json();
+    const body = (await res.json()) as InteractionResponseBody;
     expect(body.data.embeds[0].description).toContain('added to MyCol');
   });
 
@@ -415,7 +415,7 @@ describe('/collection command', () => {
       },
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
-    const body = await res.json();
+    const body = (await res.json()) as InteractionResponseBody;
     expect(body.data.embeds[0].description).toContain('collection not found');
   });
 
@@ -430,7 +430,7 @@ describe('/collection command', () => {
       },
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
-    const body = await res.json();
+    const body = (await res.json()) as InteractionResponseBody;
     expect(body.data.embeds[0].description).toContain('dye limit');
   });
 
@@ -445,7 +445,7 @@ describe('/collection command', () => {
       },
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
-    const body = await res.json();
+    const body = (await res.json()) as InteractionResponseBody;
     expect(body.data.embeds[0].description).toContain('failed to save');
   });
 
@@ -457,7 +457,7 @@ describe('/collection command', () => {
       data: { ...baseInteraction.data, options: [{ type: 1, name: 'remove', options: [] }] },
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
-    const body = await res.json();
+    const body = (await res.json()) as InteractionResponseBody;
     expect(body.data.embeds[0].description).toContain('missing input');
   });
 
@@ -471,7 +471,7 @@ describe('/collection command', () => {
       },
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
-    const body = await res.json();
+    const body = (await res.json()) as InteractionResponseBody;
     expect(body.data.embeds[0].description).toContain('dye not found');
   });
 
@@ -486,7 +486,7 @@ describe('/collection command', () => {
       },
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
-    const body = await res.json();
+    const body = (await res.json()) as InteractionResponseBody;
     expect(body.data.embeds[0].description).toContain('removed from MyCol');
   });
 
@@ -501,7 +501,7 @@ describe('/collection command', () => {
       },
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
-    const body = await res.json();
+    const body = (await res.json()) as InteractionResponseBody;
     expect(body.data.embeds[0].description).toContain('not in MyCol');
   });
 
@@ -513,7 +513,7 @@ describe('/collection command', () => {
       data: { ...baseInteraction.data, options: [{ type: 1, name: 'show', options: [] }] },
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
-    const body = await res.json();
+    const body = (await res.json()) as InteractionResponseBody;
     expect(body.data.embeds[0].description).toContain('missing name');
   });
 
@@ -525,7 +525,7 @@ describe('/collection command', () => {
       data: { ...baseInteraction.data, options: [{ type: 1, name: 'show', options: [{ name: 'name', value: 'Missing' }] }] },
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
-    const body = await res.json();
+    const body = (await res.json()) as InteractionResponseBody;
     expect(body.data.embeds[0].description).toContain('collection not found');
   });
 
@@ -542,7 +542,7 @@ describe('/collection command', () => {
       data: { ...baseInteraction.data, options: [{ type: 1, name: 'show', options: [{ name: 'name', value: 'MyCol' }] }] },
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
-    const body = await res.json();
+    const body = (await res.json()) as InteractionResponseBody;
     expect(body.data.embeds[0].title).toContain('MyCol');
     expect(body.data.embeds[0].description).toContain('Snow White-loc');
     expect(body.data.embeds[0].description).toContain('A cool collection');
@@ -560,7 +560,7 @@ describe('/collection command', () => {
       data: { ...baseInteraction.data, options: [{ type: 1, name: 'show', options: [{ name: 'name', value: 'MyCol' }] }] },
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
-    const body = await res.json();
+    const body = (await res.json()) as InteractionResponseBody;
     expect(body.data.embeds[0].description).toContain('collection empty');
   });
 
@@ -577,7 +577,7 @@ describe('/collection command', () => {
       data: { ...baseInteraction.data, options: [{ type: 1, name: 'list', options: [] }] },
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
-    const body = await res.json();
+    const body = (await res.json()) as InteractionResponseBody;
     expect(body.data.embeds[0].title).toContain('Collections');
     expect(body.data.embeds[0].description).toContain('Col1');
     expect(body.data.embeds[0].description).toContain('Col2');
@@ -594,7 +594,7 @@ describe('/collection command', () => {
       data: { ...baseInteraction.data, options: [{ type: 1, name: 'rename', options: [] }] },
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
-    const body = await res.json();
+    const body = (await res.json()) as InteractionResponseBody;
     expect(body.data.embeds[0].description).toContain('missing input');
   });
 
@@ -609,7 +609,7 @@ describe('/collection command', () => {
       },
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
-    const body = await res.json();
+    const body = (await res.json()) as InteractionResponseBody;
     expect(body.data.embeds[0].description).toContain('OldName');
     expect(body.data.embeds[0].description).toContain('NewName');
   });
@@ -625,7 +625,7 @@ describe('/collection command', () => {
       },
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
-    const body = await res.json();
+    const body = (await res.json()) as InteractionResponseBody;
     expect(body.data.embeds[0].description).toContain('name too long');
   });
 
@@ -640,7 +640,7 @@ describe('/collection command', () => {
       },
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
-    const body = await res.json();
+    const body = (await res.json()) as InteractionResponseBody;
     expect(body.data.embeds[0].description).toContain('collection exists');
   });
 
@@ -655,7 +655,7 @@ describe('/collection command', () => {
       },
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
-    const body = await res.json();
+    const body = (await res.json()) as InteractionResponseBody;
     expect(body.data.embeds[0].description).toContain('failed to save');
   });
 });

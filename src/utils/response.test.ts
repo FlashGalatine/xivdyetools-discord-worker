@@ -17,7 +17,7 @@ import {
     type DiscordEmbed,
     type DiscordActionRow,
 } from './response.js';
-import { InteractionResponseType } from '../types/env.js';
+import { InteractionResponseType, type InteractionResponseBody } from '../types/env.js';
 
 describe('response.ts', () => {
     describe('pongResponse', () => {
@@ -25,7 +25,7 @@ describe('response.ts', () => {
             const response = pongResponse();
             expect(response).toBeInstanceOf(Response);
 
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
             expect(body).toEqual({ type: InteractionResponseType.PONG });
         });
     });
@@ -35,7 +35,7 @@ describe('response.ts', () => {
             const response = messageResponse({ content: 'Hello world' });
             expect(response).toBeInstanceOf(Response);
 
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
             expect(body).toEqual({
                 type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
                 data: { content: 'Hello world' },
@@ -50,7 +50,7 @@ describe('response.ts', () => {
             };
 
             const response = messageResponse({ embeds: [embed] });
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
             expect(body.data.embeds).toHaveLength(1);
@@ -69,7 +69,7 @@ describe('response.ts', () => {
             };
 
             const response = messageResponse({ components: [actionRow] });
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.data.components).toHaveLength(1);
             expect(body.data.components[0].components[0].label).toBe('Click me');
@@ -81,7 +81,7 @@ describe('response.ts', () => {
                 flags: MessageFlags.EPHEMERAL,
             });
 
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
             expect(body.data.flags).toBe(64);
         });
     });
@@ -89,7 +89,7 @@ describe('response.ts', () => {
     describe('ephemeralResponse', () => {
         it('should return an ephemeral message', async () => {
             const response = ephemeralResponse('Secret message');
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
             expect(body.data.content).toBe('Secret message');
@@ -101,7 +101,7 @@ describe('response.ts', () => {
                 content: 'Complex message',
                 embeds: [{ title: 'Embed Title' }],
             });
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
             expect(body.data.content).toBe('Complex message');
@@ -115,7 +115,7 @@ describe('response.ts', () => {
                 content: 'Message with existing flags',
                 flags: 0, // No existing flags
             });
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.data.flags).toBe(MessageFlags.EPHEMERAL);
         });
@@ -126,7 +126,7 @@ describe('response.ts', () => {
                 content: 'Message',
                 flags: 128, // Some other flag
             });
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             // Should have both the ephemeral flag (64) and the original flag (128)
             expect(body.data.flags).toBe(128 | MessageFlags.EPHEMERAL);
@@ -141,7 +141,7 @@ describe('response.ts', () => {
             };
 
             const response = embedResponse(embed);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.data.embeds).toHaveLength(1);
             expect(body.data.embeds[0]).toEqual(embed);
@@ -156,7 +156,7 @@ describe('response.ts', () => {
             };
 
             const response = embedResponse(embed, [actionRow]);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.data.embeds).toHaveLength(1);
             expect(body.data.components).toHaveLength(1);
@@ -166,7 +166,7 @@ describe('response.ts', () => {
     describe('deferredResponse', () => {
         it('should return a non-ephemeral deferred response by default', async () => {
             const response = deferredResponse();
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.type).toBe(InteractionResponseType.DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE);
             expect(body.data).toBeUndefined();
@@ -174,7 +174,7 @@ describe('response.ts', () => {
 
         it('should return an ephemeral deferred response when specified', async () => {
             const response = deferredResponse(true);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.type).toBe(InteractionResponseType.DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE);
             expect(body.data.flags).toBe(MessageFlags.EPHEMERAL);
@@ -189,7 +189,7 @@ describe('response.ts', () => {
             ];
 
             const response = autocompleteResponse(choices);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.type).toBe(InteractionResponseType.APPLICATION_COMMAND_AUTOCOMPLETE_RESULT);
             expect(body.data.choices).toEqual(choices);
@@ -197,7 +197,7 @@ describe('response.ts', () => {
 
         it('should handle empty choices', async () => {
             const response = autocompleteResponse([]);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.data.choices).toEqual([]);
         });

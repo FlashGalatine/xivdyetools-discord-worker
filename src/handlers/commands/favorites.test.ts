@@ -130,7 +130,7 @@ describe('/favorites command', () => {
       };
       
       const response = await handleFavoritesCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
       
       expect(data.data.content).toBe('Could not identify user.');
       expect(data.data.flags).toBe(64); // Ephemeral flag
@@ -152,7 +152,7 @@ describe('/favorites command', () => {
       };
       
       const response = await handleFavoritesCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
       
       expect(data.data.content).toBe('Missing subcommand');
     });
@@ -173,7 +173,7 @@ describe('/favorites command', () => {
       };
       
       const response = await handleFavoritesCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
       
       expect(data.data.content).toContain('Unknown subcommand');
     });
@@ -202,7 +202,7 @@ describe('/favorites command', () => {
       };
       
       const response = await handleFavoritesCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
       
       expect(addFavorite).toHaveBeenCalledWith(mockEnv.KV, 'user-123', 1);
       expect(data.data.embeds[0].description).toContain('Added Snow White to favorites');
@@ -230,7 +230,7 @@ describe('/favorites command', () => {
       };
       
       const response = await handleFavoritesCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
       
       expect(addFavorite).toHaveBeenCalledWith(mockEnv.KV, 'user-123', 1);
       expect(data.data.embeds[0].description).toContain('Added Snow White to favorites');
@@ -250,7 +250,7 @@ describe('/favorites command', () => {
       };
       
       const response = await handleFavoritesCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
       
       expect(data.data.embeds[0].description).toBe('Please specify a dye');
     });
@@ -275,7 +275,7 @@ describe('/favorites command', () => {
       };
       
       const response = await handleFavoritesCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
       
       expect(data.data.embeds[0].description).toContain('Dye not found');
     });
@@ -302,7 +302,7 @@ describe('/favorites command', () => {
       };
       
       const response = await handleFavoritesCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
       
       expect(data.data.embeds[0].description).toContain('already a favorite');
     });
@@ -329,7 +329,7 @@ describe('/favorites command', () => {
       };
       
       const response = await handleFavoritesCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
       
       expect(data.data.embeds[0].description).toContain('Limit reached');
     });
@@ -356,7 +356,7 @@ describe('/favorites command', () => {
       };
       
       const response = await handleFavoritesCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
       
       expect(data.data.embeds[0].description).toBe('Failed to save');
     });
@@ -385,7 +385,7 @@ describe('/favorites command', () => {
       };
       
       const response = await handleFavoritesCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
       
       expect(removeFavorite).toHaveBeenCalledWith(mockEnv.KV, 'user-123', 1);
       expect(data.data.embeds[0].description).toContain('Removed Snow White from favorites');
@@ -405,7 +405,7 @@ describe('/favorites command', () => {
       };
       
       const response = await handleFavoritesCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
       
       expect(data.data.embeds[0].description).toBe('Please specify a dye');
     });
@@ -430,7 +430,7 @@ describe('/favorites command', () => {
       };
       
       const response = await handleFavoritesCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
       
       expect(data.data.embeds[0].description).toContain('Dye not found');
     });
@@ -457,7 +457,7 @@ describe('/favorites command', () => {
       };
       
       const response = await handleFavoritesCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
       
       expect(data.data.embeds[0].description).toContain('not in favorites');
     });
@@ -480,7 +480,7 @@ describe('/favorites command', () => {
       };
       
       const response = await handleFavoritesCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
       
       expect(getFavorites).toHaveBeenCalledWith(mockEnv.KV, 'user-123');
       expect(data.data.embeds[0].description).toContain('Snow White');
@@ -504,7 +504,7 @@ describe('/favorites command', () => {
       };
       
       const response = await handleFavoritesCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
       
       expect(data.data.embeds[0].description).toContain('No favorites yet');
     });
@@ -528,7 +528,7 @@ describe('/favorites command', () => {
       };
       
       const response = await handleFavoritesCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
       
       expect(clearFavorites).toHaveBeenCalledWith(mockEnv.KV, 'user-123');
       expect(data.data.embeds[0].description).toBe('All favorites cleared');
@@ -550,7 +550,7 @@ describe('/favorites command', () => {
       };
       
       const response = await handleFavoritesCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
       
       expect(data.data.embeds[0].description).toBe('No favorites yet');
     });
@@ -572,7 +572,7 @@ describe('/favorites command', () => {
       };
       
       const response = await handleFavoritesCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
       
       expect(data.data.embeds[0].description).toBe('Failed to reset');
     });

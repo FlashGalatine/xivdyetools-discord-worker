@@ -180,3 +180,42 @@ export enum InteractionResponseType {
   /** Respond to an interaction with a popup modal */
   MODAL = 9,
 }
+
+/**
+ * Discord Interaction Response Body
+ * Used for typing response.json() in tests
+ */
+export interface InteractionResponseBody {
+  type: InteractionResponseType;
+  data?: {
+    content?: string;
+    flags?: number;
+    embeds?: Array<{
+      title?: string;
+      description?: string;
+      color?: number;
+      fields?: Array<{ name: string; value: string; inline?: boolean }>;
+      image?: { url: string };
+      footer?: { text: string };
+    }>;
+    components?: Array<{
+      type: number;
+      components?: Array<{
+        type: number;
+        style?: number;
+        label?: string;
+        custom_id?: string;
+        url?: string;
+        emoji?: { name: string };
+        placeholder?: string;
+        min_length?: number;
+        max_length?: number;
+        required?: boolean;
+        value?: string;
+      }>;
+    }>;
+    choices?: Array<{ name: string; value: string }>;
+    custom_id?: string;
+    title?: string;
+  };
+}

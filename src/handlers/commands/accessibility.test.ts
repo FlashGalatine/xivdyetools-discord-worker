@@ -210,7 +210,7 @@ describe('accessibility.ts', () => {
       };
 
       const response = await handleAccessibilityCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
 
       expect(data.type).toBe(4);
       expect(data.data.embeds[0].title).toContain('Error');
@@ -234,7 +234,7 @@ describe('accessibility.ts', () => {
       };
 
       const response = await handleAccessibilityCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
 
       expect(data.type).toBe(4);
       expect(data.data.embeds[0].title).toContain('Error');
@@ -272,7 +272,7 @@ describe('accessibility.ts', () => {
       };
 
       const response = await handleAccessibilityCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
 
       expect(data.type).toBe(4);
       // Uses fallback translator which returns translation keys
@@ -297,7 +297,7 @@ describe('accessibility.ts', () => {
       };
 
       const response = await handleAccessibilityCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
 
       expect(data.type).toBe(5); // DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE
       expect(mockCtx.waitUntil).toHaveBeenCalled();
@@ -319,7 +319,7 @@ describe('accessibility.ts', () => {
       };
 
       const response = await handleAccessibilityCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
 
       expect(data.type).toBe(5);
     });
@@ -340,7 +340,7 @@ describe('accessibility.ts', () => {
       };
 
       const response = await handleAccessibilityCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
 
       expect(data.type).toBe(5);
     });
@@ -415,7 +415,7 @@ describe('accessibility.ts', () => {
       };
 
       const response = await handleAccessibilityCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
 
       expect(data.type).toBe(5);
     });
@@ -463,7 +463,7 @@ describe('accessibility.ts', () => {
       };
 
       const response = await handleAccessibilityCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
 
       expect(data.type).toBe(5);
     });
@@ -520,7 +520,7 @@ describe('accessibility.ts', () => {
       };
 
       const response = await handleAccessibilityCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
 
       // Should return error because Facewear dyes are filtered out
       expect(data.type).toBe(4);

@@ -8,7 +8,7 @@ import {
     handlePresetRevertModal,
     isPresetRevertModal,
 } from './preset-rejection.js';
-import { InteractionResponseType } from '../../types/env.js';
+import { InteractionResponseType, type InteractionResponseBody } from '../types/env.js';
 
 // Mock preset API
 vi.mock('../../services/preset-api.js', () => ({
@@ -71,7 +71,7 @@ describe('preset-rejection.ts', () => {
             };
 
             const response = await handlePresetRejectionModal(interaction, mockEnv, mockCtx);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
             expect(body.data.embeds[0].title).toContain('Error');
@@ -96,7 +96,7 @@ describe('preset-rejection.ts', () => {
             };
 
             const response = await handlePresetRejectionModal(interaction, mockEnv, mockCtx);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.data.embeds[0].description).toContain('permission');
         });
@@ -119,7 +119,7 @@ describe('preset-rejection.ts', () => {
             };
 
             const response = await handlePresetRejectionModal(interaction, mockEnv, mockCtx);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.data.embeds[0].description).toContain('10 characters');
         });
@@ -144,7 +144,7 @@ describe('preset-rejection.ts', () => {
             };
 
             const response = await handlePresetRejectionModal(interaction, mockEnv, mockCtx);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.type).toBe(InteractionResponseType.DEFERRED_UPDATE_MESSAGE);
             expect(mockCtx.waitUntil).toHaveBeenCalled();
@@ -162,7 +162,7 @@ describe('preset-rejection.ts', () => {
             };
 
             const response = await handlePresetRevertModal(interaction, mockEnv, mockCtx);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
             expect(body.data.embeds[0].title).toContain('Error');
@@ -186,7 +186,7 @@ describe('preset-rejection.ts', () => {
             };
 
             const response = await handlePresetRevertModal(interaction, mockEnv, mockCtx);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.data.embeds[0].description).toContain('permission');
         });
@@ -209,7 +209,7 @@ describe('preset-rejection.ts', () => {
             };
 
             const response = await handlePresetRevertModal(interaction, mockEnv, mockCtx);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.data.embeds[0].description).toContain('10 characters');
         });
@@ -234,7 +234,7 @@ describe('preset-rejection.ts', () => {
             };
 
             const response = await handlePresetRevertModal(interaction, mockEnv, mockCtx);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.type).toBe(InteractionResponseType.DEFERRED_UPDATE_MESSAGE);
             expect(mockCtx.waitUntil).toHaveBeenCalled();
@@ -260,7 +260,7 @@ describe('preset-rejection.ts', () => {
             };
 
             const response = await handlePresetRevertModal(interaction, mockEnv, mockCtx);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.type).toBe(InteractionResponseType.DEFERRED_UPDATE_MESSAGE);
         });
@@ -285,7 +285,7 @@ describe('preset-rejection.ts', () => {
             };
 
             const response = await handlePresetRevertModal(interaction, mockEnv, mockCtx);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.type).toBe(InteractionResponseType.DEFERRED_UPDATE_MESSAGE);
             expect(mockCtx.waitUntil).toHaveBeenCalled();
@@ -311,7 +311,7 @@ describe('preset-rejection.ts', () => {
             };
 
             const response = await handlePresetRevertModal(interaction, mockEnv, mockCtx);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.type).toBe(InteractionResponseType.DEFERRED_UPDATE_MESSAGE);
             expect(mockCtx.waitUntil).toHaveBeenCalled();
@@ -342,7 +342,7 @@ describe('preset-rejection.ts', () => {
             };
 
             const response = await handlePresetRevertModal(interaction, envWithoutLog, mockCtx);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.type).toBe(InteractionResponseType.DEFERRED_UPDATE_MESSAGE);
         });
@@ -369,7 +369,7 @@ describe('preset-rejection.ts', () => {
             };
 
             const response = await handlePresetRejectionModal(interaction, mockEnv, mockCtx);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.type).toBe(InteractionResponseType.DEFERRED_UPDATE_MESSAGE);
             expect(mockCtx.waitUntil).toHaveBeenCalled();
@@ -395,7 +395,7 @@ describe('preset-rejection.ts', () => {
             };
 
             const response = await handlePresetRejectionModal(interaction, mockEnv, mockCtx);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.type).toBe(InteractionResponseType.DEFERRED_UPDATE_MESSAGE);
             expect(mockCtx.waitUntil).toHaveBeenCalled();
@@ -426,7 +426,7 @@ describe('preset-rejection.ts', () => {
             };
 
             const response = await handlePresetRejectionModal(interaction, envWithoutLog, mockCtx);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.type).toBe(InteractionResponseType.DEFERRED_UPDATE_MESSAGE);
         });
@@ -454,7 +454,7 @@ describe('preset-rejection.ts', () => {
             };
 
             const response = await handlePresetRejectionModal(interaction, mockEnv, mockCtx);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.type).toBe(InteractionResponseType.DEFERRED_UPDATE_MESSAGE);
             // Wait for async processing
@@ -485,7 +485,7 @@ describe('preset-rejection.ts', () => {
             };
 
             const response = await handlePresetRejectionModal(interaction, mockEnv, mockCtx);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.type).toBe(InteractionResponseType.DEFERRED_UPDATE_MESSAGE);
         });
@@ -513,7 +513,7 @@ describe('preset-rejection.ts', () => {
             };
 
             const response = await handlePresetRevertModal(interaction, mockEnv, mockCtx);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.type).toBe(InteractionResponseType.DEFERRED_UPDATE_MESSAGE);
             // Wait for async processing
@@ -544,7 +544,7 @@ describe('preset-rejection.ts', () => {
             };
 
             const response = await handlePresetRevertModal(interaction, mockEnv, mockCtx);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.type).toBe(InteractionResponseType.DEFERRED_UPDATE_MESSAGE);
         });
@@ -699,7 +699,7 @@ describe('preset-rejection.ts', () => {
             };
 
             const response = await handlePresetRejectionModal(interaction, mockEnv, mockCtx);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             // Should fail validation because reason wasn't extracted
             expect(body.data.embeds[0].description).toContain('10 characters');
@@ -723,7 +723,7 @@ describe('preset-rejection.ts', () => {
             };
 
             const response = await handlePresetRejectionModal(interaction, mockEnv, mockCtx);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             // Should fail validation because reason wasn't extracted (wrong custom_id)
             expect(body.data.embeds[0].description).toContain('10 characters');
@@ -747,7 +747,7 @@ describe('preset-rejection.ts', () => {
             };
 
             const response = await handlePresetRejectionModal(interaction, mockEnv, mockCtx);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             // Should fail validation because reason wasn't extracted (wrong component type)
             expect(body.data.embeds[0].description).toContain('10 characters');
@@ -766,7 +766,7 @@ describe('preset-rejection.ts', () => {
             };
 
             const response = await handlePresetRejectionModal(interaction, mockEnv, mockCtx);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             // Should fail validation because reason wasn't extracted (no components)
             expect(body.data.embeds[0].description).toContain('10 characters');

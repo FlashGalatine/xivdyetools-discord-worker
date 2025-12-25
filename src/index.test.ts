@@ -150,7 +150,7 @@ describe('index.ts', () => {
       const res = await app.fetch(req, mockEnv, mockCtx);
 
       expect(res.status).toBe(200);
-      const data = await res.json();
+      const data = (await res.json()) as InteractionResponseBody;
       expect(data).toMatchObject({
         status: 'healthy',
         service: 'xivdyetools-discord-worker',
@@ -337,7 +337,7 @@ describe('index.ts', () => {
 
         const res = await app.fetch(req, mockEnv, mockCtx);
         expect(res.status).toBe(200);
-        const data = await res.json();
+        const data = (await res.json()) as InteractionResponseBody;
         expect(data.type).toBe(1); // PONG
       });
     });
@@ -435,7 +435,7 @@ describe('index.ts', () => {
 
         const res = await app.fetch(req, mockEnv, mockCtx);
         expect(res.status).toBe(200);
-        const data = await res.json();
+        const data = (await res.json()) as InteractionResponseBody;
         expect(data.data.flags).toBe(64); // Ephemeral
       });
 
@@ -465,7 +465,7 @@ describe('index.ts', () => {
 
         const res = await app.fetch(req, mockEnv, mockCtx);
         expect(res.status).toBe(200);
-        const data = await res.json();
+        const data = (await res.json()) as InteractionResponseBody;
         expect(data.data.content).toContain('not yet implemented');
       });
     });
@@ -513,7 +513,7 @@ describe('index.ts', () => {
 
         const res = await app.fetch(req, mockEnv, mockCtx);
         expect(res.status).toBe(200);
-        const data = await res.json();
+        const data = (await res.json()) as InteractionResponseBody;
         expect(data.type).toBe(InteractionResponseType.APPLICATION_COMMAND_AUTOCOMPLETE_RESULT);
         expect(data.data.choices).toBeInstanceOf(Array);
       });
@@ -564,7 +564,7 @@ describe('index.ts', () => {
 
         const res = await app.fetch(req, mockEnv, mockCtx);
         expect(res.status).toBe(200);
-        const data = await res.json();
+        const data = (await res.json()) as InteractionResponseBody;
         expect(data.type).toBe(InteractionResponseType.APPLICATION_COMMAND_AUTOCOMPLETE_RESULT);
         expect(data.data.choices[0].name).toContain('My Collection');
       });
@@ -615,7 +615,7 @@ describe('index.ts', () => {
 
         const res = await app.fetch(req, mockEnv, mockCtx);
         expect(res.status).toBe(200);
-        const data = await res.json();
+        const data = (await res.json()) as InteractionResponseBody;
         expect(searchPresetsForAutocomplete).toHaveBeenCalledWith(
           mockEnv,
           'test',
@@ -670,7 +670,7 @@ describe('index.ts', () => {
 
         const res = await app.fetch(req, mockEnv, mockCtx);
         expect(res.status).toBe(200);
-        const data = await res.json();
+        const data = (await res.json()) as InteractionResponseBody;
         expect(getMyPresets).toHaveBeenCalledWith(mockEnv, 'user-123');
       });
 
@@ -769,7 +769,7 @@ describe('index.ts', () => {
 
         const res = await app.fetch(req, mockEnv, mockCtx);
         expect(res.status).toBe(200);
-        const data = await res.json();
+        const data = (await res.json()) as InteractionResponseBody;
         expect(data.type).toBe(InteractionResponseType.APPLICATION_COMMAND_AUTOCOMPLETE_RESULT);
       });
 
@@ -803,7 +803,7 @@ describe('index.ts', () => {
 
         const res = await app.fetch(req, mockEnv, mockCtx);
         expect(res.status).toBe(200);
-        const data = await res.json();
+        const data = (await res.json()) as InteractionResponseBody;
         expect(data.type).toBe(InteractionResponseType.APPLICATION_COMMAND_AUTOCOMPLETE_RESULT);
         expect(data.data.choices).toBeInstanceOf(Array);
       });
@@ -850,7 +850,7 @@ describe('index.ts', () => {
 
         const res = await app.fetch(req, mockEnv, mockCtx);
         expect(res.status).toBe(200);
-        const data = await res.json();
+        const data = (await res.json()) as InteractionResponseBody;
         expect(data.type).toBe(InteractionResponseType.APPLICATION_COMMAND_AUTOCOMPLETE_RESULT);
       });
 
@@ -898,7 +898,7 @@ describe('index.ts', () => {
 
         const res = await app.fetch(req, mockEnv, mockCtx);
         expect(res.status).toBe(200);
-        const data = await res.json();
+        const data = (await res.json()) as InteractionResponseBody;
         expect(data.data.choices).toEqual([]);
       });
 
@@ -946,7 +946,7 @@ describe('index.ts', () => {
 
         const res = await app.fetch(req, mockEnv, mockCtx);
         expect(res.status).toBe(200);
-        const data = await res.json();
+        const data = (await res.json()) as InteractionResponseBody;
         expect(data.data.choices).toEqual([]);
       });
 
@@ -994,7 +994,7 @@ describe('index.ts', () => {
 
         const res = await app.fetch(req, mockEnv, mockCtx);
         expect(res.status).toBe(200);
-        const data = await res.json();
+        const data = (await res.json()) as InteractionResponseBody;
         expect(data.data.choices).toEqual([]);
       });
 
@@ -1042,7 +1042,7 @@ describe('index.ts', () => {
 
         const res = await app.fetch(req, mockEnv, mockCtx);
         expect(res.status).toBe(200);
-        const data = await res.json();
+        const data = (await res.json()) as InteractionResponseBody;
         expect(data.data.choices).toEqual([]);
       });
     });
@@ -1100,7 +1100,7 @@ describe('index.ts', () => {
 
         const res = await app.fetch(req, mockEnv, mockCtx);
         expect(res.status).toBe(200);
-        const data = await res.json();
+        const data = (await res.json()) as InteractionResponseBody;
         expect(data.data.content).toContain('not yet supported');
       });
     });
@@ -1162,7 +1162,7 @@ describe('index.ts', () => {
 
         const res = await app.fetch(req, mockEnv, mockCtx);
         expect(res.status).toBe(200);
-        const data = await res.json();
+        const data = (await res.json()) as InteractionResponseBody;
         expect(data.data.content).toContain('Unknown modal');
       });
 
@@ -1270,7 +1270,7 @@ describe('index.ts', () => {
 
         const res = await app.fetch(req, mockEnv, mockCtx);
         expect(res.status).toBe(200);
-        const data = await res.json();
+        const data = (await res.json()) as InteractionResponseBody;
         expect(searchPresetAuthors).toHaveBeenCalled();
         expect(data.data.choices[0].name).toContain('TestUser');
       });
@@ -1319,7 +1319,7 @@ describe('index.ts', () => {
 
         const res = await app.fetch(req, mockEnv, mockCtx);
         expect(res.status).toBe(200);
-        const data = await res.json();
+        const data = (await res.json()) as InteractionResponseBody;
         expect(data.data.choices).toEqual([]);
       });
 
@@ -1369,7 +1369,7 @@ describe('index.ts', () => {
 
         const res = await app.fetch(req, mockEnv, mockCtx);
         expect(res.status).toBe(200);
-        const data = await res.json();
+        const data = (await res.json()) as InteractionResponseBody;
         expect(searchBannedUsers).toHaveBeenCalled();
         expect(data.data.choices[0].name).toContain('BannedUser');
       });
@@ -1420,7 +1420,7 @@ describe('index.ts', () => {
 
         const res = await app.fetch(req, mockEnv, mockCtx);
         expect(res.status).toBe(200);
-        const data = await res.json();
+        const data = (await res.json()) as InteractionResponseBody;
         expect(data.data.choices[0].name).toContain('xivauth:xiv-123');
       });
 
@@ -1468,7 +1468,7 @@ describe('index.ts', () => {
 
         const res = await app.fetch(req, mockEnv, mockCtx);
         expect(res.status).toBe(200);
-        const data = await res.json();
+        const data = (await res.json()) as InteractionResponseBody;
         expect(data.data.choices).toEqual([]);
       });
     });
@@ -1600,7 +1600,7 @@ describe('index.ts', () => {
 
         const res = await app.fetch(req, mockEnv, mockCtx);
         expect(res.status).toBe(200);
-        const data = await res.json();
+        const data = (await res.json()) as InteractionResponseBody;
         expect(data.data.choices).toEqual([]);
       });
     });
@@ -1647,7 +1647,7 @@ describe('index.ts', () => {
 
         const res = await app.fetch(req, mockEnv, mockCtx);
         expect(res.status).toBe(200);
-        const data = await res.json();
+        const data = (await res.json()) as InteractionResponseBody;
         expect(data.data.choices).toEqual([]);
       });
     });
@@ -1784,7 +1784,7 @@ describe('index.ts', () => {
 
         const res = await app.fetch(req, mockEnv, mockCtx);
         expect(res.status).toBe(200);
-        const data = await res.json();
+        const data = (await res.json()) as InteractionResponseBody;
         expect(data.data.choices.length).toBe(2); // All collections returned
       });
     });

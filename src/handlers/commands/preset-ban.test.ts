@@ -6,7 +6,7 @@ import {
     handleBanUserSubcommand,
     handleUnbanUserSubcommand,
 } from './preset-ban.js';
-import { InteractionResponseType } from '../../types/env.js';
+import { InteractionResponseType, type InteractionResponseBody } from '../types/env.js';
 
 // Mock preset API
 vi.mock('../../services/preset-api.js', () => ({
@@ -70,7 +70,7 @@ describe('preset-ban.ts', () => {
                 'mod123',
                 [{ name: 'user', value: '123456789' }]
             );
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.data.content).toContain('moderation channel');
             expect(body.data.flags).toBe(64);
@@ -97,7 +97,7 @@ describe('preset-ban.ts', () => {
                 'mod123',
                 [{ name: 'user', value: '123456789' }]
             );
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.data.content).toContain('moderation channel');
         });
@@ -118,7 +118,7 @@ describe('preset-ban.ts', () => {
                 'regular-user', // Not a moderator
                 [{ name: 'user', value: '123456789' }]
             );
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.data.content).toContain('permission');
             expect(body.data.flags).toBe(64);
@@ -140,7 +140,7 @@ describe('preset-ban.ts', () => {
                 'mod123',
                 [] // No options
             );
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.data.content).toContain('specify a user');
             expect(body.data.flags).toBe(64);
@@ -165,7 +165,7 @@ describe('preset-ban.ts', () => {
                 'mod123',
                 [{ name: 'user', value: '999999999' }]
             );
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.data.content).toContain('not found');
             expect(body.data.flags).toBe(64);
@@ -200,7 +200,7 @@ describe('preset-ban.ts', () => {
                 'mod123',
                 [{ name: 'user', value: '123456789' }]
             );
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
             expect(body.data.embeds[0].title).toContain('Confirm');
@@ -233,7 +233,7 @@ describe('preset-ban.ts', () => {
                 'mod123',
                 [{ name: 'user', value: '123456789' }]
             );
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             const fields = body.data.embeds[0].fields;
             expect(fields.find((f: any) => f.name === 'Username').value).toBe('TestUser');
@@ -269,7 +269,7 @@ describe('preset-ban.ts', () => {
                 'mod123',
                 [{ name: 'user', value: '123456789' }]
             );
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             const presetsField = body.data.embeds[0].fields.find((f: any) => f.name === 'Recent Presets');
             expect(presetsField.value).toContain('[Sunset]');
@@ -302,7 +302,7 @@ describe('preset-ban.ts', () => {
                 'mod123',
                 [{ name: 'user', value: '123456789' }]
             );
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             const presetsField = body.data.embeds[0].fields.find((f: any) => f.name === 'Recent Presets');
             expect(presetsField.value).toContain('No presets');
@@ -334,7 +334,7 @@ describe('preset-ban.ts', () => {
                 'mod123',
                 [{ name: 'user', value: '123456789' }]
             );
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             const buttons = body.data.components[0].components;
             expect(buttons).toHaveLength(2);
@@ -370,7 +370,7 @@ describe('preset-ban.ts', () => {
                 'mod123',
                 [{ name: 'user', value: '123456789' }]
             );
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.data.flags).toBe(64);
         });
@@ -391,7 +391,7 @@ describe('preset-ban.ts', () => {
                 'mod123',
                 undefined
             );
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.data.content).toContain('specify a user');
         });
@@ -418,7 +418,7 @@ describe('preset-ban.ts', () => {
                 'mod123',
                 [{ name: 'user', value: '123456789' }]
             );
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.data.content).toContain('moderation channel');
         });
@@ -439,7 +439,7 @@ describe('preset-ban.ts', () => {
                 'regular-user',
                 [{ name: 'user', value: '123456789' }]
             );
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.data.content).toContain('permission');
         });
@@ -460,7 +460,7 @@ describe('preset-ban.ts', () => {
                 'mod123',
                 []
             );
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.data.content).toContain('specify a user');
         });
@@ -481,7 +481,7 @@ describe('preset-ban.ts', () => {
                 'mod123',
                 [{ name: 'user', value: '123456789' }]
             );
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.type).toBe(InteractionResponseType.DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE);
             expect(body.data.flags).toBe(64); // Ephemeral

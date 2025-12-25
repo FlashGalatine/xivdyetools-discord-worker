@@ -8,7 +8,7 @@ import {
     handlePresetRevertButton,
     isPresetModerationButton,
 } from './preset-moderation.js';
-import { InteractionResponseType } from '../../types/env.js';
+import { InteractionResponseType, type InteractionResponseBody } from '../types/env.js';
 
 // Mock preset API
 vi.mock('../../services/preset-api.js', () => ({
@@ -69,7 +69,7 @@ describe('preset-moderation.ts', () => {
             };
 
             const response = await handlePresetApproveButton(interaction, mockEnv, mockCtx);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.data.content).toContain('Invalid');
             expect(body.data.flags).toBe(64);
@@ -85,7 +85,7 @@ describe('preset-moderation.ts', () => {
             };
 
             const response = await handlePresetApproveButton(interaction, mockEnv, mockCtx);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.data.content).toContain('permission');
             expect(body.data.flags).toBe(64);
@@ -103,7 +103,7 @@ describe('preset-moderation.ts', () => {
             };
 
             const response = await handlePresetApproveButton(interaction, mockEnv, mockCtx);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.type).toBe(InteractionResponseType.DEFERRED_UPDATE_MESSAGE);
             expect(mockCtx.waitUntil).toHaveBeenCalled();
@@ -121,7 +121,7 @@ describe('preset-moderation.ts', () => {
             };
 
             const response = await handlePresetRejectButton(interaction, mockEnv, mockCtx);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.data.content).toContain('permission');
         });
@@ -136,7 +136,7 @@ describe('preset-moderation.ts', () => {
             };
 
             const response = await handlePresetRejectButton(interaction, mockEnv, mockCtx);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.type).toBe(InteractionResponseType.MODAL);
             expect(body.data.custom_id).toBe('preset_reject_modal_abc123');
@@ -153,7 +153,7 @@ describe('preset-moderation.ts', () => {
             };
 
             const response = await handlePresetRejectButton(interaction, mockEnv, mockCtx);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             const textInput = body.data.components[0].components[0];
             expect(textInput.custom_id).toBe('rejection_reason');
@@ -173,7 +173,7 @@ describe('preset-moderation.ts', () => {
             };
 
             const response = await handlePresetRevertButton(interaction, mockEnv, mockCtx);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.data.content).toContain('permission');
         });
@@ -188,7 +188,7 @@ describe('preset-moderation.ts', () => {
             };
 
             const response = await handlePresetRevertButton(interaction, mockEnv, mockCtx);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.type).toBe(InteractionResponseType.MODAL);
             expect(body.data.custom_id).toBe('preset_revert_modal_abc123');
@@ -205,7 +205,7 @@ describe('preset-moderation.ts', () => {
             };
 
             const response = await handlePresetRevertButton(interaction, mockEnv, mockCtx);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             const textInput = body.data.components[0].components[0];
             expect(textInput.custom_id).toBe('revert_reason');
@@ -222,7 +222,7 @@ describe('preset-moderation.ts', () => {
             };
 
             const response = await handlePresetRevertButton(interaction, mockEnv, mockCtx);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.data.content).toContain('Invalid');
         });
@@ -237,7 +237,7 @@ describe('preset-moderation.ts', () => {
             };
 
             const response = await handlePresetRevertButton(interaction, mockEnv, mockCtx);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.type).toBe(InteractionResponseType.MODAL);
         });
@@ -256,7 +256,7 @@ describe('preset-moderation.ts', () => {
             };
 
             const response = await handlePresetApproveButton(interaction, mockEnv, mockCtx);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.type).toBe(InteractionResponseType.DEFERRED_UPDATE_MESSAGE);
             expect(mockCtx.waitUntil).toHaveBeenCalled();
@@ -274,7 +274,7 @@ describe('preset-moderation.ts', () => {
             };
 
             const response = await handlePresetApproveButton(interaction, mockEnv, mockCtx);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.type).toBe(InteractionResponseType.DEFERRED_UPDATE_MESSAGE);
             expect(mockCtx.waitUntil).toHaveBeenCalled();
@@ -297,7 +297,7 @@ describe('preset-moderation.ts', () => {
             };
 
             const response = await handlePresetApproveButton(interaction, envWithoutLog, mockCtx);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.type).toBe(InteractionResponseType.DEFERRED_UPDATE_MESSAGE);
         });
@@ -317,7 +317,7 @@ describe('preset-moderation.ts', () => {
             };
 
             const response = await handlePresetApproveButton(interaction, mockEnv, mockCtx);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.type).toBe(InteractionResponseType.DEFERRED_UPDATE_MESSAGE);
             // Wait for async processing
@@ -340,7 +340,7 @@ describe('preset-moderation.ts', () => {
             };
 
             const response = await handlePresetApproveButton(interaction, mockEnv, mockCtx);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.type).toBe(InteractionResponseType.DEFERRED_UPDATE_MESSAGE);
         });
@@ -357,7 +357,7 @@ describe('preset-moderation.ts', () => {
             };
 
             const response = await handlePresetApproveButton(interaction, mockEnv, mockCtx);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.type).toBe(InteractionResponseType.DEFERRED_UPDATE_MESSAGE);
         });
@@ -374,7 +374,7 @@ describe('preset-moderation.ts', () => {
             };
 
             const response = await handlePresetRejectButton(interaction, mockEnv, mockCtx);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.data.content).toContain('Invalid');
         });
@@ -389,7 +389,7 @@ describe('preset-moderation.ts', () => {
             };
 
             const response = await handlePresetRejectButton(interaction, mockEnv, mockCtx);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.type).toBe(InteractionResponseType.MODAL);
         });
@@ -456,7 +456,7 @@ describe('preset-moderation.ts', () => {
             };
 
             const response = await handlePresetRevertButton(interaction as any, mockEnv, mockCtx);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.data.content).toContain('Invalid');
         });

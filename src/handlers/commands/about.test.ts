@@ -67,7 +67,7 @@ describe('about.ts', () => {
       };
 
       const response = await handleAboutCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
 
       expect(data.type).toBe(4); // CHANNEL_MESSAGE_WITH_SOURCE
       expect(data.data.embeds).toBeDefined();
@@ -85,7 +85,7 @@ describe('about.ts', () => {
       };
 
       const response = await handleAboutCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
 
       const embed = data.data.embeds[0];
       expect(embed.title).toContain('XIV Dye Tools');
@@ -103,7 +103,7 @@ describe('about.ts', () => {
       };
 
       const response = await handleAboutCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
 
       const embed = data.data.embeds[0];
       const commandListField = embed.fields[0];
@@ -128,7 +128,7 @@ describe('about.ts', () => {
       };
 
       const response = await handleAboutCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
 
       const commandListField = data.data.embeds[0].fields[0];
 
@@ -173,7 +173,7 @@ describe('about.ts', () => {
       };
 
       const response = await handleAboutCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
 
       const embed = data.data.embeds[0];
       // Should show total command count (18 commands based on COMMAND_CATEGORIES)
@@ -191,7 +191,7 @@ describe('about.ts', () => {
       };
 
       const response = await handleAboutCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
 
       const linksField = data.data.embeds[0].fields.find(
         (f: { name: string }) => f.name.includes('Links')
@@ -215,7 +215,7 @@ describe('about.ts', () => {
       };
 
       const response = await handleAboutCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
 
       const embed = data.data.embeds[0];
       expect(embed.footer).toBeDefined();
@@ -234,7 +234,7 @@ describe('about.ts', () => {
       };
 
       const response = await handleAboutCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
 
       expect(data.data.embeds[0].timestamp).toBeDefined();
       // Should be valid ISO timestamp
@@ -252,7 +252,7 @@ describe('about.ts', () => {
       };
 
       const response = await handleAboutCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
 
       // Discord blurple is 0x5865F2
       expect(data.data.embeds[0].color).toBe(0x5865f2);
@@ -269,7 +269,7 @@ describe('about.ts', () => {
       };
 
       const response = await handleAboutCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
 
       expect(data.type).toBe(4);
       expect(data.data.embeds[0].title).toContain('XIV Dye Tools');
@@ -286,7 +286,7 @@ describe('about.ts', () => {
       };
 
       const response = await handleAboutCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
 
       // Should still work, using 'unknown' as userId
       expect(data.type).toBe(4);
@@ -326,7 +326,7 @@ describe('about.ts', () => {
       };
 
       const response = await handleAboutCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
 
       const commandListField = data.data.embeds[0].fields[0];
 
@@ -348,7 +348,7 @@ describe('about.ts', () => {
       };
 
       const response = await handleAboutCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
 
       const commandListField = data.data.embeds[0].fields[0];
 

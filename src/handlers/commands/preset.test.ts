@@ -199,7 +199,7 @@ describe('/preset command', () => {
             };
 
             const res = await handlePresetCommand(interaction, env, ctx);
-            const body = await res.json();
+            const body = (await res.json()) as InteractionResponseBody;
 
             expect(body.data.embeds[0].description).toBe('Preset API is disabled');
         });
@@ -216,7 +216,7 @@ describe('/preset command', () => {
             };
 
             const res = await handlePresetCommand(interaction, env, ctx);
-            const body = await res.json();
+            const body = (await res.json()) as InteractionResponseBody;
 
             expect(body.data.content).toBe('Invalid command structure');
         });
@@ -231,7 +231,7 @@ describe('/preset command', () => {
             };
 
             const res = await handlePresetCommand(interaction, env, ctx);
-            const body = await res.json();
+            const body = (await res.json()) as InteractionResponseBody;
 
             expect(body.data.content).toContain('Unknown subcommand');
         });
@@ -248,7 +248,7 @@ describe('/preset command', () => {
             };
 
             const res = await handlePresetCommand(interaction, env, ctx);
-            const body = await res.json();
+            const body = (await res.json()) as InteractionResponseBody;
 
             expect(body.type).toBe(5); // Deferred
             expect(ctx.waitUntil).toHaveBeenCalled();
@@ -327,7 +327,7 @@ describe('/preset command', () => {
             };
 
             const res = await handlePresetCommand(interaction, env, ctx);
-            const body = await res.json();
+            const body = (await res.json()) as InteractionResponseBody;
 
             expect(body.data.embeds[0].description).toBe('Missing input');
         });
@@ -346,7 +346,7 @@ describe('/preset command', () => {
             };
 
             const res = await handlePresetCommand(interaction, env, ctx);
-            const body = await res.json();
+            const body = (await res.json()) as InteractionResponseBody;
 
             expect(body.type).toBe(5); // Deferred
             expect(ctx.waitUntil).toHaveBeenCalled();
@@ -393,7 +393,7 @@ describe('/preset command', () => {
             };
 
             const res = await handlePresetCommand(interaction, env, ctx);
-            const body = await res.json();
+            const body = (await res.json()) as InteractionResponseBody;
 
             expect(body.type).toBe(5);
             expect(ctx.waitUntil).toHaveBeenCalled();
@@ -437,7 +437,7 @@ describe('/preset command', () => {
             };
 
             const res = await handlePresetCommand(interaction, env, ctx);
-            const body = await res.json();
+            const body = (await res.json()) as InteractionResponseBody;
 
             expect(body.data.embeds[0].description).toBe('Missing input');
         });
@@ -461,7 +461,7 @@ describe('/preset command', () => {
             };
 
             const res = await handlePresetCommand(interaction, env, ctx);
-            const body = await res.json();
+            const body = (await res.json()) as InteractionResponseBody;
 
             expect(body.data.embeds[0].description).toBe('At least 2 dyes required');
         });
@@ -486,7 +486,7 @@ describe('/preset command', () => {
             };
 
             const res = await handlePresetCommand(interaction, env, ctx);
-            const body = await res.json();
+            const body = (await res.json()) as InteractionResponseBody;
 
             expect(body.data.embeds[0].description).toBe('Invalid dye name');
         });
@@ -511,7 +511,7 @@ describe('/preset command', () => {
             };
 
             const res = await handlePresetCommand(interaction, env, ctx);
-            const body = await res.json();
+            const body = (await res.json()) as InteractionResponseBody;
 
             expect(body.type).toBe(5);
             expect(ctx.waitUntil).toHaveBeenCalled();
@@ -560,7 +560,7 @@ describe('/preset command', () => {
             };
 
             const res = await handlePresetCommand(interaction, env, ctx);
-            const body = await res.json();
+            const body = (await res.json()) as InteractionResponseBody;
 
             expect(body.data.embeds[0].description).toBe('Missing input');
         });
@@ -619,7 +619,7 @@ describe('/preset command', () => {
             };
 
             const res = await handlePresetCommand(interaction, env, ctx);
-            const body = await res.json();
+            const body = (await res.json()) as InteractionResponseBody;
 
             expect(body.data.embeds[0].description).toBe('Missing input');
         });
@@ -638,7 +638,7 @@ describe('/preset command', () => {
             };
 
             const res = await handlePresetCommand(interaction, env, ctx);
-            const body = await res.json();
+            const body = (await res.json()) as InteractionResponseBody;
 
             expect(body.data.embeds[0].description).toContain('at least one field');
         });
@@ -1097,7 +1097,7 @@ describe('/preset command', () => {
             };
 
             const res = await handlePresetCommand(interaction, env, ctx);
-            const body = await res.json();
+            const body = (await res.json()) as InteractionResponseBody;
 
             expect(body.data.embeds[0].description).toBe('Access denied - moderators only');
         });
@@ -1118,7 +1118,7 @@ describe('/preset command', () => {
             };
 
             const res = await handlePresetCommand(interaction, env, ctx);
-            const body = await res.json();
+            const body = (await res.json()) as InteractionResponseBody;
 
             expect(body.type).toBe(5); // Deferred
         });
@@ -1139,7 +1139,7 @@ describe('/preset command', () => {
             };
 
             const res = await handlePresetCommand(interaction, env, ctx);
-            const body = await res.json();
+            const body = (await res.json()) as InteractionResponseBody;
 
             expect(body.data.content).toBe('Missing action');
         });
@@ -1485,7 +1485,7 @@ describe('/preset command', () => {
             };
 
             const res = await handlePresetCommand(interaction, env, ctx);
-            const body = await res.json();
+            const body = (await res.json()) as InteractionResponseBody;
 
             expect(body.type).toBe(5);
         });

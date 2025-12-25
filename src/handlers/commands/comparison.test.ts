@@ -173,7 +173,7 @@ describe('comparison.ts', () => {
       };
 
       const response = await handleComparisonCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
 
       expect(data.type).toBe(4);
       expect(data.data.embeds[0].title).toContain('Error');
@@ -195,7 +195,7 @@ describe('comparison.ts', () => {
       };
 
       const response = await handleComparisonCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
 
       expect(data.type).toBe(4);
       expect(data.data.flags).toBe(64);
@@ -218,7 +218,7 @@ describe('comparison.ts', () => {
       };
 
       const response = await handleComparisonCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
 
       expect(data.type).toBe(4);
       expect(data.data.embeds[0].description).toContain('notfound');
@@ -242,7 +242,7 @@ describe('comparison.ts', () => {
       };
 
       const response = await handleComparisonCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
 
       expect(data.type).toBe(4);
       expect(data.data.embeds[0].description).toContain('notfound1');
@@ -268,7 +268,7 @@ describe('comparison.ts', () => {
       };
 
       const response = await handleComparisonCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
 
       expect(data.type).toBe(5); // DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE
       expect(mockCtx.waitUntil).toHaveBeenCalled();
@@ -324,7 +324,7 @@ describe('comparison.ts', () => {
       };
 
       const response = await handleComparisonCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
 
       expect(data.type).toBe(5);
     });
@@ -346,7 +346,7 @@ describe('comparison.ts', () => {
       };
 
       const response = await handleComparisonCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
 
       expect(data.type).toBe(5);
     });
@@ -369,7 +369,7 @@ describe('comparison.ts', () => {
       };
 
       const response = await handleComparisonCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
 
       expect(data.type).toBe(5);
     });
@@ -424,7 +424,7 @@ describe('comparison.ts', () => {
       };
 
       const response = await handleComparisonCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
 
       expect(data.type).toBe(5);
     });
@@ -448,7 +448,7 @@ describe('comparison.ts', () => {
       };
 
       const response = await handleComparisonCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
 
       // Even Facewear dyes are included when specifically requested
       expect(data.type).toBe(5);
@@ -577,7 +577,7 @@ describe('comparison.ts', () => {
       };
 
       const response = await handleComparisonCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
 
       // Should still work with 'unknown' user ID
       expect(data.type).toBe(5);

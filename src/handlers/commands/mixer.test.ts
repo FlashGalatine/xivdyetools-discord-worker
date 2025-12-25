@@ -164,7 +164,7 @@ describe('/mixer command', () => {
         };
 
         const res = await handleMixerCommand(interaction, env, ctx);
-        const body = await res.json();
+        const body = (await res.json()) as InteractionResponseBody;
 
         expect(body.data.embeds[0].description).toBe('Missing input');
         expect(body.data.flags).toBe(64);
@@ -182,7 +182,7 @@ describe('/mixer command', () => {
         };
 
         const res = await handleMixerCommand(interaction, env, ctx);
-        const body = await res.json();
+        const body = (await res.json()) as InteractionResponseBody;
 
         expect(body.data.embeds[0].description).toBe('Missing input');
         expect(body.data.flags).toBe(64);
@@ -201,7 +201,7 @@ describe('/mixer command', () => {
         };
 
         const res = await handleMixerCommand(interaction, env, ctx);
-        const body = await res.json();
+        const body = (await res.json()) as InteractionResponseBody;
 
         expect(body.data.embeds[0].description).toContain('Invalid color');
         expect(body.data.flags).toBe(64);
@@ -220,7 +220,7 @@ describe('/mixer command', () => {
         };
 
         const res = await handleMixerCommand(interaction, env, ctx);
-        const body = await res.json();
+        const body = (await res.json()) as InteractionResponseBody;
 
         expect(body.data.embeds[0].description).toContain('Invalid color');
         expect(body.data.flags).toBe(64);
@@ -239,7 +239,7 @@ describe('/mixer command', () => {
         };
 
         const res = await handleMixerCommand(interaction, env, ctx);
-        const body = await res.json();
+        const body = (await res.json()) as InteractionResponseBody;
 
         // Should return deferred response
         expect(body.type).toBe(5);
@@ -266,7 +266,7 @@ describe('/mixer command', () => {
         };
 
         const res = await handleMixerCommand(interaction, env, ctx);
-        const body = await res.json();
+        const body = (await res.json()) as InteractionResponseBody;
 
         // Should return deferred response
         expect(body.type).toBe(5);
@@ -287,7 +287,7 @@ describe('/mixer command', () => {
         };
 
         const res = await handleMixerCommand(interaction, env, ctx);
-        const body = await res.json();
+        const body = (await res.json()) as InteractionResponseBody;
 
         // Should return deferred response
         expect(body.type).toBe(5);
@@ -307,7 +307,7 @@ describe('/mixer command', () => {
         };
 
         const res = await handleMixerCommand(interaction, env, ctx);
-        const body = await res.json();
+        const body = (await res.json()) as InteractionResponseBody;
 
         // Should return deferred response (valid colors)
         expect(body.type).toBe(5);
@@ -355,7 +355,7 @@ describe('/mixer command', () => {
         };
 
         const res = await handleMixerCommand(interaction, env, ctx);
-        const body = await res.json();
+        const body = (await res.json()) as InteractionResponseBody;
 
         expect(body.type).toBe(5);
     });
@@ -374,7 +374,7 @@ describe('/mixer command', () => {
         };
 
         const res = await handleMixerCommand(interaction, env, ctx);
-        const body = await res.json();
+        const body = (await res.json()) as InteractionResponseBody;
 
         expect(body.type).toBe(5);
 
@@ -463,7 +463,7 @@ describe('/mixer command', () => {
         };
 
         const res = await handleMixerCommand(interaction, env, ctx);
-        const body = await res.json();
+        const body = (await res.json()) as InteractionResponseBody;
 
         expect(body.type).toBe(5);
     });

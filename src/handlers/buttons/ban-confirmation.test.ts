@@ -8,7 +8,7 @@ import {
     isBanConfirmButton,
     isBanCancelButton,
 } from './ban-confirmation.js';
-import { InteractionResponseType } from '../../types/env.js';
+import { InteractionResponseType, type InteractionResponseBody } from '../../types/env.js';
 
 // Mock preset API
 vi.mock('../../services/preset-api.js', () => ({
@@ -87,7 +87,7 @@ describe('ban-confirmation.ts', () => {
             };
 
             const response = await handleBanConfirmButton(interaction, mockEnv, mockCtx);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.data.content).toContain('Invalid');
             expect(body.data.flags).toBe(64);
@@ -103,7 +103,7 @@ describe('ban-confirmation.ts', () => {
             };
 
             const response = await handleBanConfirmButton(interaction, mockEnv, mockCtx);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.data.content).toContain('permission');
             expect(body.data.flags).toBe(64);
@@ -119,7 +119,7 @@ describe('ban-confirmation.ts', () => {
             };
 
             const response = await handleBanConfirmButton(interaction, mockEnv, mockCtx);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.data.content).toContain('Invalid button data');
             expect(body.data.flags).toBe(64);
@@ -135,7 +135,7 @@ describe('ban-confirmation.ts', () => {
             };
 
             const response = await handleBanConfirmButton(interaction, mockEnv, mockCtx);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.data.content).toContain('Invalid target user');
             expect(body.data.flags).toBe(64);
@@ -151,7 +151,7 @@ describe('ban-confirmation.ts', () => {
             };
 
             const response = await handleBanConfirmButton(interaction, mockEnv, mockCtx);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.type).toBe(InteractionResponseType.MODAL);
             expect(body.data.custom_id).toBe('ban_reason_modal_123456789_TestUser');
@@ -168,7 +168,7 @@ describe('ban-confirmation.ts', () => {
             };
 
             const response = await handleBanConfirmButton(interaction, mockEnv, mockCtx);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             const textInput = body.data.components[0].components[0];
             expect(textInput.custom_id).toBe('ban_reason');
@@ -189,7 +189,7 @@ describe('ban-confirmation.ts', () => {
             };
 
             const response = await handleBanConfirmButton(interaction, mockEnv, mockCtx);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.type).toBe(InteractionResponseType.MODAL);
         });
@@ -204,7 +204,7 @@ describe('ban-confirmation.ts', () => {
             };
 
             const response = await handleBanConfirmButton(interaction, mockEnv, mockCtx);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.data.custom_id).toBe('ban_reason_modal_123456789_User_Name_Here');
         });
@@ -219,7 +219,7 @@ describe('ban-confirmation.ts', () => {
             };
 
             const response = await handleBanConfirmButton(interaction, mockEnv, mockCtx);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             // Should fail validation since empty custom_id won't have underscore
             expect(body.data.content).toContain('Invalid');
@@ -242,7 +242,7 @@ describe('ban-confirmation.ts', () => {
             };
 
             const response = await handleBanCancelButton(interaction, mockEnv, mockCtx);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.type).toBe(InteractionResponseType.UPDATE_MESSAGE);
         });
@@ -257,7 +257,7 @@ describe('ban-confirmation.ts', () => {
             };
 
             const response = await handleBanCancelButton(interaction, mockEnv, mockCtx);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.data.embeds[0].title).toContain('Cancelled');
             expect(body.data.embeds[0].description).toContain('cancelled');
@@ -273,7 +273,7 @@ describe('ban-confirmation.ts', () => {
             };
 
             const response = await handleBanCancelButton(interaction, mockEnv, mockCtx);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.data.components).toEqual([]);
         });
@@ -288,7 +288,7 @@ describe('ban-confirmation.ts', () => {
             };
 
             const response = await handleBanCancelButton(interaction, mockEnv, mockCtx);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.data.embeds[0].color).toBe(0x5865f2);
         });
@@ -303,7 +303,7 @@ describe('ban-confirmation.ts', () => {
             };
 
             const response = await handleBanCancelButton(interaction, mockEnv, mockCtx);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.type).toBe(InteractionResponseType.UPDATE_MESSAGE);
         });

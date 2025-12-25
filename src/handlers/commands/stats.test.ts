@@ -90,7 +90,7 @@ describe('stats.ts', () => {
       };
 
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
 
       expect(data.type).toBe(4);
       expect(data.data.embeds[0].title).toContain('Access Denied');
@@ -108,7 +108,7 @@ describe('stats.ts', () => {
       };
 
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
 
       expect(data.type).toBe(4);
       expect(data.data.embeds[0].title).toContain('Bot Statistics');
@@ -125,7 +125,7 @@ describe('stats.ts', () => {
       };
 
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
 
       expect(data.data.embeds[0].title).toContain('Bot Statistics');
     });
@@ -143,7 +143,7 @@ describe('stats.ts', () => {
       };
 
       const response = await handleStatsCommand(interaction, envWithoutAuth, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
 
       expect(data.data.embeds[0].title).toContain('Access Denied');
     });
@@ -159,7 +159,7 @@ describe('stats.ts', () => {
       };
 
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
 
       expect(data.data.embeds[0].title).toContain('Access Denied');
     });
@@ -175,7 +175,7 @@ describe('stats.ts', () => {
       };
 
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
 
       expect(data.data.embeds[0].title).toContain('Bot Statistics');
     });
@@ -196,7 +196,7 @@ describe('stats.ts', () => {
       };
 
       const response = await handleStatsCommand(interaction, envWithSpaces, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
 
       expect(data.data.embeds[0].title).toContain('Bot Statistics');
     });
@@ -214,7 +214,7 @@ describe('stats.ts', () => {
       };
 
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
 
       const embed = data.data.embeds[0];
       expect(embed.title).toBe('📊 Bot Statistics');
@@ -243,7 +243,7 @@ describe('stats.ts', () => {
       };
 
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
 
       const infraField = data.data.embeds[0].fields.find(
         (f: { name: string }) => f.name.includes('Infrastructure')
@@ -264,7 +264,7 @@ describe('stats.ts', () => {
       };
 
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
 
       const topField = data.data.embeds[0].fields.find(
         (f: { name: string }) => f.name.includes('Top Commands')
@@ -296,7 +296,7 @@ describe('stats.ts', () => {
       };
 
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
 
       const topField = data.data.embeds[0].fields.find(
         (f: { name: string }) => f.name.includes('Top Commands')
@@ -320,7 +320,7 @@ describe('stats.ts', () => {
       };
 
       const response = await handleStatsCommand(interaction, envWithAnalytics, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
 
       const infraField = data.data.embeds[0].fields.find(
         (f: { name: string }) => f.name.includes('Infrastructure')
@@ -339,7 +339,7 @@ describe('stats.ts', () => {
       };
 
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
 
       const infraField = data.data.embeds[0].fields.find(
         (f: { name: string }) => f.name.includes('Infrastructure')
@@ -358,7 +358,7 @@ describe('stats.ts', () => {
       };
 
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
 
       expect(data.data.embeds[0].footer.text).toContain('30-day retention');
     });
@@ -374,7 +374,7 @@ describe('stats.ts', () => {
       };
 
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
 
       expect(data.data.embeds[0].timestamp).toBeDefined();
     });
@@ -390,7 +390,7 @@ describe('stats.ts', () => {
       };
 
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
 
       expect(data.data.flags).toBe(64);
     });
@@ -410,7 +410,7 @@ describe('stats.ts', () => {
       };
 
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
-      const data = await response.json();
+      const data = (await response.json()) as InteractionResponseBody;
 
       expect(data.data.embeds[0].title).toContain('Error');
       expect(data.data.embeds[0].description).toContain('Failed to retrieve statistics');

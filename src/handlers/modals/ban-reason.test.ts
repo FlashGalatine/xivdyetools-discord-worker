@@ -6,7 +6,7 @@ import {
     handleBanReasonModal,
     isBanReasonModal,
 } from './ban-reason.js';
-import { InteractionResponseType } from '../../types/env.js';
+import { InteractionResponseType, type InteractionResponseBody } from '../types/env.js';
 
 // Mock preset API
 vi.mock('../../services/preset-api.js', () => ({
@@ -90,7 +90,7 @@ describe('ban-reason.ts', () => {
             };
 
             const response = await handleBanReasonModal(interaction, mockEnv, mockCtx);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
             expect(body.data.embeds[0].title).toContain('Error');
@@ -117,7 +117,7 @@ describe('ban-reason.ts', () => {
             };
 
             const response = await handleBanReasonModal(interaction, mockEnv, mockCtx);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.data.embeds[0].title).toContain('Error');
             expect(body.data.embeds[0].description).toContain('permission');
@@ -144,7 +144,7 @@ describe('ban-reason.ts', () => {
             };
 
             const response = await handleBanReasonModal(interaction, mockEnv, mockCtx);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.data.embeds[0].title).toContain('Error');
             expect(body.data.embeds[0].description).toContain('Invalid modal data');
@@ -170,7 +170,7 @@ describe('ban-reason.ts', () => {
             };
 
             const response = await handleBanReasonModal(interaction, mockEnv, mockCtx);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.data.embeds[0].title).toContain('Error');
             expect(body.data.embeds[0].description).toContain('Invalid target user');
@@ -189,7 +189,7 @@ describe('ban-reason.ts', () => {
             };
 
             const response = await handleBanReasonModal(interaction, mockEnv, mockCtx);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.data.embeds[0].title).toContain('Error');
             expect(body.data.embeds[0].description).toContain('valid ban reason');
@@ -215,7 +215,7 @@ describe('ban-reason.ts', () => {
             };
 
             const response = await handleBanReasonModal(interaction, mockEnv, mockCtx);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.data.embeds[0].title).toContain('Error');
             expect(body.data.embeds[0].description).toContain('at least 10 characters');
@@ -241,7 +241,7 @@ describe('ban-reason.ts', () => {
             };
 
             const response = await handleBanReasonModal(interaction, mockEnv, mockCtx);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.type).toBe(InteractionResponseType.UPDATE_MESSAGE);
             expect(body.data.embeds[0].title).toContain('Processing');
@@ -293,7 +293,7 @@ describe('ban-reason.ts', () => {
             };
 
             const response = await handleBanReasonModal(interaction, mockEnv, mockCtx);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.type).toBe(InteractionResponseType.UPDATE_MESSAGE);
         });
@@ -656,7 +656,7 @@ describe('ban-reason.ts', () => {
             };
 
             const response = await handleBanReasonModal(interaction, mockEnv, mockCtx);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.data.embeds[0].title).toContain('Error');
             expect(body.data.embeds[0].description).toContain('valid ban reason');
@@ -675,7 +675,7 @@ describe('ban-reason.ts', () => {
             };
 
             const response = await handleBanReasonModal(interaction, mockEnv, mockCtx);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.data.embeds[0].title).toContain('Error');
         });
@@ -739,7 +739,7 @@ describe('ban-reason.ts', () => {
             };
 
             const response = await handleBanReasonModal(interaction, mockEnv, mockCtx);
-            const body = await response.json();
+            const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.data.embeds[0].color).toBe(0xfee75c); // Yellow
         });

@@ -176,7 +176,7 @@ describe('/match command', () => {
     const interaction = { ...baseInteraction, data: { ...baseInteraction.data, options: [] } };
 
     const res = await handleMatchCommand(interaction, env, ctx);
-    const body = await res.json();
+    const body = (await res.json()) as InteractionResponseBody;
 
     expect(body.data.embeds[0].description).toBe('Missing input');
     expect(body.data.flags).toBe(64);
@@ -189,7 +189,7 @@ describe('/match command', () => {
     };
 
     const res = await handleMatchCommand(interaction, env, ctx);
-    const body = await res.json();
+    const body = (await res.json()) as InteractionResponseBody;
 
     expect(body.data.embeds[0].description).toContain('Invalid color');
     expect(body.data.flags).toBe(64);
@@ -202,7 +202,7 @@ describe('/match command', () => {
       };
 
       const res = await handleMatchCommand(interaction, env, ctx);
-      const body = await res.json();
+      const body = (await res.json()) as InteractionResponseBody;
 
       expect(body.data.embeds[0].title).toContain('Closest match');
     });
@@ -214,7 +214,7 @@ describe('/match command', () => {
       };
 
       const res = await handleMatchCommand(interaction, env, ctx);
-      const body = await res.json();
+      const body = (await res.json()) as InteractionResponseBody;
 
       expect(body.data.embeds[0].title).toContain('Closest match');
     });
@@ -232,7 +232,7 @@ describe('/match command', () => {
       };
 
       const res = await handleMatchCommand(interaction, env, ctx);
-      const body = await res.json();
+      const body = (await res.json()) as InteractionResponseBody;
 
       // count=0 should be clamped to 1, giving single match response
       expect(body.data.embeds[0].title).toContain('Closest match');
@@ -251,7 +251,7 @@ describe('/match command', () => {
       };
 
       const res = await handleMatchCommand(interaction, env, ctx);
-      const body = await res.json();
+      const body = (await res.json()) as InteractionResponseBody;
 
       // count=15 should be clamped to 10
       expect(body.data.embeds[0].title).toContain('Top');
@@ -266,7 +266,7 @@ describe('/match command', () => {
     };
 
     const res = await handleMatchCommand(interaction, env, ctx);
-    const body = await res.json();
+    const body = (await res.json()) as InteractionResponseBody;
 
     expect(body.data.embeds[0].title).toContain('Closest match');
     expect(body.data.embeds[0].fields).toHaveLength(3);
@@ -281,7 +281,7 @@ describe('/match command', () => {
       };
 
       const res = await handleMatchCommand(interaction, env, ctx);
-      const body = await res.json();
+      const body = (await res.json()) as InteractionResponseBody;
 
       // Should show source dye name in input color field
       const inputField = body.data.embeds[0].fields.find((f: any) => f.name.includes('Input'));
@@ -304,7 +304,7 @@ describe('/match command', () => {
       };
 
       const res = await handleMatchCommand(interaction, env, ctx);
-      const body = await res.json();
+      const body = (await res.json()) as InteractionResponseBody;
 
       expect(body.data.embeds[0].title).toContain('Top 2 matches');
       expect(body.data.embeds[0].description).toContain('Dye One-localized');
@@ -324,7 +324,7 @@ describe('/match command', () => {
       };
 
       const res = await handleMatchCommand(interaction, env, ctx);
-      const body = await res.json();
+      const body = (await res.json()) as InteractionResponseBody;
 
       // Multi-match should show source dye name in description
       expect(body.data.embeds[0].description).toContain('Rose Pink-localized');
@@ -340,7 +340,7 @@ describe('/match command', () => {
       };
 
       const res = await handleMatchCommand(interaction, env, ctx);
-      const body = await res.json();
+      const body = (await res.json()) as InteractionResponseBody;
 
       const qualityField = body.data.embeds[0].fields.find((f: any) => f.name.includes('Quality'));
       expect(qualityField.value).toContain('Perfect');
@@ -360,7 +360,7 @@ describe('/match command', () => {
       };
 
       const res = await handleMatchCommand(interaction, env, ctx);
-      const body = await res.json();
+      const body = (await res.json()) as InteractionResponseBody;
 
       // Should still work in DM context
       expect(body.data.embeds[0].title).toContain('Closest match');
@@ -378,7 +378,7 @@ describe('/match command', () => {
       };
 
       const res = await handleMatchCommand(interaction, env, ctx);
-      const body = await res.json();
+      const body = (await res.json()) as InteractionResponseBody;
 
       expect(body.data.embeds[0].description).toBe('No matches found');
       expect(body.data.flags).toBe(64);
@@ -402,7 +402,7 @@ describe('/match command', () => {
       };
 
       const res = await handleMatchCommand(interaction, env, ctx);
-      const body = await res.json();
+      const body = (await res.json()) as InteractionResponseBody;
 
       // Should return Dye One, not Facewear Dye
       expect(body.data.embeds[0].title).toContain('Dye One-localized');
@@ -419,7 +419,7 @@ describe('/match command', () => {
       };
 
       const res = await handleMatchCommand(interaction, env, ctx);
-      const body = await res.json();
+      const body = (await res.json()) as InteractionResponseBody;
 
       // Facewear dye should be excluded from name search, so it should be invalid color
       expect(body.data.embeds[0].description).toContain('Invalid color');
@@ -435,7 +435,7 @@ describe('/match command', () => {
       };
 
       const res = await handleMatchCommand(interaction, env, ctx);
-      const body = await res.json();
+      const body = (await res.json()) as InteractionResponseBody;
 
       // After 20 attempts of getting Facewear, should return no matches
       expect(body.data.embeds[0].description).toBe('No matches found');
@@ -455,7 +455,7 @@ describe('/match command', () => {
       } as DiscordInteraction;
 
       const res = await handleMatchCommand(interaction, env, ctx);
-      const body = await res.json();
+      const body = (await res.json()) as InteractionResponseBody;
 
       // Missing options should result in missing input error
       expect(body.data.embeds[0].description).toBe('Missing input');
@@ -471,7 +471,7 @@ describe('/match command', () => {
       };
 
       const res = await handleMatchCommand(interaction, env, ctx);
-      const body = await res.json();
+      const body = (await res.json()) as InteractionResponseBody;
 
       // Should still work without emoji
       expect(body.data.embeds[0].title).toContain('Closest match');
@@ -496,7 +496,7 @@ describe('/match command', () => {
       };
 
       const res = await handleMatchCommand(interaction, env, ctx);
-      const body = await res.json();
+      const body = (await res.json()) as InteractionResponseBody;
 
       // Should still work without emoji
       expect(body.data.embeds[0].title).toContain('Top 2 matches');
@@ -512,7 +512,7 @@ describe('/match command', () => {
       };
 
       const res = await handleMatchCommand(interaction, env, ctx);
-      const body = await res.json();
+      const body = (await res.json()) as InteractionResponseBody;
 
       // Should still include fromDye name without emoji
       const inputField = body.data.embeds[0].fields.find((f: any) => f.name.includes('Input'));
