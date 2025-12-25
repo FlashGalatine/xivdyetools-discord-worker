@@ -158,7 +158,7 @@ describe('preset-api.ts', () => {
             });
 
             await getPresets(env, {
-                category: 'armor',
+                category: 'aesthetics',
                 search: 'test',
                 status: 'approved',
                 sort: 'popular',
@@ -167,7 +167,7 @@ describe('preset-api.ts', () => {
             });
 
             const calledUrl = mockFetch.mock.calls[0][0];
-            expect(calledUrl).toContain('category=armor');
+            expect(calledUrl).toContain('category=aesthetics');
             expect(calledUrl).toContain('search=test');
             expect(calledUrl).toContain('status=approved');
             expect(calledUrl).toContain('sort=popular');
@@ -262,7 +262,7 @@ describe('preset-api.ts', () => {
         it('should filter by category when provided', async () => {
             const env = createMockEnv({ withUrlConfig: true });
             const mockPresets = [
-                { id: '1', name: 'Armor Preset', category: 'armor' },
+                { id: '1', name: 'Aesthetics Preset', category: 'aesthetics' },
             ];
 
             mockFetch.mockResolvedValueOnce({
@@ -270,11 +270,11 @@ describe('preset-api.ts', () => {
                 json: () => Promise.resolve({ presets: mockPresets, total: 1 }),
             });
 
-            const result = await getRandomPreset(env, 'armor');
+            const result = await getRandomPreset(env, 'aesthetics');
 
             expect(result).toEqual(mockPresets[0]);
             const calledUrl = mockFetch.mock.calls[0][0];
-            expect(calledUrl).toContain('category=armor');
+            expect(calledUrl).toContain('category=aesthetics');
         });
 
         it('should return null when no presets available', async () => {
@@ -303,7 +303,7 @@ describe('preset-api.ts', () => {
 
             const result = await submitPreset(
                 env,
-                { name: 'New Preset', description: 'Test', category: 'armor', dye_ids: [1, 2] },
+                { name: 'New Preset', description: 'Test description text', category_id: 'aesthetics', dyes: [1, 2], tags: [] },
                 'user123',
                 'TestUser'
             );
@@ -551,7 +551,7 @@ describe('preset-api.ts', () => {
             });
 
             await expect(
-                editPreset(env, 'preset123', { dye_ids: [1, 2] }, 'user123', 'TestUser')
+                editPreset(env, 'preset123', { dyes: [1, 2] }, 'user123', 'TestUser')
             ).rejects.toThrow(PresetAPIError);
         });
     });

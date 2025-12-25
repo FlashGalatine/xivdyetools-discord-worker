@@ -7,10 +7,12 @@ import {
     generateCompactPresetSwatch,
     type PresetSwatchOptions,
 } from './preset-swatch.js';
-import type { Dye } from '@xivdyetools/core';
+import { createMockDye } from '@xivdyetools/test-utils/factories';
+import type { Dye } from '@xivdyetools/types/dye';
+import type { PresetCategory } from '../../types/preset.js';
 
 describe('svg/preset-swatch.ts', () => {
-    const mockDye1: Dye = {
+    const mockDye1: Dye = createMockDye({
         id: 1,
         itemID: 5729,
         name: 'Dalamud Red',
@@ -18,9 +20,9 @@ describe('svg/preset-swatch.ts', () => {
         rgb: { r: 170, g: 17, b: 17 },
         hsv: { h: 0, s: 90, v: 67 },
         category: 'Red',
-    };
+    });
 
-    const mockDye2: Dye = {
+    const mockDye2: Dye = createMockDye({
         id: 2,
         itemID: 5730,
         name: 'Jet Black',
@@ -28,9 +30,10 @@ describe('svg/preset-swatch.ts', () => {
         rgb: { r: 0, g: 0, b: 0 },
         hsv: { h: 0, s: 0, v: 0 },
         category: 'Black',
-    };
+        isDark: true,
+    });
 
-    const mockDye3: Dye = {
+    const mockDye3: Dye = createMockDye({
         id: 3,
         itemID: 5731,
         name: 'Snow White',
@@ -38,12 +41,12 @@ describe('svg/preset-swatch.ts', () => {
         rgb: { r: 255, g: 255, b: 255 },
         hsv: { h: 0, s: 0, v: 100 },
         category: 'White',
-    };
+    });
 
     const baseOptions: PresetSwatchOptions = {
         name: 'Test Preset',
         description: 'A test preset description',
-        category: 'armor',
+        category: 'aesthetics' as PresetCategory,
         dyes: [mockDye1, mockDye2],
     };
 
@@ -242,7 +245,7 @@ describe('svg/preset-swatch.ts', () => {
 
     describe('dye name truncation', () => {
         it('should truncate long dye names in full swatch view', () => {
-            const longNameDye: Dye = {
+            const longNameDye: Dye = createMockDye({
                 id: 99,
                 itemID: 9999,
                 name: 'A Very Long Dye Name That Exceeds The Maximum Allowed Length',
@@ -250,7 +253,7 @@ describe('svg/preset-swatch.ts', () => {
                 rgb: { r: 255, g: 0, b: 255 },
                 hsv: { h: 300, s: 100, v: 100 },
                 category: 'Purple',
-            };
+            });
 
             // Use a smaller width so the truncation kicks in sooner
             const svg = generatePresetSwatch({

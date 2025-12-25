@@ -3,7 +3,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { handlePresetCommand } from './preset.js';
-import type { DiscordInteraction, Env } from '../../types/env.js';
+import type { DiscordInteraction, Env, InteractionResponseBody } from '../../types/env.js';
 
 // ---------------------------------------------------------------------------
 // Mock Dyes
@@ -26,6 +26,7 @@ const mockPreset = {
     author_name: 'tester',
     vote_count: 10,
     status: 'approved',
+    is_curated: false,
     created_at: '2024-01-01T00:00:00Z',
     updated_at: '2024-01-01T00:00:00Z',
 };
@@ -101,7 +102,7 @@ vi.mock('../../services/preset-api.js', () => ({
     getPendingPresets: vi.fn().mockResolvedValue([]),
     approvePreset: vi.fn().mockResolvedValue({ id: 'preset-1', name: 'Test Preset', status: 'approved' }),
     rejectPreset: vi.fn().mockResolvedValue({ id: 'preset-1', name: 'Test Preset', status: 'rejected' }),
-    getModerationStats: vi.fn().mockResolvedValue({ pending: 5, approved: 100, rejected: 10, flagged: 2, actions_last_week: 25 }),
+    getModerationStats: vi.fn().mockResolvedValue({ pending_count: 5, approved_count: 100, rejected_count: 10, flagged_count: 2 }),
 }));
 
 // ---------------------------------------------------------------------------
@@ -1369,11 +1370,10 @@ describe('/preset command', () => {
             mockIsModerator.mockReturnValue(true);
             const { getModerationStats } = await import('../../services/preset-api.js');
             vi.mocked(getModerationStats).mockResolvedValueOnce({
-                pending: 5,
-                approved: 100,
-                rejected: 10,
-                flagged: 2,
-                actions_last_week: 25,
+                pending_count: 5,
+                approved_count: 100,
+                rejected_count: 10,
+                flagged_count: 2,
             });
 
             const interaction: DiscordInteraction = {

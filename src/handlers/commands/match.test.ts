@@ -3,7 +3,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { handleMatchCommand } from './match.js';
-import type { DiscordInteraction, Env } from '../../types/env.js';
+import type { DiscordInteraction, Env, InteractionResponseBody } from '../../types/env.js';
 
 // ---------------------------------------------------------------------------
 // Mocks
@@ -140,15 +140,16 @@ const baseInteraction: DiscordInteraction = {
 const env: Env = {
   KV: {} as KVNamespace,
   DISCORD_PUBLIC_KEY: 'pk',
-  DISCORD_APPLICATION_ID: 'app',
-  DISCORD_BOT_TOKEN: 'token',
-  PRESET_WEBHOOK_SECRET: 'secret',
-};
+  DISCORD_CLIENT_ID: 'app',
+  DISCORD_TOKEN: 'token',
+  PRESETS_API_URL: 'https://test-api.example.com',
+} as unknown as Env;
 
 const ctx: ExecutionContext = {
   waitUntil: vi.fn(),
   passThroughOnException: vi.fn(),
-} as any;
+  props: {},
+} as unknown as ExecutionContext;
 
 // ---------------------------------------------------------------------------
 // Tests

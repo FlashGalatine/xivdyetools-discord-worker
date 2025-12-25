@@ -4,7 +4,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { handleFavoritesCommand } from './favorites.js';
-import type { Env, DiscordInteraction } from '../../types/env.js';
+import type { Env, DiscordInteraction, InteractionResponseBody } from '../../types/env.js';
 import { DyeService } from '@xivdyetools/core';
 
 // Mock dependencies
@@ -100,15 +100,16 @@ describe('/favorites command', () => {
     mockEnv = {
       KV: {} as KVNamespace,
       DISCORD_PUBLIC_KEY: 'test-key',
-      DISCORD_APPLICATION_ID: 'test-app-id',
-      DISCORD_BOT_TOKEN: 'test-token',
-      PRESET_WEBHOOK_SECRET: 'test-secret',
-    };
+      DISCORD_CLIENT_ID: 'test-app-id',
+      DISCORD_TOKEN: 'test-token',
+      PRESETS_API_URL: 'https://test-api.example.com',
+    } as unknown as Env;
     
     mockCtx = {
       waitUntil: vi.fn(),
       passThroughOnException: vi.fn(),
-    } as any;
+      props: {},
+    } as unknown as ExecutionContext;
     
     // Setup mocks
     vi.mocked(createUserTranslator).mockResolvedValue(mockTranslator as any);

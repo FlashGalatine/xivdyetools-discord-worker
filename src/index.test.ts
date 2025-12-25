@@ -4,7 +4,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import app from './index.js';
-import { InteractionType, InteractionResponseType } from './types/env.js';
+import { InteractionType, InteractionResponseType, type InteractionResponseBody } from './types/env.js';
 import type { Env } from './types/env.js';
 
 // Mock dependencies
@@ -357,7 +357,7 @@ describe('index.ts', () => {
           }),
           error: '',
         });
-        vi.mocked(checkRateLimit).mockResolvedValue({ allowed: true });
+        vi.mocked(checkRateLimit).mockResolvedValue({ allowed: true, remaining: 14, resetAt: Date.now() + 60000 });
         vi.mocked(handleAboutCommand).mockResolvedValue(new Response());
 
         const req = new Request('http://localhost/', {
@@ -387,7 +387,7 @@ describe('index.ts', () => {
           }),
           error: '',
         });
-        vi.mocked(checkRateLimit).mockResolvedValue({ allowed: true });
+        vi.mocked(checkRateLimit).mockResolvedValue({ allowed: true, remaining: 14, resetAt: Date.now() + 60000 });
         vi.mocked(handleHarmonyCommand).mockResolvedValue(new Response());
 
         const req = new Request('http://localhost/', {
@@ -452,7 +452,7 @@ describe('index.ts', () => {
           }),
           error: '',
         });
-        vi.mocked(checkRateLimit).mockResolvedValue({ allowed: true });
+        vi.mocked(checkRateLimit).mockResolvedValue({ allowed: true, remaining: 14, resetAt: Date.now() + 60000 });
 
         const req = new Request('http://localhost/', {
           method: 'POST',
@@ -1538,7 +1538,7 @@ describe('index.ts', () => {
           }),
           error: '',
         });
-        vi.mocked(checkRateLimit).mockResolvedValue({ allowed: true });
+        vi.mocked(checkRateLimit).mockResolvedValue({ allowed: true, remaining: 14, resetAt: Date.now() + 60000 });
         vi.mocked(trackCommandWithKV).mockRejectedValue(new Error('Analytics failed'));
         vi.mocked(handleDyeCommand).mockResolvedValue(new Response());
 
@@ -1683,7 +1683,7 @@ describe('index.ts', () => {
             }),
             error: '',
           });
-          vi.mocked(checkRateLimit).mockResolvedValue({ allowed: true });
+          vi.mocked(checkRateLimit).mockResolvedValue({ allowed: true, remaining: 14, resetAt: Date.now() + 60000 });
           vi.mocked(handler).mockResolvedValue(new Response());
 
           const req = new Request('http://localhost/', {
@@ -1760,8 +1760,8 @@ describe('index.ts', () => {
           error: '',
         });
         vi.mocked(getCollections).mockResolvedValue([
-          { name: 'Collection A', dyes: [1], created_at: Date.now() },
-          { name: 'Collection B', dyes: [2], created_at: Date.now() },
+          { id: 'col-1', name: 'Collection A', dyes: [1], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+          { id: 'col-2', name: 'Collection B', dyes: [2], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
         ]);
 
         const req = new Request('http://localhost/', {

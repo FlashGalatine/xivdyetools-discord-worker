@@ -3,6 +3,8 @@
  */
 import { describe, it, expect, vi } from 'vitest';
 import { generatePaletteGrid, type PaletteEntry } from './palette-grid.js';
+import { createMockDye } from '@xivdyetools/test-utils/factories';
+import type { Dye } from '@xivdyetools/types/dye';
 
 // Mock the image types
 vi.mock('../../types/image.js', () => ({
@@ -16,7 +18,7 @@ vi.mock('../../types/image.js', () => ({
 }));
 
 describe('svg/palette-grid.ts', () => {
-    const mockDye = {
+    const mockDye: Dye = createMockDye({
         id: 1,
         itemID: 5729,
         name: 'Dalamud Red',
@@ -24,7 +26,7 @@ describe('svg/palette-grid.ts', () => {
         rgb: { r: 170, g: 17, b: 17 },
         hsv: { h: 0, s: 90, v: 67 },
         category: 'Red',
-    };
+    });
 
     describe('generatePaletteGrid', () => {
         it('should generate valid SVG document', () => {
@@ -126,7 +128,7 @@ describe('svg/palette-grid.ts', () => {
         });
 
         it('should handle multiple entries', () => {
-            const secondDye = { ...mockDye, id: 2, name: 'Jet Black', hex: '#000000' };
+            const secondDye: Dye = createMockDye({ id: 2, name: 'Jet Black', hex: '#000000', isDark: true });
             const entries: PaletteEntry[] = [
                 {
                     extracted: { r: 180, g: 20, b: 20 },
@@ -195,7 +197,7 @@ describe('svg/palette-grid.ts', () => {
         });
 
         it('should include separator lines between rows', () => {
-            const secondDye = { ...mockDye, id: 2, name: 'Jet Black', hex: '#000000' };
+            const secondDye: Dye = createMockDye({ id: 2, name: 'Jet Black', hex: '#000000', isDark: true });
             const entries: PaletteEntry[] = [
                 {
                     extracted: { r: 180, g: 20, b: 20 },

@@ -53,8 +53,8 @@ describe('response.ts', () => {
             const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
-            expect(body.data.embeds).toHaveLength(1);
-            expect(body.data.embeds[0]).toEqual(embed);
+            expect(body.data!.embeds).toHaveLength(1);
+            expect(body.data!.embeds![0]).toEqual(embed);
         });
 
         it('should return a message response with components', async () => {
@@ -71,8 +71,8 @@ describe('response.ts', () => {
             const response = messageResponse({ components: [actionRow] });
             const body = (await response.json()) as InteractionResponseBody;
 
-            expect(body.data.components).toHaveLength(1);
-            expect(body.data.components[0].components[0].label).toBe('Click me');
+            expect(body.data!.components).toHaveLength(1);
+            expect(body.data!.components![0].components![0].label).toBe('Click me');
         });
 
         it('should include flags when provided', async () => {
@@ -82,7 +82,7 @@ describe('response.ts', () => {
             });
 
             const body = (await response.json()) as InteractionResponseBody;
-            expect(body.data.flags).toBe(64);
+            expect(body.data!.flags).toBe(64);
         });
     });
 
@@ -92,8 +92,8 @@ describe('response.ts', () => {
             const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
-            expect(body.data.content).toBe('Secret message');
-            expect(body.data.flags).toBe(MessageFlags.EPHEMERAL);
+            expect(body.data!.content).toBe('Secret message');
+            expect(body.data!.flags).toBe(MessageFlags.EPHEMERAL);
         });
 
         it('should accept InteractionResponseData object', async () => {
@@ -104,10 +104,10 @@ describe('response.ts', () => {
             const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
-            expect(body.data.content).toBe('Complex message');
-            expect(body.data.embeds).toHaveLength(1);
-            expect(body.data.embeds[0].title).toBe('Embed Title');
-            expect(body.data.flags).toBe(MessageFlags.EPHEMERAL);
+            expect(body.data!.content).toBe('Complex message');
+            expect(body.data!.embeds).toHaveLength(1);
+            expect(body.data!.embeds![0].title).toBe('Embed Title');
+            expect(body.data!.flags).toBe(MessageFlags.EPHEMERAL);
         });
 
         it('should preserve existing flags when adding ephemeral flag', async () => {
@@ -117,7 +117,7 @@ describe('response.ts', () => {
             });
             const body = (await response.json()) as InteractionResponseBody;
 
-            expect(body.data.flags).toBe(MessageFlags.EPHEMERAL);
+            expect(body.data!.flags).toBe(MessageFlags.EPHEMERAL);
         });
 
         it('should combine existing flags with ephemeral using bitwise OR', async () => {
@@ -129,7 +129,7 @@ describe('response.ts', () => {
             const body = (await response.json()) as InteractionResponseBody;
 
             // Should have both the ephemeral flag (64) and the original flag (128)
-            expect(body.data.flags).toBe(128 | MessageFlags.EPHEMERAL);
+            expect(body.data!.flags).toBe(128 | MessageFlags.EPHEMERAL);
         });
     });
 
@@ -143,9 +143,9 @@ describe('response.ts', () => {
             const response = embedResponse(embed);
             const body = (await response.json()) as InteractionResponseBody;
 
-            expect(body.data.embeds).toHaveLength(1);
-            expect(body.data.embeds[0]).toEqual(embed);
-            expect(body.data.components).toBeUndefined();
+            expect(body.data!.embeds).toHaveLength(1);
+            expect(body.data!.embeds![0]).toEqual(embed);
+            expect(body.data!.components).toBeUndefined();
         });
 
         it('should return a response with embed and components', async () => {
@@ -158,8 +158,8 @@ describe('response.ts', () => {
             const response = embedResponse(embed, [actionRow]);
             const body = (await response.json()) as InteractionResponseBody;
 
-            expect(body.data.embeds).toHaveLength(1);
-            expect(body.data.components).toHaveLength(1);
+            expect(body.data!.embeds).toHaveLength(1);
+            expect(body.data!.components).toHaveLength(1);
         });
     });
 
@@ -177,7 +177,7 @@ describe('response.ts', () => {
             const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.type).toBe(InteractionResponseType.DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE);
-            expect(body.data.flags).toBe(MessageFlags.EPHEMERAL);
+            expect(body.data!.flags).toBe(MessageFlags.EPHEMERAL);
         });
     });
 
@@ -192,14 +192,14 @@ describe('response.ts', () => {
             const body = (await response.json()) as InteractionResponseBody;
 
             expect(body.type).toBe(InteractionResponseType.APPLICATION_COMMAND_AUTOCOMPLETE_RESULT);
-            expect(body.data.choices).toEqual(choices);
+            expect(body.data!.choices).toEqual(choices);
         });
 
         it('should handle empty choices', async () => {
             const response = autocompleteResponse([]);
             const body = (await response.json()) as InteractionResponseBody;
 
-            expect(body.data.choices).toEqual([]);
+            expect(body.data!.choices).toEqual([]);
         });
     });
 

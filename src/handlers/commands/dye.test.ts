@@ -4,7 +4,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { handleDyeCommand } from './dye.js';
-import type { Env, DiscordInteraction } from '../../types/env.js';
+import type { Env, DiscordInteraction, InteractionResponseBody } from '../../types/env.js';
 
 // Mock dependencies
 vi.mock('@xivdyetools/core', () => {
@@ -107,16 +107,17 @@ describe('dye.ts', () => {
     mockEnv = {
       DISCORD_PUBLIC_KEY: 'test-key',
       DISCORD_TOKEN: 'test-token',
-      DISCORD_APPLICATION_ID: 'test-app-id',
-      PRESET_API_URL: 'https://test-api.example.com',
+      DISCORD_CLIENT_ID: 'test-app-id',
+      PRESETS_API_URL: 'https://test-api.example.com',
       INTERNAL_WEBHOOK_SECRET: 'test-secret',
       KV: {} as KVNamespace,
-    };
+    } as unknown as Env;
 
     mockCtx = {
       waitUntil: vi.fn(),
       passThroughOnException: vi.fn(),
-    };
+      props: {},
+    } as unknown as ExecutionContext;
 
     vi.clearAllMocks();
   });

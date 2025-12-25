@@ -3,10 +3,11 @@
  */
 import { describe, it, expect } from 'vitest';
 import { generateComparisonGrid, type ComparisonGridOptions } from './comparison-grid.js';
-import type { Dye } from '@xivdyetools/core';
+import { createMockDye } from '@xivdyetools/test-utils/factories';
+import type { Dye } from '@xivdyetools/types/dye';
 
 describe('svg/comparison-grid.ts', () => {
-    const mockDye1: Dye = {
+    const mockDye1: Dye = createMockDye({
         id: 1,
         itemID: 5729,
         name: 'Dalamud Red',
@@ -14,9 +15,9 @@ describe('svg/comparison-grid.ts', () => {
         rgb: { r: 170, g: 17, b: 17 },
         hsv: { h: 0, s: 90, v: 67 },
         category: 'Red',
-    };
+    });
 
-    const mockDye2: Dye = {
+    const mockDye2: Dye = createMockDye({
         id: 2,
         itemID: 5730,
         name: 'Jet Black',
@@ -24,9 +25,10 @@ describe('svg/comparison-grid.ts', () => {
         rgb: { r: 10, g: 10, b: 10 },
         hsv: { h: 0, s: 0, v: 4 },
         category: 'Black',
-    };
+        isDark: true,
+    });
 
-    const mockDye3: Dye = {
+    const mockDye3: Dye = createMockDye({
         id: 3,
         itemID: 5731,
         name: 'Snow White',
@@ -34,9 +36,9 @@ describe('svg/comparison-grid.ts', () => {
         rgb: { r: 255, g: 255, b: 255 },
         hsv: { h: 0, s: 0, v: 100 },
         category: 'White',
-    };
+    });
 
-    const mockDye4: Dye = {
+    const mockDye4: Dye = createMockDye({
         id: 4,
         itemID: 5732,
         name: 'Metallic Gold',
@@ -44,7 +46,8 @@ describe('svg/comparison-grid.ts', () => {
         rgb: { r: 255, g: 215, b: 0 },
         hsv: { h: 51, s: 100, v: 100 },
         category: 'Yellow',
-    };
+        isMetallic: true,
+    });
 
     describe('generateComparisonGrid', () => {
         it('should generate valid SVG document', () => {
@@ -168,7 +171,7 @@ describe('svg/comparison-grid.ts', () => {
 
         it('should handle blue-dominant color (max === b branch in rgbToHsv)', () => {
             // Blue dye to hit max === b branch in rgbToHsv
-            const blueDye: Dye = {
+            const blueDye: Dye = createMockDye({
                 id: 10,
                 itemID: 5740,
                 name: 'Pure Blue',
@@ -176,7 +179,7 @@ describe('svg/comparison-grid.ts', () => {
                 rgb: { r: 0, g: 0, b: 255 },
                 hsv: { h: 240, s: 100, v: 100 },
                 category: 'Blue',
-            };
+            });
 
             const svg = generateComparisonGrid({ dyes: [blueDye, mockDye2] });
 
@@ -186,7 +189,7 @@ describe('svg/comparison-grid.ts', () => {
 
         it('should handle green-dominant color (max === g branch in rgbToHsv)', () => {
             // Green dye to hit max === g branch in rgbToHsv
-            const greenDye: Dye = {
+            const greenDye: Dye = createMockDye({
                 id: 11,
                 itemID: 5741,
                 name: 'Pure Green',
@@ -194,7 +197,7 @@ describe('svg/comparison-grid.ts', () => {
                 rgb: { r: 0, g: 255, b: 0 },
                 hsv: { h: 120, s: 100, v: 100 },
                 category: 'Green',
-            };
+            });
 
             const svg = generateComparisonGrid({ dyes: [greenDye, mockDye1] });
 
@@ -204,7 +207,7 @@ describe('svg/comparison-grid.ts', () => {
 
         it('should handle achromatic colors (max === min in rgbToHsv)', () => {
             // Gray dye where r === g === b (achromatic)
-            const grayDye: Dye = {
+            const grayDye: Dye = createMockDye({
                 id: 12,
                 itemID: 5742,
                 name: 'Pure Gray',
@@ -212,7 +215,7 @@ describe('svg/comparison-grid.ts', () => {
                 rgb: { r: 128, g: 128, b: 128 },
                 hsv: { h: 0, s: 0, v: 50 },
                 category: 'Gray',
-            };
+            });
 
             const svg = generateComparisonGrid({ dyes: [grayDye, mockDye3] });
 
@@ -230,7 +233,7 @@ describe('svg/comparison-grid.ts', () => {
 
         it('should show different contrast ratings based on color pairs', () => {
             // Test with colors that have different contrast levels
-            const mediumContrastDye: Dye = {
+            const mediumContrastDye: Dye = createMockDye({
                 id: 13,
                 itemID: 5743,
                 name: 'Medium Gray',
@@ -238,7 +241,7 @@ describe('svg/comparison-grid.ts', () => {
                 rgb: { r: 107, g: 107, b: 107 },
                 hsv: { h: 0, s: 0, v: 42 },
                 category: 'Gray',
-            };
+            });
 
             const svg = generateComparisonGrid({ dyes: [mediumContrastDye, mockDye3] });
 
@@ -248,7 +251,7 @@ describe('svg/comparison-grid.ts', () => {
 
         it('should handle pure black color (max === 0 in rgbToHsv)', () => {
             // Pure black where r=g=b=0 (max === 0)
-            const blackDye: Dye = {
+            const blackDye: Dye = createMockDye({
                 id: 14,
                 itemID: 5744,
                 name: 'Pure Black',
@@ -256,7 +259,8 @@ describe('svg/comparison-grid.ts', () => {
                 rgb: { r: 0, g: 0, b: 0 },
                 hsv: { h: 0, s: 0, v: 0 },
                 category: 'Black',
-            };
+                isDark: true,
+            });
 
             const svg = generateComparisonGrid({ dyes: [blackDye, mockDye3] });
 
@@ -266,7 +270,7 @@ describe('svg/comparison-grid.ts', () => {
 
         it('should handle red-dominant color (max === r branch in rgbToHsv)', () => {
             // Pure red dye to hit max === r branch in rgbToHsv
-            const redDye: Dye = {
+            const redDye: Dye = createMockDye({
                 id: 15,
                 itemID: 5745,
                 name: 'Pure Red',
@@ -274,7 +278,7 @@ describe('svg/comparison-grid.ts', () => {
                 rgb: { r: 255, g: 0, b: 0 },
                 hsv: { h: 0, s: 100, v: 100 },
                 category: 'Red',
-            };
+            });
 
             const svg = generateComparisonGrid({ dyes: [redDye, mockDye2] });
 
@@ -284,7 +288,7 @@ describe('svg/comparison-grid.ts', () => {
 
         it('should use success color for very similar colors (distance < 30)', () => {
             // Two very similar red colors
-            const red1: Dye = {
+            const red1: Dye = createMockDye({
                 id: 16,
                 itemID: 5746,
                 name: 'Red One',
@@ -292,8 +296,8 @@ describe('svg/comparison-grid.ts', () => {
                 rgb: { r: 255, g: 0, b: 0 },
                 hsv: { h: 0, s: 100, v: 100 },
                 category: 'Red',
-            };
-            const red2: Dye = {
+            });
+            const red2: Dye = createMockDye({
                 id: 17,
                 itemID: 5747,
                 name: 'Red Two',
@@ -301,7 +305,7 @@ describe('svg/comparison-grid.ts', () => {
                 rgb: { r: 255, g: 16, b: 16 },
                 hsv: { h: 0, s: 94, v: 100 },
                 category: 'Red',
-            };
+            });
 
             const svg = generateComparisonGrid({ dyes: [red1, red2] });
 
@@ -311,7 +315,7 @@ describe('svg/comparison-grid.ts', () => {
 
         it('should use green color for moderately similar colors (distance 30-80)', () => {
             // Two somewhat similar colors
-            const red: Dye = {
+            const red: Dye = createMockDye({
                 id: 18,
                 itemID: 5748,
                 name: 'Bright Red',
@@ -319,8 +323,8 @@ describe('svg/comparison-grid.ts', () => {
                 rgb: { r: 255, g: 0, b: 0 },
                 hsv: { h: 0, s: 100, v: 100 },
                 category: 'Red',
-            };
-            const orange: Dye = {
+            });
+            const orange: Dye = createMockDye({
                 id: 19,
                 itemID: 5749,
                 name: 'Reddish Orange',
@@ -328,7 +332,7 @@ describe('svg/comparison-grid.ts', () => {
                 rgb: { r: 255, g: 68, b: 0 },
                 hsv: { h: 16, s: 100, v: 100 },
                 category: 'Orange',
-            };
+            });
 
             const svg = generateComparisonGrid({ dyes: [red, orange] });
 
@@ -338,7 +342,7 @@ describe('svg/comparison-grid.ts', () => {
 
         it('should use amber color for different colors (distance 80-150)', () => {
             // Two different but not opposite colors
-            const red: Dye = {
+            const red: Dye = createMockDye({
                 id: 20,
                 itemID: 5750,
                 name: 'Bright Red',
@@ -346,9 +350,9 @@ describe('svg/comparison-grid.ts', () => {
                 rgb: { r: 255, g: 0, b: 0 },
                 hsv: { h: 0, s: 100, v: 100 },
                 category: 'Red',
-            };
+            });
             // Use #FF6600 for distance ~102 from red
-            const midOrange: Dye = {
+            const midOrange: Dye = createMockDye({
                 id: 23,
                 itemID: 5753,
                 name: 'Mid Orange',
@@ -356,7 +360,7 @@ describe('svg/comparison-grid.ts', () => {
                 rgb: { r: 255, g: 102, b: 0 },
                 hsv: { h: 24, s: 100, v: 100 },
                 category: 'Orange',
-            };
+            });
 
             const svg = generateComparisonGrid({ dyes: [red, midOrange] });
 

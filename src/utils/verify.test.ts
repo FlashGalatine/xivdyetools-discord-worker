@@ -195,7 +195,7 @@ describe('verify.ts', () => {
             expect(response.status).toBe(401);
             expect(response.headers.get('Content-Type')).toBe('application/json');
 
-            const body = (await response.json()) as InteractionResponseBody;
+            const body = (await response.json()) as { error: string };
             expect(body).toEqual({ error: 'Invalid request signature' });
         });
 
@@ -204,7 +204,7 @@ describe('verify.ts', () => {
 
             expect(response.status).toBe(401);
 
-            const body = (await response.json()) as InteractionResponseBody;
+            const body = (await response.json()) as { error: string };
             expect(body).toEqual({ error: 'Custom error message' });
         });
     });
@@ -216,7 +216,7 @@ describe('verify.ts', () => {
             expect(response.status).toBe(400);
             expect(response.headers.get('Content-Type')).toBe('application/json');
 
-            const body = (await response.json()) as InteractionResponseBody;
+            const body = (await response.json()) as { error: string };
             expect(body).toEqual({ error: 'Invalid input' });
         });
     });

@@ -50,12 +50,12 @@ describe('analytics.ts', () => {
     mockEnv = {
       DISCORD_PUBLIC_KEY: 'test-key',
       DISCORD_TOKEN: 'test-token',
-      DISCORD_APPLICATION_ID: 'test-app-id',
-      PRESET_API_URL: 'https://test-api.example.com',
+      DISCORD_CLIENT_ID: 'test-app-id',
+      PRESETS_API_URL: 'https://test-api.example.com',
       INTERNAL_WEBHOOK_SECRET: 'test-secret',
       KV: mockKV,
       ANALYTICS: mockAnalytics as unknown as AnalyticsEngineDataset,
-    };
+    } as Env;
 
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2024-06-15T12:00:00Z'));
