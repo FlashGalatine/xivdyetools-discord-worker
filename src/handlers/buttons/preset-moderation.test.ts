@@ -8,7 +8,7 @@ import {
     handlePresetRevertButton,
     isPresetModerationButton,
 } from './preset-moderation.js';
-import { InteractionResponseType, type InteractionResponseBody } from '../types/env.js';
+import { InteractionResponseType, type InteractionResponseBody } from '../../types/env.js';
 
 // Mock preset API
 vi.mock('../../services/preset-api.js', () => ({

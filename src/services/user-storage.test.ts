@@ -73,7 +73,7 @@ describe('user-storage.ts', () => {
         });
 
         it('should return favorites from KV', async () => {
-            mockKV._store.set(`xivdye:favorites:${mockUserId}`, JSON.stringify([1, 2, 3]));
+            mockKV._store.set(`xivdye:favorites:v1:${mockUserId}`, JSON.stringify([1, 2, 3]));
 
             const favorites = await getFavorites(mockKV, mockUserId);
 
@@ -96,7 +96,7 @@ describe('user-storage.ts', () => {
             expect(result.success).toBe(true);
             expect(mockKV.put).toHaveBeenCalled();
 
-            const stored = JSON.parse(mockKV._store.get(`xivdye:favorites:${mockUserId}`)!);
+            const stored = JSON.parse(mockKV._store.get(`xivdye:favorites:v1:${mockUserId}`)!);
             expect(stored).toContain(5729);
         });
 
@@ -208,7 +208,7 @@ describe('user-storage.ts', () => {
 
         it('should return collections from KV', async () => {
             const mockCollections = [{ id: '1', name: 'Test', dyes: [], createdAt: '', updatedAt: '' }];
-            mockKV._store.set(`xivdye:collections:${mockUserId}`, JSON.stringify(mockCollections));
+            mockKV._store.set(`xivdye:collections:v1:${mockUserId}`, JSON.stringify(mockCollections));
 
             const collections = await getCollections(mockKV, mockUserId);
 
