@@ -1,7 +1,7 @@
 /**
  * /preset Command Handler
  *
- * Manages community preset palettes - browsing, submitting, voting, and moderation.
+ * Manages community preset palettes - browsing, submitting, voting.
  * Interacts with the preset API worker for data persistence.
  *
  * Subcommands:
@@ -10,7 +10,10 @@
  * - random: Get random preset for inspiration
  * - submit: Create a new community preset
  * - vote: Toggle vote on a preset
- * - moderate: Moderator actions (pending, approve, reject, stats)
+ * - edit: Edit your own preset
+ *
+ * Note: Moderation commands (moderate, ban_user, unban_user) are handled
+ * by xivdyetools-moderation-worker.
  */
 
 import { DyeService, dyeDatabase, type Dye } from '@xivdyetools/core';
@@ -39,7 +42,6 @@ import {
 } from '../../types/preset.js';
 import * as presetApi from '../../services/preset-api.js';
 import type { DiscordInteraction } from '../../types/env.js';
-import { handleBanUserSubcommand, handleUnbanUserSubcommand } from './preset-ban.js';
 
 // Initialize DyeService
 const dyeService = new DyeService(dyeDatabase);
@@ -101,15 +103,6 @@ export async function handlePresetCommand(
 
     case 'edit':
       return handleEditSubcommand(interaction, env, ctx, t, userId, userName, subcommand.options, logger);
-
-    case 'moderate':
-      return handleModerateSubcommand(interaction, env, ctx, t, userId, subcommand.options, logger);
-
-    case 'ban_user':
-      return handleBanUserSubcommand(interaction, env, ctx, t, userId, subcommand.options, logger);
-
-    case 'unban_user':
-      return handleUnbanUserSubcommand(interaction, env, ctx, t, userId, subcommand.options, logger);
 
     default:
       return ephemeralResponse(`Unknown subcommand: ${subcommand.name}`);
@@ -780,184 +773,6 @@ async function processEditCommand(
       logger.error('Edit preset error', error instanceof Error ? error : undefined);
     }
     const message = error instanceof PresetAPIError ? error.message : 'Failed to edit preset.';
-    await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
-      embeds: [errorEmbed(t.t('common.error'), message)],
-    });
-  }
-}
-
-/**
- * /preset moderate - Moderator actions
- */
-async function handleModerateSubcommand(
-  interaction: DiscordInteraction,
-  env: Env,
-  ctx: ExecutionContext,
-  t: Translator,
-  userId: string,
-  options?: Array<{ name: string; value?: string | number | boolean }>,
-  logger?: ExtendedLogger
-): Promise<Response> {
-  // Check moderator status
-  if (!presetApi.isModerator(env, userId)) {
-    return messageResponse({
-      embeds: [errorEmbed(t.t('common.error'), t.t('preset.moderation.accessDenied'))],
-      flags: 64,
-    });
-  }
-
-  const action = options?.find((opt) => opt.name === 'action')?.value as string;
-  const presetId = options?.find((opt) => opt.name === 'preset_id')?.value as string | undefined;
-  const reason = options?.find((opt) => opt.name === 'reason')?.value as string | undefined;
-
-  if (!action) {
-    return ephemeralResponse('Missing action');
-  }
-
-  // Defer response
-  const deferResponse = deferredResponse();
-
-  ctx.waitUntil(
-    processModerateCommand(interaction, env, t, userId, action, presetId, reason, logger)
-  );
-
-  return deferResponse;
-}
-
-async function processModerateCommand(
-  interaction: DiscordInteraction,
-  env: Env,
-  t: Translator,
-  userId: string,
-  action: string,
-  presetId?: string,
-  reason?: string,
-  logger?: ExtendedLogger
-): Promise<void> {
-  try {
-    switch (action) {
-      case 'pending': {
-        const presets = await presetApi.getPendingPresets(env, userId);
-
-        if (presets.length === 0) {
-          await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
-            embeds: [
-              successEmbed(
-                t.t('preset.moderation.pendingQueue'),
-                t.t('preset.moderation.noPending')
-              ),
-            ],
-          });
-          return;
-        }
-
-        const presetLines = presets.slice(0, 10).map((preset, i) => {
-          return `**${i + 1}.** ${preset.name} by ${preset.author_name || 'Unknown'}\n   ID: \`${preset.id}\``;
-        });
-
-        await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
-          embeds: [
-            {
-              title: `📋 ${t.t('preset.moderation.pendingQueue')}`,
-              description: [
-                t.t('preset.moderation.pendingCount', { count: presets.length }),
-                '',
-                presetLines.join('\n\n'),
-              ].join('\n'),
-              color: 0xfee75c,
-              footer: { text: 'Use /preset moderate approve <id> or reject <id> <reason>' },
-            },
-          ],
-        });
-        break;
-      }
-
-      case 'approve': {
-        if (!presetId) {
-          await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
-            embeds: [errorEmbed(t.t('common.error'), t.t('preset.moderation.missingId'))],
-          });
-          return;
-        }
-
-        const preset = await presetApi.approvePreset(env, presetId, userId, reason);
-
-        await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
-          embeds: [
-            successEmbed(
-              t.t('preset.moderation.approved'),
-              t.t('preset.moderation.approvedDesc', { name: preset.name })
-            ),
-          ],
-        });
-
-        // Notify submission log
-        if (env.SUBMISSION_LOG_CHANNEL_ID) {
-          await notifySubmissionChannel(env, preset, 'approved');
-        }
-        break;
-      }
-
-      case 'reject': {
-        if (!presetId) {
-          await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
-            embeds: [errorEmbed(t.t('common.error'), t.t('preset.moderation.missingId'))],
-          });
-          return;
-        }
-
-        if (!reason) {
-          await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
-            embeds: [errorEmbed(t.t('common.error'), t.t('preset.moderation.missingReason'))],
-          });
-          return;
-        }
-
-        const preset = await presetApi.rejectPreset(env, presetId, userId, reason);
-
-        await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
-          embeds: [
-            {
-              title: `❌ ${t.t('preset.moderation.rejected')}`,
-              description: t.t('preset.moderation.rejectedDesc', { name: preset.name }),
-              color: 0xed4245,
-              fields: [{ name: 'Reason', value: reason }],
-            },
-          ],
-        });
-        break;
-      }
-
-      case 'stats': {
-        const stats = await presetApi.getModerationStats(env, userId);
-
-        await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
-          embeds: [
-            {
-              title: `📊 ${t.t('preset.moderation.stats')}`,
-              color: 0x5865f2,
-              fields: [
-                { name: '🟡 Pending', value: String(stats.pending_count), inline: true },
-                { name: '🟢 Approved', value: String(stats.approved_count), inline: true },
-                { name: '🔴 Rejected', value: String(stats.rejected_count), inline: true },
-                { name: '🟠 Flagged', value: String(stats.flagged_count), inline: true },
-              ],
-            },
-          ],
-        });
-        break;
-      }
-
-      default:
-        await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
-          embeds: [errorEmbed(t.t('common.error'), `Unknown action: ${action}`)],
-        });
-    }
-  } catch (error) {
-    if (logger) {
-      logger.error('Moderate error', error instanceof Error ? error : undefined);
-    }
-    const message = error instanceof PresetAPIError ? error.message : 'Moderation action failed.';
     await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [errorEmbed(t.t('common.error'), message)],
     });

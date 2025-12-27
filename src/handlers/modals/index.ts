@@ -1,12 +1,10 @@
 /**
  * Modal Handlers Index
  *
- * Re-exports all modal submission handlers for cleaner imports.
+ * Note: Modal handlers for moderation (rejection, revert, ban) are now handled
+ * by xivdyetools-moderation-worker. This file remains for potential future
+ * modal handlers in the main worker.
  */
 
-export {
-  handlePresetRejectionModal,
-  isPresetRejectionModal,
-  handlePresetRevertModal,
-  isPresetRevertModal,
-} from './preset-rejection.js';
+// Empty export to make this a valid module
+export {};

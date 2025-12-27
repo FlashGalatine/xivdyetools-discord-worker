@@ -349,10 +349,10 @@
     "errors": {
       "notConfigured": "此服务器不支持实惠染料功能。市场板集成未配置。",
       "noWorldSet": "请先使用`/budget set_world <服务器>`设置您的服务器，或使用`world`选项指定服务器。",
-      "worldNotFound": "找不到服务器或数据中心"{world}"。\n\n请检查拼写，或尝试使用数据中心名称，如"陆行鸟"或"莫古力"。",
+      "worldNotFound": "找不到服务器或数据中心「{world}」。\n\n请检查拼写，或尝试使用数据中心名称，如「陆行鸟」或「莫古力」。",
       "missingDye": "请指定目标染料。",
-      "dyeNotFound": "找不到染料"{name}"。",
-      "presetNotFound": "找不到快速选择预设"{id}"。",
+      "dyeNotFound": "找不到染料「{name}」。",
+      "presetNotFound": "找不到快速选择预设「{id}」。",
       "apiError": "无法获取市场板数据。请稍后再试。",
       "rateLimited": "请求过多。请稍等片刻后再查询价格。"
     }

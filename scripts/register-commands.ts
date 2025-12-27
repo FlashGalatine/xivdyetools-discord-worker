@@ -766,66 +766,8 @@ const commands = [
           },
         ],
       },
-      {
-        name: 'moderate',
-        description: 'Moderation actions (moderators only)',
-        type: OptionType.SUB_COMMAND,
-        options: [
-          {
-            name: 'action',
-            description: 'Action to perform',
-            type: OptionType.STRING,
-            required: true,
-            choices: [
-              { name: '📋 View Pending', value: 'pending' },
-              { name: '✅ Approve', value: 'approve' },
-              { name: '❌ Reject', value: 'reject' },
-              { name: '📊 Statistics', value: 'stats' },
-            ],
-          },
-          {
-            name: 'preset_id',
-            description: 'Preset to moderate (for approve/reject)',
-            type: OptionType.STRING,
-            required: false,
-            autocomplete: true,
-          },
-          {
-            name: 'reason',
-            description: 'Reason for rejection (required for reject)',
-            type: OptionType.STRING,
-            required: false,
-          },
-        ],
-      },
-      {
-        name: 'ban_user',
-        description: 'Ban a user from Preset Palettes (moderators only)',
-        type: OptionType.SUB_COMMAND,
-        options: [
-          {
-            name: 'user',
-            description: 'User to ban (search by username)',
-            type: OptionType.STRING,
-            required: true,
-            autocomplete: true,
-          },
-        ],
-      },
-      {
-        name: 'unban_user',
-        description: 'Unban a user from Preset Palettes (moderators only)',
-        type: OptionType.SUB_COMMAND,
-        options: [
-          {
-            name: 'user',
-            description: 'User to unban (search by username)',
-            type: OptionType.STRING,
-            required: true,
-            autocomplete: true,
-          },
-        ],
-      },
+      // Note: moderate, ban_user, and unban_user are now handled by
+      // xivdyetools-moderation-worker (separate bot application)
     ],
   },
 

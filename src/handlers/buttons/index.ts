@@ -2,21 +2,13 @@
  * Button Handlers Index
  *
  * Routes button interactions based on custom_id prefixes.
+ * Note: Moderation buttons are handled by xivdyetools-moderation-worker.
  */
 
 import type { Env } from '../../types/env.js';
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import { ephemeralResponse } from '../../utils/response.js';
 import { handleCopyHex, handleCopyRgb, handleCopyHsv } from './copy.js';
-import {
-  handlePresetApproveButton,
-  handlePresetRejectButton,
-  handlePresetRevertButton,
-} from './preset-moderation.js';
-import {
-  handleBanConfirmButton,
-  handleBanCancelButton,
-} from './ban-confirmation.js';
 
 // Re-export button creation helpers
 export { createCopyButtons, createHexButton } from './copy.js';
@@ -79,28 +71,6 @@ export async function handleButtonInteraction(
 
   if (customId.startsWith('copy_hsv_')) {
     return handleCopyHsv(interaction);
-  }
-
-  // Preset moderation buttons
-  if (customId.startsWith('preset_approve_')) {
-    return handlePresetApproveButton(interaction, env, ctx, logger);
-  }
-
-  if (customId.startsWith('preset_reject_')) {
-    return handlePresetRejectButton(interaction, env, ctx, logger);
-  }
-
-  if (customId.startsWith('preset_revert_')) {
-    return handlePresetRevertButton(interaction, env, ctx, logger);
-  }
-
-  // Ban confirmation buttons
-  if (customId.startsWith('ban_confirm_')) {
-    return handleBanConfirmButton(interaction, env, ctx, logger);
-  }
-
-  if (customId.startsWith('ban_cancel_')) {
-    return handleBanCancelButton(interaction, env, ctx, logger);
   }
 
   // Unknown button

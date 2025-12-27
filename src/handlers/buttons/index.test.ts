@@ -1,5 +1,8 @@
 /**
  * Tests for Button Handlers Index
+ *
+ * Note: Moderation buttons (preset approve/reject/revert, ban confirm/cancel)
+ * are now handled by xivdyetools-moderation-worker.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { handleButtonInteraction } from './index.js';
@@ -13,27 +16,15 @@ vi.mock('./copy.js', () => ({
     createHexButton: vi.fn(),
 }));
 
-vi.mock('./preset-moderation.js', () => ({
-    handlePresetApproveButton: vi.fn(() => new Response(JSON.stringify({ type: 4, data: { content: 'approved' } }))),
-    handlePresetRejectButton: vi.fn(() => new Response(JSON.stringify({ type: 4, data: { content: 'rejected' } }))),
-    handlePresetRevertButton: vi.fn(() => new Response(JSON.stringify({ type: 4, data: { content: 'reverted' } }))),
-}));
-
-vi.mock('./ban-confirmation.js', () => ({
-    handleBanConfirmButton: vi.fn(() => new Response(JSON.stringify({ type: 4, data: { content: 'ban confirmed' } }))),
-    handleBanCancelButton: vi.fn(() => new Response(JSON.stringify({ type: 4, data: { content: 'ban cancelled' } }))),
-}));
-
 import { handleCopyHex, handleCopyRgb, handleCopyHsv } from './copy.js';
-import {
-    handlePresetApproveButton,
-    handlePresetRejectButton,
-    handlePresetRevertButton,
-} from './preset-moderation.js';
-import {
-    handleBanConfirmButton,
-    handleBanCancelButton,
-} from './ban-confirmation.js';
+
+interface InteractionResponseBody {
+    type: number;
+    data?: {
+        content?: string;
+        flags?: number;
+    };
+}
 
 describe('buttons/index.ts', () => {
     const mockEnv = {} as any;
@@ -84,45 +75,6 @@ describe('buttons/index.ts', () => {
             expect(handleCopyHsv).toHaveBeenCalledWith(interaction);
         });
 
-        it('should route preset_approve_ buttons to handlePresetApproveButton', async () => {
-            const interaction = {
-                id: '123',
-                token: 'token',
-                application_id: 'app_id',
-                data: { custom_id: 'preset_approve_preset-123' },
-            };
-
-            await handleButtonInteraction(interaction, mockEnv, mockCtx);
-
-            expect(handlePresetApproveButton).toHaveBeenCalledWith(interaction, mockEnv, mockCtx, undefined);
-        });
-
-        it('should route preset_reject_ buttons to handlePresetRejectButton', async () => {
-            const interaction = {
-                id: '123',
-                token: 'token',
-                application_id: 'app_id',
-                data: { custom_id: 'preset_reject_preset-123' },
-            };
-
-            await handleButtonInteraction(interaction, mockEnv, mockCtx);
-
-            expect(handlePresetRejectButton).toHaveBeenCalledWith(interaction, mockEnv, mockCtx, undefined);
-        });
-
-        it('should route preset_revert_ buttons to handlePresetRevertButton', async () => {
-            const interaction = {
-                id: '123',
-                token: 'token',
-                application_id: 'app_id',
-                data: { custom_id: 'preset_revert_preset-123' },
-            };
-
-            await handleButtonInteraction(interaction, mockEnv, mockCtx);
-
-            expect(handlePresetRevertButton).toHaveBeenCalledWith(interaction, mockEnv, mockCtx, undefined);
-        });
-
         it('should return ephemeral message for unknown buttons', async () => {
             const interaction = {
                 id: '123',
@@ -134,8 +86,8 @@ describe('buttons/index.ts', () => {
             const response = await handleButtonInteraction(interaction, mockEnv, mockCtx);
             const body = (await response.json()) as InteractionResponseBody;
 
-            expect(body.data.content).toBe('This button is not recognized.');
-            expect(body.data.flags).toBe(64);
+            expect(body.data?.content).toBe('This button is not recognized.');
+            expect(body.data?.flags).toBe(64);
         });
 
         it('should handle empty custom_id gracefully', async () => {
@@ -149,7 +101,7 @@ describe('buttons/index.ts', () => {
             const response = await handleButtonInteraction(interaction, mockEnv, mockCtx);
             const body = (await response.json()) as InteractionResponseBody;
 
-            expect(body.data.content).toBe('This button is not recognized.');
+            expect(body.data?.content).toBe('This button is not recognized.');
         });
 
         it('should handle missing data gracefully', async () => {
@@ -162,33 +114,7 @@ describe('buttons/index.ts', () => {
             const response = await handleButtonInteraction(interaction, mockEnv, mockCtx);
             const body = (await response.json()) as InteractionResponseBody;
 
-            expect(body.data.content).toBe('This button is not recognized.');
-        });
-
-        it('should route ban_confirm_ buttons to handleBanConfirmButton', async () => {
-            const interaction = {
-                id: '123',
-                token: 'token',
-                application_id: 'app_id',
-                data: { custom_id: 'ban_confirm_user123' },
-            };
-
-            await handleButtonInteraction(interaction, mockEnv, mockCtx);
-
-            expect(handleBanConfirmButton).toHaveBeenCalledWith(interaction, mockEnv, mockCtx, undefined);
-        });
-
-        it('should route ban_cancel_ buttons to handleBanCancelButton', async () => {
-            const interaction = {
-                id: '123',
-                token: 'token',
-                application_id: 'app_id',
-                data: { custom_id: 'ban_cancel_user123' },
-            };
-
-            await handleButtonInteraction(interaction, mockEnv, mockCtx);
-
-            expect(handleBanCancelButton).toHaveBeenCalledWith(interaction, mockEnv, mockCtx, undefined);
+            expect(body.data?.content).toBe('This button is not recognized.');
         });
 
         it('should log info when logger is provided', async () => {
@@ -211,12 +137,12 @@ describe('buttons/index.ts', () => {
                 id: '123',
                 token: 'token',
                 application_id: 'app_id',
-                data: { custom_id: 'unknown_button_xyz' },
+                data: { custom_id: 'totally_unknown_button' },
             };
 
             await handleButtonInteraction(interaction, mockEnv, mockCtx, mockLogger as any);
 
-            expect(mockLogger.warn).toHaveBeenCalledWith('Unknown button custom_id: unknown_button_xyz');
+            expect(mockLogger.warn).toHaveBeenCalledWith('Unknown button custom_id: totally_unknown_button');
         });
     });
 });
