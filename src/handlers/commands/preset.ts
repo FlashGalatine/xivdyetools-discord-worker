@@ -487,8 +487,9 @@ async function processSubmitCommand(
     if (logger) {
       logger.error('Submit preset error', error instanceof Error ? error : undefined);
     }
+    // SECURITY: Use getSafeMessage() to prevent exposing internal API details
     const message = error instanceof PresetAPIError
-      ? error.message
+      ? error.getSafeMessage()
       : 'Failed to submit preset.';
 
     await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
@@ -772,7 +773,8 @@ async function processEditCommand(
     if (logger) {
       logger.error('Edit preset error', error instanceof Error ? error : undefined);
     }
-    const message = error instanceof PresetAPIError ? error.message : 'Failed to edit preset.';
+    // SECURITY: Use getSafeMessage() to prevent exposing internal API details
+    const message = error instanceof PresetAPIError ? error.getSafeMessage() : 'Failed to edit preset.';
     await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [errorEmbed(t.t('common.error'), message)],
     });

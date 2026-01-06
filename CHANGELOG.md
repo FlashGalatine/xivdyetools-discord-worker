@@ -5,6 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.2] - 2026-01-05
+
+### Added
+
+- **Text Sanitization Utility**: New `src/utils/sanitize.ts` module for secure text handling
+  - `sanitizeDisplayText()` - Removes control characters, zalgo text, invisible Unicode
+  - `sanitizePresetName()` / `sanitizePresetDescription()` - Preset-specific sanitization
+  - `sanitizeCollectionName()` / `sanitizeCollectionDescription()` - Collection-specific sanitization
+  - `sanitizeErrorMessage()` - Converts HTTP status codes to safe user messages
+
+### Security
+
+#### Medium Priority Audit Fixes (2026-01-05 Security Audit)
+
+- **M-001**: Sanitized preset names/descriptions before display in Discord embeds
+  - Preset webhook embeds now use `sanitizePresetName()` and `sanitizePresetDescription()`
+  - Prevents zalgo text, invisible characters, and display issues
+
+- **M-002**: Added character validation for collection names
+  - `createCollection()` now sanitizes names/descriptions before storage
+  - Removes control characters, normalizes whitespace, enforces length limits
+
+- **M-003**: Sanitized API error messages shown to users
+  - Added `getSafeMessage()` method to `PresetAPIError` class
+  - Error handlers now use safe messages instead of raw upstream errors
+  - Prevents exposing internal API details to end users
+
+---
+
 ## [2.3.1] - 2025-12-24
 
 ### Changed

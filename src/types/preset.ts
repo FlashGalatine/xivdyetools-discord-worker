@@ -102,6 +102,34 @@ export class PresetAPIError extends Error {
     this.statusCode = statusCode;
     this.details = details;
   }
+
+  /**
+   * Get a safe, user-friendly error message based on status code.
+   * This prevents exposing internal API details to end users.
+   *
+   * SECURITY: Use this method when displaying errors to users instead of `message`
+   */
+  getSafeMessage(): string {
+    switch (this.statusCode) {
+      case 400:
+        return 'Invalid request. Please check your input and try again.';
+      case 401:
+      case 403:
+        return 'Permission denied.';
+      case 404:
+        return 'Not found.';
+      case 409:
+        return 'This already exists or conflicts with another resource.';
+      case 429:
+        return 'Too many requests. Please wait a moment and try again.';
+      case 500:
+      case 502:
+      case 503:
+        return 'A server error occurred. Please try again later.';
+      default:
+        return 'An error occurred. Please try again.';
+    }
+  }
 }
 
 // ============================================================================

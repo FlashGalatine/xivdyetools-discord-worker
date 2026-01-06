@@ -44,6 +44,7 @@ import { getLocalizedDyeName } from './services/i18n.js';
 import { validateEnv, logValidationErrors } from './utils/env-validation.js';
 import { requestIdMiddleware, getRequestId, type RequestIdVariables } from './middleware/request-id.js';
 import { loggerMiddleware, getLogger } from './middleware/logger.js';
+import { sanitizePresetName, sanitizePresetDescription } from './utils/sanitize.js';
 
 // Initialize DyeService for autocomplete
 const dyeService = new DyeService(dyeDatabase);
@@ -174,11 +175,14 @@ app.post('/webhooks/preset-submission', async (c) => {
 
   // Pending presets go to moderation channel with approve/reject buttons
   if (preset.status === 'pending' && env.MODERATION_CHANNEL_ID) {
+    // SECURITY: Sanitize user-provided content before display
+    const safeName = sanitizePresetName(preset.name);
+    const safeDescription = sanitizePresetDescription(preset.description);
     await sendMessage(env.DISCORD_TOKEN, env.MODERATION_CHANNEL_ID, {
       embeds: [
         {
           title: '🟡 Preset Awaiting Moderation',
-          description: `**${preset.name}**\n\n${preset.description}`,
+          description: `**${safeName}**\n\n${safeDescription}`,
           color: STATUS_DISPLAY.pending.color,
           fields: [
             { name: 'Category', value: preset.category_id, inline: true },
@@ -217,11 +221,14 @@ app.post('/webhooks/preset-submission', async (c) => {
 
   // Auto-approved presets go directly to submission log channel
   if (preset.status === 'approved' && env.SUBMISSION_LOG_CHANNEL_ID) {
+    // SECURITY: Sanitize user-provided content before display
+    const safeName = sanitizePresetName(preset.name);
+    const safeDescription = sanitizePresetDescription(preset.description);
     await sendMessage(env.DISCORD_TOKEN, env.SUBMISSION_LOG_CHANNEL_ID, {
       embeds: [
         {
           title: '🟢 New Preset Published',
-          description: `**${preset.name}**\n\n${preset.description}`,
+          description: `**${safeName}**\n\n${safeDescription}`,
           color: STATUS_DISPLAY.approved.color,
           fields: [
             { name: 'Category', value: preset.category_id, inline: true },

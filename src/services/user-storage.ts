@@ -7,6 +7,7 @@
  */
 
 import type { ExtendedLogger } from '@xivdyetools/logger';
+import { sanitizeCollectionName, sanitizeCollectionDescription } from '../utils/sanitize.js';
 
 // ============================================================================
 // Constants
@@ -277,20 +278,29 @@ export async function createCollection(
   logger?: ExtendedLogger
 ): Promise<{ success: boolean; collection?: Collection; reason?: string }> {
   try {
+    // SECURITY: Sanitize name and description to prevent control chars, zalgo, etc.
+    const sanitizedName = sanitizeCollectionName(name);
+    const sanitizedDescription = description ? sanitizeCollectionDescription(description) : undefined;
+
+    // Reject empty names after sanitization
+    if (!sanitizedName || sanitizedName.length === 0) {
+      return { success: false, reason: 'invalidName' };
+    }
+
     // Validate name length
-    if (name.length > MAX_COLLECTION_NAME_LENGTH) {
+    if (sanitizedName.length > MAX_COLLECTION_NAME_LENGTH) {
       return { success: false, reason: 'nameTooLong' };
     }
 
     // Validate description length
-    if (description && description.length > MAX_DESCRIPTION_LENGTH) {
+    if (sanitizedDescription && sanitizedDescription.length > MAX_DESCRIPTION_LENGTH) {
       return { success: false, reason: 'descriptionTooLong' };
     }
 
     const collections = await getCollections(kv, userId, logger);
 
     // Check for duplicate name
-    if (collections.some((c) => c.name.toLowerCase() === name.toLowerCase())) {
+    if (collections.some((c) => c.name.toLowerCase() === sanitizedName.toLowerCase())) {
       return { success: false, reason: 'alreadyExists' };
     }
 
@@ -303,8 +313,8 @@ export async function createCollection(
     const now = new Date().toISOString();
     const collection: Collection = {
       id: crypto.randomUUID(),
-      name,
-      description,
+      name: sanitizedName,
+      description: sanitizedDescription,
       dyes: [],
       createdAt: now,
       updatedAt: now,
