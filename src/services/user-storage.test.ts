@@ -259,22 +259,30 @@ describe('user-storage.ts', () => {
             expect(result.collection?.description).toBeUndefined();
         });
 
-        it('should return nameTooLong for names exceeding limit', async () => {
-            const longName = 'a'.repeat(MAX_COLLECTION_NAME_LENGTH + 1);
+        it('should truncate long names during sanitization', async () => {
+            // Note: The sanitization layer truncates long names BEFORE validation,
+            // so names exceeding the limit are automatically truncated with ellipsis
+            const longName = 'a'.repeat(MAX_COLLECTION_NAME_LENGTH + 10);
 
             const result = await createCollection(mockKV, mockUserId, longName);
 
-            expect(result.success).toBe(false);
-            expect(result.reason).toBe('nameTooLong');
+            // Success because name is truncated to fit
+            expect(result.success).toBe(true);
+            // Name should be truncated to max length with ellipsis
+            expect(result.collection?.name.length).toBeLessThanOrEqual(MAX_COLLECTION_NAME_LENGTH);
         });
 
-        it('should return descriptionTooLong for descriptions exceeding limit', async () => {
-            const longDesc = 'a'.repeat(MAX_DESCRIPTION_LENGTH + 1);
+        it('should truncate long descriptions during sanitization', async () => {
+            // Note: The sanitization layer truncates long descriptions BEFORE validation,
+            // so descriptions exceeding the limit are automatically truncated with ellipsis
+            const longDesc = 'a'.repeat(MAX_DESCRIPTION_LENGTH + 10);
 
             const result = await createCollection(mockKV, mockUserId, 'Name', longDesc);
 
-            expect(result.success).toBe(false);
-            expect(result.reason).toBe('descriptionTooLong');
+            // Success because description is truncated to fit
+            expect(result.success).toBe(true);
+            // Description should be truncated to max length with ellipsis
+            expect(result.collection?.description?.length).toBeLessThanOrEqual(MAX_DESCRIPTION_LENGTH);
         });
 
         it('should return alreadyExists for duplicate names (case-insensitive)', async () => {
