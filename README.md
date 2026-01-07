@@ -1,6 +1,6 @@
 # XIV Dye Tools Discord Worker
 
-**v2.2.0** | Discord bot for FFXIV dye color exploration, running on Cloudflare Workers using HTTP Interactions.
+**v2.3.2** | Discord bot for FFXIV dye color exploration, running on Cloudflare Workers using HTTP Interactions.
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3%2B-blue)](https://www.typescriptlang.org/)
 [![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers-F38020)](https://workers.cloudflare.com/)
@@ -18,6 +18,7 @@
 💰 **Live Pricing** - Market board prices via Universalis API
 🌐 **Multi-Language** - Full localization for EN, JA, DE, FR, KO, ZH
 ⚡ **Serverless** - Runs on Cloudflare Workers edge network with auto-scaling
+🛡️ **Text Sanitization** - Protection against zalgo text, control characters, and display issues
 
 ## Commands (17 Total)
 
