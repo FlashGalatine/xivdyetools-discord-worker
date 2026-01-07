@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.3] - 2026-01-07
+
+### Added
+
+- **Localization**: Added `matchImageHelp` section translations for all supported languages
+  - German (de), French (fr), Japanese (ja), Korean (ko), Chinese (zh)
+  - Ensures feature parity with English locale for `/match_image` help command
+
+### Changed
+
+- Updated @xivdyetools/core to 1.5.6 (fixes missing metallic dye IDs)
+
 ## [2.3.2] - 2026-01-05
 
 ### Added
