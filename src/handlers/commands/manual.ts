@@ -206,7 +206,7 @@ function buildEmbeds(t: Translator) {
         t.t('manual.tips.facewearExcluded'),
         '',
         t.t('manual.tips.links'),
-        '• [Web App](https://xivdyetools.projectgalatine.com/)',
+        '• [Web App](https://xivdyetools.app/)',
         '• [Support Server](https://discord.gg/5VUSKTZCe5)',
         '• [Patreon](https://patreon.com/ProjectGalatine)',
       ].join('\n'),

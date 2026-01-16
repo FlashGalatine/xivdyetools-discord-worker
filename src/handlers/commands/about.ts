@@ -135,7 +135,7 @@ export async function handleAboutCommand(
             {
               name: `🔗 ${t.t('about.links')}`,
               value: [
-                '[Web App](https://xivdyetools.projectgalatine.com/)',
+                '[Web App](https://xivdyetools.app/)',
                 '[GitHub](https://github.com/FlashGalatine/xivdyetools-discord-worker)',
                 '[Invite Bot](https://discord.com/oauth2/authorize?client_id=1447108133020369048)',
                 '[Patreon](https://www.patreon.com/ProjectGalatine)',

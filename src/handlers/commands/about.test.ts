@@ -202,7 +202,7 @@ describe('about.ts', () => {
       expect(linksField.value).toContain('GitHub');
       expect(linksField.value).toContain('Invite Bot');
       expect(linksField.value).toContain('Patreon');
-      expect(linksField.value).toContain('xivdyetools.projectgalatine.com');
+      expect(linksField.value).toContain('xivdyetools.app');
     });
 
     it('should include footer with powered by info', async () => {
