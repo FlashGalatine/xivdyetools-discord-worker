@@ -2,13 +2,13 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Overview
+## Project Overview
 
-**Version 2.0.0** - The primary Discord bot for FFXIV dye color tools. Uses HTTP Interactions (not Gateway WebSocket) for serverless operation on the edge network.
+The primary Discord bot for FFXIV dye color tools. Uses HTTP Interactions (not Gateway WebSocket) for serverless operation on the edge network.
 
 This bot replaces the deprecated `xivdyetools-discord-bot` (traditional Node.js/Discord.js bot).
 
-## Quick Commands
+## Commands
 
 ```bash
 npm run dev                  # Start local dev server (wrangler)
@@ -39,6 +39,12 @@ wrangler secret put BOT_API_SECRET
 wrangler secret put INTERNAL_WEBHOOK_SECRET
 wrangler secret put STATS_AUTHORIZED_USERS    # Comma-separated user IDs for /stats
 wrangler secret put MODERATOR_IDS             # Comma-separated user IDs for moderation
+```
+
+### Pre-commit Checklist
+
+```bash
+npm run lint && npm run test -- --run && npm run type-check
 ```
 
 ## Architecture
@@ -212,3 +218,84 @@ Stats available:
 - Success rate
 - Top 5 most used commands
 - Unique users per day
+
+## Testing
+
+Tests use Vitest with `@xivdyetools/test-utils` for Cloudflare Workers mocks.
+
+```bash
+npm run test                 # Run all tests
+npx vitest run src/handlers/commands/harmony.test.ts  # Single file
+npx vitest run -t "harmony"  # Pattern match
+```
+
+Test files are co-located with source (`*.test.ts`).
+
+## Security Patterns
+
+### Ed25519 Signature Verification
+
+All Discord requests verified before processing (see `utils/verify.ts`):
+- Headers: `X-Signature-Ed25519`, `X-Signature-Timestamp`
+- Max body size: 100KB (validates Content-Length first, then actual body)
+- Uses `discord-interactions` library
+
+### Timing-Safe Comparisons
+
+Prevents timing oracle attacks on secret comparisons:
+- Uses `crypto.subtle.timingSafeEqual()` with padding
+- Fallback XOR-based comparison if crypto unavailable
+- Applied to webhook authentication and secret validation
+
+### Webhook Authentication
+
+For `/webhooks/preset-submission`:
+- Bearer token authentication
+- Constant-time comparison of secrets
+- Max payload size: 10KB
+
+### Rate Limiting
+
+Per-user sliding window (KV-backed):
+- Image processing commands: 5 req/min
+- Standard commands: 15 req/min
+- Exempt commands: 'about', 'manual', 'stats'
+- Guards against missing userId to prevent bypass
+
+### Data Sanitization
+
+Before Discord display:
+- Removes control characters, invisible Unicode, Zalgo text
+- Max lengths: 100 chars (name), 500 chars (description)
+- Functions: `sanitizePresetName()`, `sanitizePresetDescription()`
+- Generic error messages prevent information leakage
+
+### Security Headers
+
+```
+X-Content-Type-Options: nosniff
+X-Frame-Options: DENY
+Strict-Transport-Security: max-age=31536000; includeSubDomains
+```
+
+## Related Projects
+
+**Dependencies:**
+- `@xivdyetools/core` - Dye database, color algorithms
+- `@xivdyetools/types` - Shared type definitions
+- `@xivdyetools/logger` - Structured logging
+
+**Service Bindings:**
+- xivdyetools-presets-api - Community presets (Service Binding preferred)
+
+**Sibling:**
+- xivdyetools-moderation-worker - Separate moderation bot
+
+## Deployment Checklist
+
+1. Ensure all secrets are set: `wrangler secret list`
+2. Run tests: `npm run test -- --run`
+3. Deploy to staging: `npm run deploy`
+4. Test commands in staging Discord server
+5. Deploy to production: `npm run deploy:production`
+6. Verify production endpoints respond
