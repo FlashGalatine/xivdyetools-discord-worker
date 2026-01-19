@@ -5,56 +5,24 @@
  * Accepts hex codes or dye names, returns match quality and details.
  */
 
-import { DyeService, dyeDatabase, ColorService, type Dye } from '@xivdyetools/core';
+import { ColorService, type Dye } from '@xivdyetools/core';
 import { messageResponse, errorEmbed, hexToDiscordColor } from '../../utils/response.js';
+// DISCORD-REF-001 FIX: Import from centralized color utilities
+import { resolveColorInput as resolveColor, dyeService } from '../../utils/color.js';
 import { getDyeEmoji } from '../../services/emoji.js';
 import { createCopyButtons } from '../buttons/index.js';
 import { createUserTranslator, type Translator } from '../../services/bot-i18n.js';
 import { initializeLocale, getLocalizedDyeName } from '../../services/i18n.js';
 import type { Env, DiscordInteraction } from '../../types/env.js';
 
-// Initialize DyeService with the database
-const dyeService = new DyeService(dyeDatabase);
-
-/**
- * Validates if a string is a valid hex color
- */
-function isValidHex(input: string): boolean {
-  return /^#?[0-9A-Fa-f]{6}$/.test(input) || /^#?[0-9A-Fa-f]{3}$/.test(input);
-}
-
-/**
- * Normalizes a hex color (ensures # prefix and 6 digits)
- */
-function normalizeHex(hex: string): string {
-  let clean = hex.replace('#', '');
-
-  // Expand 3-digit hex to 6-digit
-  if (clean.length === 3) {
-    clean = clean[0] + clean[0] + clean[1] + clean[1] + clean[2] + clean[2];
-  }
-
-  return `#${clean}`;
-}
-
 /**
  * Resolves color input to a hex value
+ * DISCORD-REF-001 FIX: Uses shared color utilities, adapts result to local interface
  */
 function resolveColorInput(input: string): { hex: string; fromDye?: Dye } | null {
-  // Check if it's a hex color
-  if (isValidHex(input)) {
-    return { hex: normalizeHex(input) };
-  }
-
-  // Try to find a dye by name (excluding Facewear)
-  const dyes = dyeService.searchByName(input);
-  const nonFacewearDye = dyes.find((d) => d.category !== 'Facewear');
-
-  if (nonFacewearDye) {
-    return { hex: nonFacewearDye.hex, fromDye: nonFacewearDye };
-  }
-
-  return null;
+  const resolved = resolveColor(input, { excludeFacewear: true });
+  if (!resolved) return null;
+  return { hex: resolved.hex, fromDye: resolved.dye };
 }
 
 /**

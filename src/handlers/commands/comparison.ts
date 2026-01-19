@@ -5,9 +5,11 @@
  * distances, and contrast ratios.
  */
 
-import { DyeService, dyeDatabase, type Dye } from '@xivdyetools/core';
+import type { Dye } from '@xivdyetools/core';
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import { deferredResponse, errorEmbed } from '../../utils/response.js';
+// DISCORD-REF-001 FIX: Import from centralized color utilities
+import { resolveColorInput as resolveColor } from '../../utils/color.js';
 import { editOriginalResponse } from '../../utils/discord-api.js';
 import { generateComparisonGrid } from '../../services/svg/comparison-grid.js';
 import { renderSvgToPng } from '../../services/svg/renderer.js';
@@ -16,49 +18,13 @@ import { createUserTranslator, createTranslator, type Translator } from '../../s
 import { initializeLocale, getLocalizedDyeName, type LocaleCode } from '../../services/i18n.js';
 import type { Env, DiscordInteraction } from '../../types/env.js';
 
-// Initialize DyeService with the database
-const dyeService = new DyeService(dyeDatabase);
-
-/**
- * Validates if a string is a valid hex color
- */
-function isValidHex(input: string): boolean {
-  return /^#?[0-9A-Fa-f]{6}$/.test(input);
-}
-
-/**
- * Normalizes a hex color (ensures # prefix)
- */
-function normalizeHex(hex: string): string {
-  return hex.startsWith('#') ? hex : `#${hex}`;
-}
-
 /**
  * Resolves color input to a dye
- * Returns the dye if found by name, or creates a synthetic dye from hex
+ * DISCORD-REF-001 FIX: Uses shared color utilities with findClosestForHex option
  */
 function resolveColorInput(input: string): Dye | null {
-  // Check if it's a hex color
-  if (isValidHex(input)) {
-    const hex = normalizeHex(input);
-    // Find closest dye to this hex color
-    const closestDye = dyeService.findClosestDye(hex);
-    if (closestDye) {
-      return closestDye;
-    }
-    // If no dye found, return null (unlikely but possible)
-    return null;
-  }
-
-  // Try to find a dye by name
-  const dyes = dyeService.searchByName(input);
-  if (dyes.length > 0) {
-    // Filter out Facewear and take the first match
-    const nonFacewear = dyes.filter((d) => d.category !== 'Facewear');
-    return nonFacewear[0] || dyes[0];
-  }
-
-  return null;
+  const resolved = resolveColor(input, { excludeFacewear: true, findClosestForHex: true });
+  return resolved?.dye ?? null;
 }
 
 /**

@@ -9,9 +9,11 @@
  * for users with color vision deficiencies.
  */
 
-import { DyeService, dyeDatabase, type Dye } from '@xivdyetools/core';
+import type { Dye } from '@xivdyetools/core';
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import { deferredResponse, errorEmbed } from '../../utils/response.js';
+// DISCORD-REF-001 FIX: Import from centralized color utilities
+import { resolveColorInput, type ResolvedColor } from '../../utils/color.js';
 import { editOriginalResponse } from '../../utils/discord-api.js';
 import {
   generateAccessibilityComparison,
@@ -28,24 +30,15 @@ import { discordLocaleToLocaleCode, initializeLocale, getLocalizedDyeName, type 
 import type { Env, DiscordInteraction } from '../../types/env.js';
 
 // ============================================================================
-// Service Initialization
-// ============================================================================
-
-const dyeService = new DyeService(dyeDatabase);
-
-// ============================================================================
 // Types
 // ============================================================================
 
 /**
- * Resolved dye input
+ * Resolved dye input with required name field
+ * DISCORD-REF-001 FIX: Extends shared ResolvedColor with accessibility-specific requirements
  */
-interface ResolvedDye {
-  hex: string;
-  name: string;
-  id?: number;
-  itemID?: number;
-  dye?: Dye;
+interface ResolvedDye extends ResolvedColor {
+  name: string;  // Required for accessibility display
 }
 
 // ============================================================================
@@ -59,52 +52,19 @@ const VISION_TYPES: VisionType[] = ['protanopia', 'deuteranopia', 'tritanopia'];
 // ============================================================================
 
 /**
- * Validates if a string is a valid hex color
- */
-function isValidHex(input: string): boolean {
-  return /^#?[0-9A-Fa-f]{6}$/.test(input);
-}
-
-/**
- * Normalizes a hex color (ensures # prefix)
- */
-function normalizeHex(hex: string): string {
-  return hex.startsWith('#') ? hex : `#${hex}`;
-}
-
-/**
  * Resolves dye input (hex or name) to a color
+ * DISCORD-REF-001 FIX: Uses shared color utilities with findClosestForHex option
  */
 function resolveDyeInput(input: string): ResolvedDye | null {
-  // Check if it's a hex color
-  if (isValidHex(input)) {
-    const hex = normalizeHex(input);
-    // Try to find closest matching dye for the name
-    const closest = dyeService.findClosestDye(hex);
-    return {
-      hex,
-      name: closest ? closest.name : hex.toUpperCase(),
-      id: closest?.id,
-      itemID: closest?.itemID,
-      dye: closest ?? undefined,
-    };
-  }
+  // Use shared utility with findClosestForHex to always get dye info for hex inputs
+  const resolved = resolveColorInput(input, { excludeFacewear: true, findClosestForHex: true });
+  if (!resolved) return null;
 
-  // Try to find a dye by name (exclude Facewear)
-  const dyes = dyeService.searchByName(input);
-  const nonFacewear = dyes.find((d) => d.category !== 'Facewear');
-
-  if (nonFacewear) {
-    return {
-      hex: nonFacewear.hex,
-      name: nonFacewear.name,
-      id: nonFacewear.id,
-      itemID: nonFacewear.itemID,
-      dye: nonFacewear,
-    };
-  }
-
-  return null;
+  // Ensure we have a name (use hex as fallback)
+  return {
+    ...resolved,
+    name: resolved.name ?? resolved.hex.toUpperCase(),
+  };
 }
 
 // ============================================================================

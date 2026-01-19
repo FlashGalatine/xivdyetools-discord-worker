@@ -6,9 +6,11 @@
  * creates a visual wheel showing harmonious dye combinations.
  */
 
-import { DyeService, dyeDatabase, type Dye } from '@xivdyetools/core';
+import type { Dye } from '@xivdyetools/core';
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import { deferredResponse, errorEmbed } from '../../utils/response.js';
+// DISCORD-REF-001 FIX: Import from centralized color utilities
+import { resolveColorInput, dyeService } from '../../utils/color.js';
 import { editOriginalResponse } from '../../utils/discord-api.js';
 import { generateHarmonyWheel, type HarmonyDye } from '../../services/svg/harmony-wheel.js';
 import { renderSvgToPng } from '../../services/svg/renderer.js';
@@ -16,9 +18,6 @@ import { getDyeEmoji } from '../../services/emoji.js';
 import { createUserTranslator, createTranslator, type Translator } from '../../services/bot-i18n.js';
 import { initializeLocale, getLocalizedDyeName, type LocaleCode } from '../../services/i18n.js';
 import type { Env, DiscordInteraction } from '../../types/env.js';
-
-// Initialize DyeService with the database
-const dyeService = new DyeService(dyeDatabase);
 
 // Valid harmony types
 const HARMONY_TYPES = [
@@ -32,40 +31,6 @@ const HARMONY_TYPES = [
 ] as const;
 
 type HarmonyType = (typeof HARMONY_TYPES)[number];
-
-/**
- * Validates if a string is a valid hex color
- */
-function isValidHex(input: string): boolean {
-  return /^#?[0-9A-Fa-f]{6}$/.test(input);
-}
-
-/**
- * Normalizes a hex color (ensures # prefix)
- */
-function normalizeHex(hex: string): string {
-  return hex.startsWith('#') ? hex : `#${hex}`;
-}
-
-/**
- * Resolves color input to a hex value and optional dye info
- */
-function resolveColorInput(input: string): { hex: string; name?: string; id?: number; itemID?: number } | null {
-  // Check if it's a hex color
-  if (isValidHex(input)) {
-    return { hex: normalizeHex(input) };
-  }
-
-  // Try to find a dye by name
-  const dyes = dyeService.searchByName(input);
-  if (dyes.length > 0) {
-    // Take the closest match (first result)
-    const dye = dyes[0];
-    return { hex: dye.hex, name: dye.name, id: dye.id, itemID: dye.itemID };
-  }
-
-  return null;
-}
 
 /**
  * Gets harmony dyes based on the harmony type
@@ -126,7 +91,8 @@ export async function handleHarmonyCommand(
   }
 
   // Resolve the color input
-  const resolved = resolveColorInput(colorInput);
+  // Note: harmony uses all dyes including Facewear since core harmony functions handle filtering
+  const resolved = resolveColorInput(colorInput, { excludeFacewear: false });
   if (!resolved) {
     return Response.json({
       type: 4,

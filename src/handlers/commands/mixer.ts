@@ -7,9 +7,11 @@
  * Accepts colors as hex codes or dye names, with configurable step count.
  */
 
-import { DyeService, dyeDatabase, ColorService, type Dye } from '@xivdyetools/core';
+import { ColorService, type Dye } from '@xivdyetools/core';
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import { deferredResponse, errorEmbed, hexToDiscordColor } from '../../utils/response.js';
+// DISCORD-REF-001 FIX: Import from centralized color utilities
+import { resolveColorInput, dyeService } from '../../utils/color.js';
 import { editOriginalResponse } from '../../utils/discord-api.js';
 import {
   generateGradientBar,
@@ -21,43 +23,6 @@ import { getDyeEmoji } from '../../services/emoji.js';
 import { createTranslator, createUserTranslator, type Translator } from '../../services/bot-i18n.js';
 import { discordLocaleToLocaleCode, initializeLocale, getLocalizedDyeName, type LocaleCode } from '../../services/i18n.js';
 import type { Env, DiscordInteraction } from '../../types/env.js';
-
-// Initialize DyeService with the database
-const dyeService = new DyeService(dyeDatabase);
-
-/**
- * Validates if a string is a valid hex color
- */
-function isValidHex(input: string): boolean {
-  return /^#?[0-9A-Fa-f]{6}$/.test(input);
-}
-
-/**
- * Normalizes a hex color (ensures # prefix)
- */
-function normalizeHex(hex: string): string {
-  return hex.startsWith('#') ? hex : `#${hex}`;
-}
-
-/**
- * Resolves color input to a hex value and optional dye info
- */
-function resolveColorInput(input: string): { hex: string; name?: string; id?: number; itemID?: number } | null {
-  // Check if it's a hex color
-  if (isValidHex(input)) {
-    return { hex: normalizeHex(input) };
-  }
-
-  // Try to find a dye by name (excluding Facewear)
-  const dyes = dyeService.searchByName(input);
-  const nonFacewearDye = dyes.find((d) => d.category !== 'Facewear');
-
-  if (nonFacewearDye) {
-    return { hex: nonFacewearDye.hex, name: nonFacewearDye.name, id: nonFacewearDye.id, itemID: nonFacewearDye.itemID };
-  }
-
-  return null;
-}
 
 /**
  * Gets match quality description based on color distance
