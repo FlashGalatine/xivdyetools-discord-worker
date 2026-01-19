@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.4] - 2026-01-19
+
+### Fixed
+
+- **DISCORD-BUG-001**: Fixed non-atomic counter increment in analytics. Added optimistic concurrency with retries and version tracking via KV metadata to prevent lost updates under concurrent load
+- **DISCORD-BUG-002**: Verified Analytics.writeDataPoint already had try-catch error handling with logger support (no changes needed)
+
+### Refactored
+
+- **DISCORD-REF-001**: Extracted shared color utilities to `src/utils/color.ts`
+  - `isValidHex()` - Supports both 6-digit and optional 3-digit shorthand validation
+  - `normalizeHex()` - Ensures `#` prefix and expands 3-digit to 6-digit (`#F00` → `#FF0000`)
+  - `resolveColorInput()` - Flexible options for different command needs
+  - Reduced ~110 lines of duplicated functions across 5 command handlers
+
+---
+
 ## [2.3.3] - 2026-01-07
 
 ### Added
