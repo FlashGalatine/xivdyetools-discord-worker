@@ -18,18 +18,28 @@ import type { Env } from '../types/env.js';
 // Create mock KV namespace
 function createMockKV() {
   const store = new Map<string, string>();
+  const metadata = new Map<string, { version: number }>();
 
   return {
     get: vi.fn(async (key: string) => store.get(key) ?? null),
-    put: vi.fn(async (key: string, value: string) => {
+    getWithMetadata: vi.fn(async (key: string) => ({
+      value: store.get(key) ?? null,
+      metadata: metadata.get(key) ?? null,
+    })),
+    put: vi.fn(async (key: string, value: string, options?: { metadata?: { version: number } }) => {
       store.set(key, value);
+      if (options?.metadata) {
+        metadata.set(key, options.metadata);
+      }
     }),
     delete: vi.fn(async (key: string) => {
       store.delete(key);
+      metadata.delete(key);
     }),
     list: vi.fn(async () => ({ keys: [] })),
     _store: store,
-  } as unknown as KVNamespace & { _store: Map<string, string> };
+    _metadata: metadata,
+  } as unknown as KVNamespace & { _store: Map<string, string>; _metadata: Map<string, { version: number }> };
 }
 
 // Create mock Analytics Engine

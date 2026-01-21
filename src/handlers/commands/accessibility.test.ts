@@ -522,9 +522,10 @@ describe('accessibility.ts', () => {
       const response = await handleAccessibilityCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      // Should return error because Facewear dyes are filtered out
+      // Should return an immediate error response (type 4) because
+      // Facewear dyes are excluded from color resolution
       expect(data.type).toBe(4);
-      expect(data.data.embeds[0].description).toContain('facewear');
+      expect(data.data?.embeds?.[0]?.description).toContain('Could not find');
     });
 
     it('should log error when logger is provided', async () => {

@@ -164,7 +164,9 @@ export function resolveColorInput(
       : dyes;
 
     // Take the first match (closest name match from searchByName)
-    const dye = candidates[0] || dyes[0];
+    // Note: Don't fall back to dyes[0] when excludeFacewear is true,
+    // as that would defeat the purpose of the Facewear filter
+    const dye = candidates[0];
 
     if (dye) {
       return {

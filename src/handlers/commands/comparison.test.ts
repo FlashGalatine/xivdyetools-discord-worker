@@ -429,9 +429,9 @@ describe('comparison.ts', () => {
       expect(data.type).toBe(5);
     });
 
-    it('should prefer non-Facewear dye when searching by name', async () => {
-      // The mock returns Facewear for 'facewear' query but comparison
-      // should handle it - in this case the first match is returned
+    it('should reject Facewear dye when searching by name', async () => {
+      // Facewear dyes are excluded from color resolution, so searching
+      // for 'facewear' should return an error for invalid color
       const interaction: DiscordInteraction = {
         type: 2,
         data: {
@@ -450,8 +450,10 @@ describe('comparison.ts', () => {
       const response = await handleComparisonCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      // Even Facewear dyes are included when specifically requested
-      expect(data.type).toBe(5);
+      // Should return an immediate error response (type 4) because
+      // Facewear dyes are excluded from color resolution
+      expect(data.type).toBe(4);
+      expect(data.data?.embeds?.[0]?.description).toContain('Could not find');
     });
   });
 
