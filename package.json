@@ -1,6 +1,6 @@
 {
   "name": "xivdyetools-discord-worker",
-  "version": "2.3.7",
+  "version": "2.3.8",
   "description": "XIV Dye Tools Discord Bot - Cloudflare Workers Edition",
   "type": "module",
   "scripts": {
@@ -25,15 +25,16 @@
     "@cf-wasm/photon": "^0.3.4",
     "@cloudflare/workers-types": "^4.20251205.0",
     "@resvg/resvg-wasm": "^2.6.2",
+    "@xivdyetools/auth": "file:../xivdyetools-auth",
     "@xivdyetools/core": "^1.5.5",
     "@xivdyetools/logger": "^1.0.2",
     "@xivdyetools/rate-limiter": "^1.0.0",
     "@xivdyetools/types": "^1.1.1",
-    "discord-interactions": "^4.4.0",
     "hono": "^4.11.4"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
+    "discord-interactions": "^4.4.0",
     "@vitest/coverage-v8": "^4.0.15",
     "@xivdyetools/test-utils": "^1.0.3",
     "dotenv": "^17.2.3",
