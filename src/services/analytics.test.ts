@@ -16,9 +16,10 @@ import {
 import type { Env } from '../types/env.js';
 
 // Create mock KV namespace
+// OPT-002: Updated to properly mock list() with metadata for getStats()
 function createMockKV() {
   const store = new Map<string, string>();
-  const metadata = new Map<string, { version: number }>();
+  const metadata = new Map<string, { version: number; count: number }>();
 
   return {
     get: vi.fn(async (key: string) => store.get(key) ?? null),
@@ -26,20 +27,45 @@ function createMockKV() {
       value: store.get(key) ?? null,
       metadata: metadata.get(key) ?? null,
     })),
-    put: vi.fn(async (key: string, value: string, options?: { metadata?: { version: number } }) => {
+    put: vi.fn(async (key: string, value: string, options?: { metadata?: { version: number; count?: number } }) => {
       store.set(key, value);
       if (options?.metadata) {
-        metadata.set(key, options.metadata);
+        metadata.set(key, {
+          version: options.metadata.version,
+          count: options.metadata.count ?? (parseInt(value, 10) || 0),
+        });
       }
     }),
     delete: vi.fn(async (key: string) => {
       store.delete(key);
       metadata.delete(key);
     }),
-    list: vi.fn(async () => ({ keys: [] })),
+    // OPT-002: list() now returns keys with metadata from the store
+    list: vi.fn(async (options?: { prefix?: string }) => {
+      const prefix = options?.prefix || '';
+      const keys: Array<{ name: string; metadata: { version: number; count: number } | null }> = [];
+      for (const [key, value] of store.entries()) {
+        if (key.startsWith(prefix)) {
+          keys.push({
+            name: key,
+            metadata: metadata.get(key) ?? { version: 1, count: parseInt(value, 10) || 0 },
+          });
+        }
+      }
+      return { keys };
+    }),
     _store: store,
     _metadata: metadata,
-  } as unknown as KVNamespace & { _store: Map<string, string>; _metadata: Map<string, { version: number }> };
+    // Helper to set data with proper metadata (for tests)
+    _setWithMetadata: (key: string, value: string, count?: number) => {
+      store.set(key, value);
+      metadata.set(key, { version: 1, count: count ?? (parseInt(value, 10) || 0) });
+    },
+  } as unknown as KVNamespace & {
+    _store: Map<string, string>;
+    _metadata: Map<string, { version: number; count: number }>;
+    _setWithMetadata: (key: string, value: string, count?: number) => void;
+  };
 }
 
 // Create mock Analytics Engine
@@ -62,7 +88,7 @@ describe('analytics.ts', () => {
       DISCORD_TOKEN: 'test-token',
       DISCORD_CLIENT_ID: 'test-app-id',
       PRESETS_API_URL: 'https://test-api.example.com',
-      INTERNAL_WEBHOOK_SECRET: 'test-secret',
+      INTERNAL_WEBHOOK_SECRET: 'test-secret', // pragma: allowlist secret
       KV: mockKV,
       ANALYTICS: mockAnalytics as unknown as AnalyticsEngineDataset,
     } as Env;
@@ -388,13 +414,14 @@ describe('analytics.ts', () => {
     });
 
     it('should return correct stats from KV', async () => {
-      // Set up test data
-      mockKV._store.set('stats:total', '100');
-      mockKV._store.set('stats:success', '95');
-      mockKV._store.set('stats:failure', '5');
-      mockKV._store.set('stats:cmd:harmony', '40');
-      mockKV._store.set('stats:cmd:dye', '30');
-      mockKV._store.set('stats:cmd:match', '20');
+      // Set up test data with metadata (OPT-002: list() reads from metadata)
+      mockKV._setWithMetadata('stats:total', '100', 100);
+      mockKV._setWithMetadata('stats:success', '95', 95);
+      mockKV._setWithMetadata('stats:failure', '5', 5);
+      mockKV._setWithMetadata('stats:cmd:harmony', '40', 40);
+      mockKV._setWithMetadata('stats:cmd:dye', '30', 30);
+      mockKV._setWithMetadata('stats:cmd:match', '20', 20);
+      // Users key stores comma-separated list, not count
       mockKV._store.set('stats:users:2024-06-15', 'user-1,user-2,user-3');
 
       const stats = await getStats(mockKV);
@@ -412,8 +439,9 @@ describe('analytics.ts', () => {
     });
 
     it('should only include commands with non-zero counts', async () => {
-      mockKV._store.set('stats:cmd:harmony', '10');
-      mockKV._store.set('stats:cmd:dye', '0'); // Should not appear
+      // OPT-002: Use setWithMetadata so list() returns proper counts
+      mockKV._setWithMetadata('stats:cmd:harmony', '10', 10);
+      mockKV._setWithMetadata('stats:cmd:dye', '0', 0); // Should not appear (count is 0)
 
       const stats = await getStats(mockKV);
 
@@ -422,9 +450,10 @@ describe('analytics.ts', () => {
     });
 
     it('should calculate success rate correctly', async () => {
-      mockKV._store.set('stats:total', '200');
-      mockKV._store.set('stats:success', '150');
-      mockKV._store.set('stats:failure', '50');
+      // OPT-002: Use setWithMetadata so list() returns proper counts
+      mockKV._setWithMetadata('stats:total', '200', 200);
+      mockKV._setWithMetadata('stats:success', '150', 150);
+      mockKV._setWithMetadata('stats:failure', '50', 50);
 
       const stats = await getStats(mockKV);
 
@@ -432,6 +461,7 @@ describe('analytics.ts', () => {
     });
 
     it('should handle empty unique users string', async () => {
+      // Users key is fetched via get() not metadata, so use _store directly
       mockKV._store.set('stats:users:2024-06-15', '');
 
       const stats = await getStats(mockKV);
@@ -442,6 +472,7 @@ describe('analytics.ts', () => {
 
     it('should use current date for unique users', async () => {
       vi.setSystemTime(new Date('2024-12-31T23:59:59Z'));
+      // Users key is fetched via get() not metadata
       mockKV._store.set('stats:users:2024-12-31', 'user-a,user-b');
 
       const stats = await getStats(mockKV);
@@ -449,20 +480,16 @@ describe('analytics.ts', () => {
       expect(stats.uniqueUsersToday).toBe(2);
     });
 
-    it('should fetch all known command counters', async () => {
-      // All expected command names should be queried
-      const expectedCommands = [
-        'harmony', 'match', 'match_image', 'dye', 'mixer',
-        'comparison', 'accessibility', 'manual', 'about',
-        'favorites', 'collection', 'preset', 'language', 'stats',
-      ];
+    it('should use list() with prefix to fetch all stats keys (OPT-002)', async () => {
+      // OPT-002: getStats now uses list() instead of individual get() calls
+      // Set up some test data
+      mockKV._setWithMetadata('stats:total', '10', 10);
+      mockKV._setWithMetadata('stats:cmd:harmony', '5', 5);
 
       await getStats(mockKV);
 
-      // Verify KV.get was called for each command
-      for (const cmd of expectedCommands) {
-        expect(mockKV.get).toHaveBeenCalledWith(`stats:cmd:${cmd}`);
-      }
+      // Verify list() was called with the stats prefix
+      expect(mockKV.list).toHaveBeenCalledWith({ prefix: 'stats:' });
     });
   });
 });
