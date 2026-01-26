@@ -5,23 +5,29 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
     checkRateLimit,
     formatRateLimitMessage,
+    resetRateLimiterInstance,
     type RateLimitResult,
 } from './rate-limiter.js';
 
-// Create mock KV namespace
+// Create mock KV namespace with getWithMetadata support for KVRateLimiter
 function createMockKV() {
-    const store = new Map<string, string>();
+    const store = new Map<string, { value: string; metadata: Record<string, unknown> | null }>();
 
     return {
-        get: vi.fn(async (key: string) => store.get(key) ?? null),
-        put: vi.fn(async (key: string, value: string) => {
-            store.set(key, value);
+        get: vi.fn(async (key: string) => store.get(key)?.value ?? null),
+        getWithMetadata: vi.fn(async (key: string) => {
+            const entry = store.get(key);
+            return { value: entry?.value ?? null, metadata: entry?.metadata ?? null };
+        }),
+        put: vi.fn(async (key: string, value: string, options?: { metadata?: Record<string, unknown>; expirationTtl?: number }) => {
+            store.set(key, { value, metadata: options?.metadata ?? null });
         }),
         delete: vi.fn(async (key: string) => {
             store.delete(key);
         }),
         _store: store, // For test inspection
-    } as unknown as KVNamespace & { _store: Map<string, string> };
+        _clear: () => store.clear(), // Helper to clear store between tests
+    } as unknown as KVNamespace & { _store: Map<string, { value: string; metadata: Record<string, unknown> | null }>; _clear: () => void };
 }
 
 describe('rate-limiter.ts', () => {
@@ -29,6 +35,7 @@ describe('rate-limiter.ts', () => {
     const mockUserId = 'user-123';
 
     beforeEach(() => {
+        resetRateLimiterInstance(); // Reset singleton between tests
         mockKV = createMockKV();
         vi.useFakeTimers();
         vi.setSystemTime(new Date('2024-01-01T12:00:00Z'));
@@ -53,12 +60,12 @@ describe('rate-limiter.ts', () => {
             expect(result.remaining).toBe(4); // 5 - 1 = 4
 
             // dye has a limit of 20
-            mockKV._store.clear();
+            mockKV._clear();
             result = await checkRateLimit(mockKV, mockUserId, 'dye');
             expect(result.remaining).toBe(19); // 20 - 1 = 19
 
             // about has a limit of 30
-            mockKV._store.clear();
+            mockKV._clear();
             result = await checkRateLimit(mockKV, mockUserId, 'about');
             expect(result.remaining).toBe(29); // 30 - 1 = 29
         });
@@ -150,16 +157,19 @@ describe('rate-limiter.ts', () => {
             );
         });
 
-        it('should log undefined when non-Error is thrown with logger', async () => {
+        it('should log error when backend error occurs with logger', async () => {
+            // The shared package handles errors internally and sets backendError flag
             mockKV.get = vi.fn().mockRejectedValue('string error');
             const mockLogger = { error: vi.fn() };
 
             const result = await checkRateLimit(mockKV, mockUserId, 'harmony', mockLogger as any);
 
             expect(result.allowed).toBe(true);
+            expect(result.kvError).toBe(true);
+            // Now logs a generic Error when backendError is detected
             expect(mockLogger.error).toHaveBeenCalledWith(
                 'Rate limit check failed',
-                undefined
+                expect.any(Error)
             );
         });
 

@@ -4,10 +4,13 @@
  * Implements sliding window rate limiting using Cloudflare KV.
  * Supports per-user and per-command limits.
  *
+ * REFACTOR-002: Now uses @xivdyetools/rate-limiter shared package
+ *
  * @module services/rate-limiter
  */
 
 import type { ExtendedLogger } from '@xivdyetools/logger';
+import { KVRateLimiter, getDiscordCommandLimit } from '@xivdyetools/rate-limiter';
 
 /**
  * Rate limit check result
@@ -25,55 +28,26 @@ export interface RateLimitResult {
   kvError?: boolean;
 }
 
-/**
- * Rate limit configuration per command
- * Commands not listed here use the default limit
- */
-const COMMAND_LIMITS: Record<string, number> = {
-  // Image processing commands are more expensive
-  match_image: 5,
-  accessibility: 10,
-  // API-dependent commands (external rate limits apply)
-  budget: 10,
-  // Standard commands
-  harmony: 15,
-  match: 15,
-  mixer: 15,
-  comparison: 15,
-  dye: 20,
-  favorites: 20,
-  collection: 20,
-  language: 20,
-  // Utility commands (more lenient)
-  about: 30,
-  manual: 30,
-};
-
-/** Default rate limit for commands not in COMMAND_LIMITS */
-const DEFAULT_LIMIT = 15;
-
-/** Rate limit window in seconds */
-const WINDOW_SECONDS = 60;
-
 /** KV key prefix for rate limit data */
 const KEY_PREFIX = 'ratelimit:user:';
 
 /**
- * Rate limit entry stored in KV
+ * Singleton KV rate limiter instance
+ * Initialized on first use with the KV namespace from env
  */
-interface RateLimitEntry {
-  /** Number of requests in the current window */
-  count: number;
-  /** Start of the current window (ms since epoch) */
-  windowStart: number;
-}
+let limiterInstance: KVRateLimiter | null = null;
 
 /**
- * Get the rate limit for a specific command
+ * Get or create the KV rate limiter instance
  */
-function getCommandLimit(commandName?: string): number {
-  if (!commandName) return DEFAULT_LIMIT;
-  return COMMAND_LIMITS[commandName] ?? DEFAULT_LIMIT;
+function getLimiter(kv: KVNamespace): KVRateLimiter {
+  if (!limiterInstance) {
+    limiterInstance = new KVRateLimiter({
+      kv,
+      keyPrefix: KEY_PREFIX,
+    });
+  }
+  return limiterInstance;
 }
 
 /**
@@ -115,70 +89,38 @@ export async function checkRateLimit(
   commandName?: string,
   logger?: ExtendedLogger
 ): Promise<RateLimitResult> {
-  const limit = getCommandLimit(commandName);
-  const key = commandName
-    ? `${KEY_PREFIX}${userId}:${commandName}`
-    : `${KEY_PREFIX}${userId}:global`;
+  const limiter = getLimiter(kv);
+  const config = getDiscordCommandLimit(commandName);
 
-  const now = Date.now();
-  const windowMs = WINDOW_SECONDS * 1000;
+  // Build compound key for user:command rate limiting
+  const key = commandName ? `${userId}:${commandName}` : `${userId}:global`;
 
   try {
-    // Get current rate limit data
-    const data = await kv.get(key);
-    let entry: RateLimitEntry;
+    const result = await limiter.check(key, config);
 
-    if (data) {
-      entry = JSON.parse(data);
-
-      // Check if window has expired
-      if (now - entry.windowStart >= windowMs) {
-        // Start new window
-        entry = { count: 1, windowStart: now };
-      } else {
-        // Increment counter in current window
-        entry.count++;
-      }
-    } else {
-      // First request, start new window
-      entry = { count: 1, windowStart: now };
-    }
-
-    // Calculate remaining time in window
-    const windowRemaining = Math.max(0, windowMs - (now - entry.windowStart));
-    const resetAt = entry.windowStart + windowMs;
-
-    // Store updated data with TTL (window duration + buffer)
-    await kv.put(key, JSON.stringify(entry), {
-      expirationTtl: WINDOW_SECONDS + 10, // Add 10s buffer
-    });
-
-    // Check if rate limited
-    if (entry.count > limit) {
-      return {
-        allowed: false,
-        remaining: 0,
-        resetAt,
-        retryAfter: Math.ceil(windowRemaining / 1000),
-      };
+    // Log if there was a backend error (fail-open occurred)
+    if (result.backendError && logger) {
+      logger.error('Rate limit check failed', new Error('KV backend error'));
     }
 
     return {
-      allowed: true,
-      remaining: Math.max(0, limit - entry.count),
-      resetAt,
+      allowed: result.allowed,
+      remaining: result.remaining,
+      resetAt: result.resetAt.getTime(),
+      retryAfter: result.retryAfter,
+      kvError: result.backendError,
     };
   } catch (error) {
-    // DISCORD-BUG-002: On KV errors, allow the request (fail open) and flag the error
-    // This prevents KV issues from blocking all commands while enabling monitoring
+    // This shouldn't happen since KVRateLimiter fails open by default
+    // But just in case, log and allow
     if (logger) {
       logger.error('Rate limit check failed', error instanceof Error ? error : undefined);
     }
     return {
       allowed: true,
-      remaining: limit,
-      resetAt: now + windowMs,
-      kvError: true, // Flag for caller to potentially log/alert
+      remaining: config.maxRequests,
+      resetAt: Date.now() + config.windowMs,
+      kvError: true,
     };
   }
 }
@@ -189,4 +131,11 @@ export async function checkRateLimit(
 export function formatRateLimitMessage(result: RateLimitResult): string {
   const seconds = result.retryAfter ?? Math.ceil((result.resetAt - Date.now()) / 1000);
   return `You're using this command too quickly! Please wait **${seconds} second${seconds !== 1 ? 's' : ''}** before trying again.`;
+}
+
+/**
+ * Reset the rate limiter for testing
+ */
+export function resetRateLimiterInstance(): void {
+  limiterInstance = null;
 }

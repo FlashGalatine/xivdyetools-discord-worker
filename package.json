@@ -1,6 +1,6 @@
 {
   "name": "xivdyetools-discord-worker",
-  "version": "2.3.6",
+  "version": "2.3.7",
   "description": "XIV Dye Tools Discord Bot - Cloudflare Workers Edition",
   "type": "module",
   "scripts": {
@@ -27,6 +27,7 @@
     "@resvg/resvg-wasm": "^2.6.2",
     "@xivdyetools/core": "^1.5.5",
     "@xivdyetools/logger": "^1.0.2",
+    "@xivdyetools/rate-limiter": "^1.0.0",
     "@xivdyetools/types": "^1.1.1",
     "discord-interactions": "^4.4.0",
     "hono": "^4.11.4"
