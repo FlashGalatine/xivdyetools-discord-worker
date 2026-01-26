@@ -92,11 +92,23 @@ const STATS_PREFIX = 'stats:';
 const STATS_TTL = 30 * 24 * 60 * 60; // 30 days
 
 /**
+ * Counter metadata structure for OPT-002 optimization
+ * Stores count in metadata so KV list() can return counts without individual gets
+ */
+interface CounterMetadata {
+  version: number;
+  count: number; // OPT-002: Store count in metadata for fast list() queries
+}
+
+/**
  * Increment a counter in KV (for simple stats without Analytics API)
  *
  * DISCORD-BUG-001 FIX: KV doesn't support atomic increments, so concurrent calls
  * can cause lost increments. This implementation uses optimistic concurrency with
  * retries to reduce (but not eliminate) the race window.
+ *
+ * OPT-002: Stores count in both value and metadata so list() can retrieve
+ * counts without individual get() calls.
  *
  * For truly atomic counters, consider using Durable Objects instead.
  * The Analytics Engine integration (trackCommand) provides accurate long-term stats.
@@ -114,7 +126,7 @@ export async function incrementCounter(
 
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     // Read current value with metadata
-    const result = await kv.getWithMetadata<{ version: number }>(fullKey);
+    const result = await kv.getWithMetadata<CounterMetadata>(fullKey);
     const current = parseInt(result.value || '0', 10);
     const currentVersion = result.metadata?.version ?? 0;
 
@@ -122,12 +134,12 @@ export async function incrementCounter(
     const newValue = current + 1;
     const newVersion = currentVersion + 1;
 
-    // Write with new version
+    // Write with new version and count in metadata (OPT-002)
     // Note: This isn't true CAS, but the version helps detect concurrent modifications
     // when debugging. For accurate stats, rely on Analytics Engine.
     await kv.put(fullKey, String(newValue), {
       expirationTtl: STATS_TTL,
-      metadata: { version: newVersion },
+      metadata: { version: newVersion, count: newValue },
     });
 
     // Read back to verify (simple optimistic check)
@@ -205,6 +217,10 @@ export async function trackCommandWithKV(
 
 /**
  * Get aggregated stats from KV
+ *
+ * OPT-002: Uses KV list() with metadata to get command breakdown in a single
+ * operation instead of N+1 individual getCounter() calls. The count is stored
+ * in metadata during incrementCounter() so list() returns everything needed.
  */
 export async function getStats(kv: KVNamespace): Promise<{
   totalCommands: number;
@@ -214,34 +230,53 @@ export async function getStats(kv: KVNamespace): Promise<{
   commandBreakdown: Record<string, number>;
   uniqueUsersToday: number;
 }> {
-  // Get basic counters
-  const [total, success, failure] = await Promise.all([
-    getCounter(kv, 'total'),
-    getCounter(kv, 'success'),
-    getCounter(kv, 'failure'),
-  ]);
-
-  // Get today's unique users
+  // Get today's unique users key
   const today = new Date().toISOString().split('T')[0];
-  const usersStr = await kv.get(`${STATS_PREFIX}users:${today}`);
-  const uniqueUsersToday = usersStr ? usersStr.split(',').length : 0;
 
-  // Get command breakdown (list all cmd:* keys)
+  // OPT-002: Use single list() call to get all stats keys with metadata
+  // This replaces 14+ individual getCounter() calls with one list operation
+  const listResult = await kv.list<CounterMetadata>({ prefix: STATS_PREFIX });
+
+  // Initialize counters
+  let total = 0;
+  let success = 0;
+  let failure = 0;
+  let uniqueUsersToday = 0;
   const commandBreakdown: Record<string, number> = {};
-  const commandNames = [
-    'harmony', 'match', 'match_image', 'dye', 'mixer',
-    'comparison', 'accessibility', 'manual', 'about',
-    'favorites', 'collection', 'preset', 'language', 'stats',
-  ];
 
-  await Promise.all(
-    commandNames.map(async (cmd) => {
-      const count = await getCounter(kv, `cmd:${cmd}`);
+  // Process results from list
+  for (const key of listResult.keys) {
+    const keyName = key.name.replace(STATS_PREFIX, '');
+
+    // Extract count from metadata if available (OPT-002 optimization)
+    const count = key.metadata?.count ?? 0;
+
+    if (keyName === 'total') {
+      total = count;
+    } else if (keyName === 'success') {
+      success = count;
+    } else if (keyName === 'failure') {
+      failure = count;
+    } else if (keyName.startsWith('cmd:')) {
+      const cmdName = keyName.replace('cmd:', '');
       if (count > 0) {
-        commandBreakdown[cmd] = count;
+        commandBreakdown[cmdName] = count;
       }
-    })
-  );
+    } else if (keyName === `users:${today}`) {
+      // For unique users, we need to fetch the actual value (comma-separated list)
+      // since count isn't meaningful here
+      const usersStr = await kv.get(key.name);
+      uniqueUsersToday = usersStr ? usersStr.split(',').length : 0;
+    }
+  }
+
+  // Fallback: If metadata doesn't have counts (old data), fetch individually
+  // This provides backward compatibility during migration
+  if (total === 0 && listResult.keys.some((k) => k.name === `${STATS_PREFIX}total`)) {
+    total = await getCounter(kv, 'total');
+    success = await getCounter(kv, 'success');
+    failure = await getCounter(kv, 'failure');
+  }
 
   return {
     totalCommands: total,

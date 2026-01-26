@@ -1,6 +1,6 @@
 {
   "name": "xivdyetools-discord-worker",
-  "version": "2.3.5",
+  "version": "2.3.6",
   "description": "XIV Dye Tools Discord Bot - Cloudflare Workers Edition",
   "type": "module",
   "scripts": {

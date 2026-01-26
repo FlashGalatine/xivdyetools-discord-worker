@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.6] - 2026-01-25
+
+### Performance
+
+- **OPT-002**: Optimized analytics `getStats()` using KV list() with metadata
+  - Stores counter values in KV metadata during `incrementCounter()`
+  - `getStats()` now uses single `kv.list()` call instead of 14+ individual gets
+  - Removes hardcoded command list - dynamically discovers all tracked commands
+  - Includes backward compatibility fallback for counters without metadata
+  - **Reference**: Security audit OPT-002 (2026-01-25)
+
+---
+
 ## [2.3.5] - 2026-01-25
 
 ### Security
