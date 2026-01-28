@@ -57,17 +57,29 @@
     "dyeInformation": "Dye Information",
     "botInformation": "Bot Information",
     "tipsResources": "Tips & Resources",
-    "match": {
-      "name": "`/match <color> [count]`",
-      "description": "Find the closest FFXIV dye to any color.\n• Accepts hex codes (`#FF0000`) or dye names\n• Optional: show up to 10 closest matches"
+    "extractor": {
+      "name": "`/extractor color <color> [count]` | `/extractor image <image>`",
+      "description": "Extract and match colors to FFXIV dyes.\n• `color`: Match a hex code or dye name to closest dyes\n• `image`: Extract dominant colors from an uploaded image"
     },
     "harmony": {
       "name": "`/harmony <color> [type]`",
       "description": "Generate harmonious dye combinations.\n• Types: Complementary, Analogous, Triadic, Split-Complementary, Tetradic, Square, Monochromatic\n• Creates a visual color wheel"
     },
     "mixer": {
-      "name": "`/mixer <start> <end> [steps]`",
+      "name": "`/mixer <dye1> <dye2> [mode]`",
+      "description": "Blend two dyes together using color science.\n• 6 blending modes: RGB, LAB, OKLAB, RYB, HSL, Spectral\n• Finds the closest FFXIV dye to the blended result"
+    },
+    "gradient": {
+      "name": "`/gradient <start> <end> [steps]`",
       "description": "Create a color gradient between two colors.\n• Shows matched dyes for each gradient step\n• Configurable step count (2-10)"
+    },
+    "swatch": {
+      "name": "`/swatch color <type> <index>` | `/swatch grid <type> <row> <col>`",
+      "description": "Match FFXIV character colors to dyes.\n• Supports skin, hair, eyes, highlights, lips, tattoos, face paint\n• Race/clan specific palettes for skin and hair"
+    },
+    "preferences": {
+      "name": "`/preferences show` | `/preferences set <key> <value>` | `/preferences reset`",
+      "description": "Manage your bot preferences.\n• Set defaults for blending mode, matching method, result count\n• Configure character clan/gender and market world"
     },
     "dyeSearch": {
       "name": "`/dye search <query>`",
@@ -137,6 +149,25 @@
     "useInfoHint": "Use /dye info for acquisition details",
     "useInfoNameHint": "Use /dye info <name> for acquisition details"
   },
+  "extractor": {
+    "title": "Color Extractor: {name}",
+    "topMatches": "Top {count} Dye Matches",
+    "findingMatches": "Finding closest matches for {input}",
+    "useInfoHint": "Use /dye info for acquisition details",
+    "useInfoNameHint": "Use /dye info <name> for acquisition details",
+    "colorSubcommand": "Extract dyes from a color",
+    "imageSubcommand": "Extract dyes from an image",
+    "extractedColors": "Extracted Colors",
+    "dominantColor": "Dominant Color"
+  },
+  "gradient": {
+    "title": "Color Gradient",
+    "startColor": "Start",
+    "endColor": "End",
+    "steps": "{count} Steps",
+    "gradientFrom": "Gradient from {start} to {end}",
+    "description": "Create smooth color transitions between two colors"
+  },
   "harmony": {
     "title": "{type} Harmony",
     "baseColor": "Base Color",
@@ -150,11 +181,29 @@
     "monochromatic": "Monochromatic"
   },
   "mixer": {
-    "title": "Color Gradient",
-    "startColor": "Start",
-    "endColor": "End",
-    "steps": "{count} Steps",
-    "gradientFrom": "Gradient from {start} to {end}"
+    "title": "Dye Blender",
+    "blendResult": "Blend Result",
+    "inputDyes": "Input Dyes",
+    "blendedColor": "Blended Color",
+    "closestMatch": "Closest Match",
+    "topMatches": "Top {count} Matches",
+    "blendingMode": "Blending Mode",
+    "modes": {
+      "rgb": "RGB Average",
+      "lab": "LAB (Perceptual)",
+      "oklab": "OKLAB (Modern Perceptual)",
+      "ryb": "RYB (Artist)",
+      "hsl": "HSL (Hue-based)",
+      "spectral": "Spectral (Pigment Physics)"
+    },
+    "modeDescriptions": {
+      "rgb": "Simple additive channel averaging",
+      "lab": "Perceptually uniform CIELAB blending",
+      "oklab": "Modern perceptual color space (fixes blue→purple)",
+      "ryb": "Traditional artist's color wheel mixing",
+      "hsl": "Hue-Saturation-Lightness interpolation",
+      "spectral": "Kubelka-Munk pigment physics simulation"
+    }
   },
   "comparison": {
     "title": "Dye Comparison",
@@ -383,6 +432,185 @@
       "presetNotFound": "Could not find quick pick preset \"{id}\".",
       "apiError": "Could not fetch market board data. Please try again later.",
       "rateLimited": "Too many requests. Please wait a moment before checking prices again."
+    }
+  },
+  "swatch": {
+    "title": "Character Color Match",
+    "colorType": "Color Type",
+    "colorTypes": {
+      "skin": "Skin Tone",
+      "hair": "Hair Color",
+      "eyes": "Eye Color",
+      "highlight": "Hair Highlight",
+      "lips_dark": "Lip Color (Dark)",
+      "lips_light": "Lip Color (Light)",
+      "tattoo": "Tattoo/Limbal Ring",
+      "facepaint_dark": "Face Paint (Dark)",
+      "facepaint_light": "Face Paint (Light)"
+    },
+    "clan": "Clan",
+    "gender": "Gender",
+    "genders": {
+      "male": "Male",
+      "female": "Female"
+    },
+    "gridPosition": "Grid Position",
+    "row": "Row",
+    "column": "Column",
+    "colorIndex": "Color Index",
+    "characterColor": "Character Color",
+    "closestDye": "Closest Dye",
+    "topMatches": "Top {count} Matches",
+    "raceSpecific": "Race-specific color palette",
+    "sharedPalette": "Shared color palette (all races)"
+  },
+  "preferences": {
+    "title": "Your Preferences",
+    "show": {
+      "title": "Current Preferences",
+      "description": "Your personalized settings for XIV Dye Tools",
+      "default": "Default",
+      "notSet": "Not set"
+    },
+    "set": {
+      "success": "Preference Updated",
+      "updated": "**{key}** has been set to **{value}**.",
+      "affectedCommands": "This affects: {commands}"
+    },
+    "reset": {
+      "success": "Preference Reset",
+      "single": "**{key}** has been reset to its default value.",
+      "all": "All preferences have been reset to defaults."
+    },
+    "keys": {
+      "language": "Language",
+      "blending": "Blending Mode",
+      "matching": "Matching Method",
+      "count": "Result Count",
+      "clan": "Character Clan",
+      "gender": "Character Gender",
+      "world": "Market World",
+      "market": "Show Market Prices"
+    },
+    "descriptions": {
+      "language": "Language for dye names and bot messages",
+      "blending": "Default algorithm for /mixer",
+      "matching": "Default color matching method",
+      "count": "Default number of results (1-10)",
+      "clan": "Default clan for /swatch",
+      "gender": "Default gender for /swatch",
+      "world": "Default world/datacenter for market prices",
+      "market": "Whether to show market prices by default"
+    },
+    "errors": {
+      "invalidKey": "Unknown preference key: {key}",
+      "invalidValue": "Invalid value for {key}. Valid options: {options}"
+    }
+  },
+  "stats": {
+    "summary": {
+      "title": "XIV Dye Tools Bot",
+      "description": "A Discord bot for FFXIV dye color exploration and matching",
+      "features": "Features",
+      "featuresList": "• Color matching & extraction\n• Dye blending & gradients\n• Color harmony generation\n• Character color matching\n• Market price integration",
+      "links": "Links"
+    },
+    "overview": {
+      "title": "Usage Overview",
+      "period": "Last {days} days",
+      "totalCommands": "Total Commands",
+      "uniqueUsers": "Unique Users",
+      "successRate": "Success Rate",
+      "avgLatency": "Avg Latency"
+    },
+    "commands": {
+      "title": "Command Statistics",
+      "topCommands": "Top Commands",
+      "leastUsed": "Least Used",
+      "v4Migration": "V4 Migration Status",
+      "v4Usage": "V4 Commands",
+      "legacyUsage": "Legacy Commands"
+    },
+    "preferences": {
+      "title": "Preference Adoption",
+      "sampleSize": "Sample size: {count} users",
+      "languageDistribution": "Language Distribution",
+      "blendingModes": "Blending Mode Usage",
+      "matchingMethods": "Matching Method Usage"
+    },
+    "health": {
+      "title": "System Health",
+      "kvLatency": "KV Latency",
+      "analyticsStatus": "Analytics Engine",
+      "cacheStatus": "Cache API",
+      "externalServices": "External Services",
+      "universalis": "Universalis API",
+      "operational": "Operational",
+      "degraded": "Degraded",
+      "down": "Down"
+    }
+  },
+  "status": {
+    "analyzing": "Analyzing...",
+    "rendering": "Generating image...",
+    "fetchingMarket": "Fetching market data...",
+    "processing": "Processing...",
+    "finalizing": "Finalizing...",
+    "complete": "Complete!",
+    "queuePosition": "Queue Position: {position}",
+    "estimatedWait": "Estimated wait: {seconds}s",
+    "cooldown": "Please wait {seconds}s before using this command again."
+  },
+  "pagination": {
+    "page": "Page {current} of {total}",
+    "pageCompact": "{current}/{total}",
+    "first": "First",
+    "previous": "Previous",
+    "next": "Next",
+    "last": "Last",
+    "showing": "Showing {start}-{end} of {total}",
+    "noResults": "No results found.",
+    "emptyPage": "This page is empty."
+  },
+  "components": {
+    "blendingModeSelect": {
+      "placeholder": "Select blending mode...",
+      "label": "Blending Mode"
+    },
+    "matchingMethodSelect": {
+      "placeholder": "Select matching method...",
+      "label": "Matching Method"
+    },
+    "marketToggle": {
+      "show": "Show Prices",
+      "hide": "Hide Prices"
+    },
+    "refresh": {
+      "label": "Refresh"
+    },
+    "copy": {
+      "hex": "Copy HEX",
+      "rgb": "Copy RGB",
+      "hsv": "Copy HSV",
+      "lab": "Copy LAB"
+    }
+  },
+  "matching": {
+    "methods": {
+      "rgb": "RGB Euclidean",
+      "cie76": "CIE76 (ΔE*)",
+      "ciede2000": "CIEDE2000",
+      "oklab": "OKLAB Distance",
+      "hyab": "HyAB (Hybrid)",
+      "oklch_weighted": "OKLCH Weighted"
+    },
+    "methodDescriptions": {
+      "rgb": "Simple RGB color space distance",
+      "cie76": "Basic perceptual difference (LAB)",
+      "ciede2000": "Advanced perceptual difference",
+      "oklab": "Modern perceptual color space",
+      "hyab": "Hybrid LAB + Chroma distance",
+      "oklch_weighted": "Weighted OKLCH components"
     }
   }
 }

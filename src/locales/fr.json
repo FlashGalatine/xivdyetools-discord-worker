@@ -57,17 +57,29 @@
     "dyeInformation": "Informations sur les teintures",
     "botInformation": "Informations du bot",
     "tipsResources": "Conseils et ressources",
-    "match": {
-      "name": "`/match <couleur> [nombre]`",
-      "description": "Trouvez la teinture FFXIV la plus proche d'une couleur.\n• Accepte les codes hexadécimaux (`#FF0000`) ou les noms de teinture\n• Optionnel : afficher jusqu'à 10 correspondances"
+    "extractor": {
+      "name": "`/extractor color <couleur> [nombre]` | `/extractor image <image>`",
+      "description": "Extraire et faire correspondre les couleurs aux teintures FFXIV.\n• `color` : Faire correspondre un code hex ou un nom de teinture aux teintures les plus proches\n• `image` : Extraire les couleurs dominantes d'une image téléchargée"
     },
     "harmony": {
       "name": "`/harmony <couleur> [type]`",
       "description": "Générez des combinaisons de teintures harmonieuses.\n• Types : Complémentaire, Analogue, Triadique, Complémentaire divisé, Tétradique, Carré, Monochromatique\n• Crée une roue chromatique visuelle"
     },
     "mixer": {
-      "name": "`/mixer <début> <fin> [étapes]`",
+      "name": "`/mixer <teinture1> <teinture2> [mode]`",
+      "description": "Mélangez deux teintures en utilisant la science des couleurs.\n• 6 modes de mélange : RGB, LAB, OKLAB, RYB, HSL, Spectral\n• Trouve la teinture FFXIV la plus proche du résultat mélangé"
+    },
+    "gradient": {
+      "name": "`/gradient <début> <fin> [étapes]`",
       "description": "Créez un dégradé de couleurs entre deux couleurs.\n• Affiche les teintures correspondantes pour chaque étape\n• Nombre d'étapes configurable (2-10)"
+    },
+    "swatch": {
+      "name": "`/swatch color <type> <index>` | `/swatch grid <type> <ligne> <colonne>`",
+      "description": "Faire correspondre les couleurs de personnage FFXIV aux teintures.\n• Prend en charge peau, cheveux, yeux, reflets, lèvres, tatouages, peinture faciale\n• Palettes spécifiques à la race/clan pour la peau et les cheveux"
+    },
+    "preferences": {
+      "name": "`/preferences show` | `/preferences set <clé> <valeur>` | `/preferences reset`",
+      "description": "Gérez vos préférences du bot.\n• Définissez les valeurs par défaut pour le mode de mélange, la méthode de correspondance, le nombre de résultats\n• Configurez le clan/genre du personnage et le monde du marché"
     },
     "dyeSearch": {
       "name": "`/dye search <recherche>`",
@@ -137,6 +149,25 @@
     "useInfoHint": "Utilisez /dye info pour les détails d'acquisition",
     "useInfoNameHint": "Utilisez /dye info <nom> pour les détails d'acquisition"
   },
+  "extractor": {
+    "title": "Extracteur de couleur : {name}",
+    "topMatches": "Top {count} correspondances de teinture",
+    "findingMatches": "Recherche des correspondances les plus proches pour {input}",
+    "useInfoHint": "Utilisez /dye info pour les détails d'acquisition",
+    "useInfoNameHint": "Utilisez /dye info <nom> pour les détails d'acquisition",
+    "colorSubcommand": "Extraire des teintures d'une couleur",
+    "imageSubcommand": "Extraire des teintures d'une image",
+    "extractedColors": "Couleurs extraites",
+    "dominantColor": "Couleur dominante"
+  },
+  "gradient": {
+    "title": "Dégradé de couleurs",
+    "startColor": "Début",
+    "endColor": "Fin",
+    "steps": "{count} étapes",
+    "gradientFrom": "Dégradé de {start} à {end}",
+    "description": "Créez des transitions de couleur fluides entre deux couleurs"
+  },
   "harmony": {
     "title": "Harmonie {type}",
     "baseColor": "Couleur de base",
@@ -150,11 +181,29 @@
     "monochromatic": "Monochromatique"
   },
   "mixer": {
-    "title": "Dégradé de couleurs",
-    "startColor": "Début",
-    "endColor": "Fin",
-    "steps": "{count} étapes",
-    "gradientFrom": "Dégradé de {start} à {end}"
+    "title": "Mélangeur de teintures",
+    "blendResult": "Résultat du mélange",
+    "inputDyes": "Teintures d'entrée",
+    "blendedColor": "Couleur mélangée",
+    "closestMatch": "Correspondance la plus proche",
+    "topMatches": "Top {count} correspondances",
+    "blendingMode": "Mode de mélange",
+    "modes": {
+      "rgb": "Moyenne RGB",
+      "lab": "LAB (Perceptuel)",
+      "oklab": "OKLAB (Perceptuel moderne)",
+      "ryb": "RYB (Artiste)",
+      "hsl": "HSL (Basé sur la teinte)",
+      "spectral": "Spectral (Physique des pigments)"
+    },
+    "modeDescriptions": {
+      "rgb": "Simple moyenne additive des canaux",
+      "lab": "Mélange CIELAB perceptuellement uniforme",
+      "oklab": "Espace colorimétrique perceptuel moderne (corrige bleu→violet)",
+      "ryb": "Mélange traditionnel de roue chromatique d'artiste",
+      "hsl": "Interpolation Teinte-Saturation-Luminosité",
+      "spectral": "Simulation physique des pigments Kubelka-Munk"
+    }
   },
   "comparison": {
     "title": "Comparaison de teintures",
@@ -383,6 +432,185 @@
       "presetNotFound": "Impossible de trouver le préréglage rapide \"{id}\".",
       "apiError": "Impossible de récupérer les données du tableau des ventes. Veuillez réessayer plus tard.",
       "rateLimited": "Trop de requêtes. Veuillez patienter avant de vérifier à nouveau les prix."
+    }
+  },
+  "swatch": {
+    "title": "Correspondance de couleur de personnage",
+    "colorType": "Type de couleur",
+    "colorTypes": {
+      "skin": "Teint de peau",
+      "hair": "Couleur de cheveux",
+      "eyes": "Couleur des yeux",
+      "highlight": "Reflets des cheveux",
+      "lips_dark": "Couleur des lèvres (Foncé)",
+      "lips_light": "Couleur des lèvres (Clair)",
+      "tattoo": "Tatouage/Anneau limbique",
+      "facepaint_dark": "Peinture faciale (Foncé)",
+      "facepaint_light": "Peinture faciale (Clair)"
+    },
+    "clan": "Clan",
+    "gender": "Genre",
+    "genders": {
+      "male": "Masculin",
+      "female": "Féminin"
+    },
+    "gridPosition": "Position dans la grille",
+    "row": "Ligne",
+    "column": "Colonne",
+    "colorIndex": "Index de couleur",
+    "characterColor": "Couleur du personnage",
+    "closestDye": "Teinture la plus proche",
+    "topMatches": "Top {count} correspondances",
+    "raceSpecific": "Palette de couleurs spécifique à la race",
+    "sharedPalette": "Palette de couleurs partagée (toutes races)"
+  },
+  "preferences": {
+    "title": "Vos préférences",
+    "show": {
+      "title": "Préférences actuelles",
+      "description": "Vos paramètres personnalisés pour XIV Dye Tools",
+      "default": "Par défaut",
+      "notSet": "Non défini"
+    },
+    "set": {
+      "success": "Préférence mise à jour",
+      "updated": "**{key}** a été défini sur **{value}**.",
+      "affectedCommands": "Cela affecte : {commands}"
+    },
+    "reset": {
+      "success": "Préférence réinitialisée",
+      "single": "**{key}** a été réinitialisé à sa valeur par défaut.",
+      "all": "Toutes les préférences ont été réinitialisées aux valeurs par défaut."
+    },
+    "keys": {
+      "language": "Langue",
+      "blending": "Mode de mélange",
+      "matching": "Méthode de correspondance",
+      "count": "Nombre de résultats",
+      "clan": "Clan du personnage",
+      "gender": "Genre du personnage",
+      "world": "Monde du marché",
+      "market": "Afficher les prix du marché"
+    },
+    "descriptions": {
+      "language": "Langue pour les noms de teinture et les messages du bot",
+      "blending": "Algorithme par défaut pour /mixer",
+      "matching": "Méthode de correspondance de couleur par défaut",
+      "count": "Nombre de résultats par défaut (1-10)",
+      "clan": "Clan par défaut pour /swatch",
+      "gender": "Genre par défaut pour /swatch",
+      "world": "Monde/centre de données par défaut pour les prix",
+      "market": "Afficher les prix du marché par défaut"
+    },
+    "errors": {
+      "invalidKey": "Clé de préférence inconnue : {key}",
+      "invalidValue": "Valeur invalide pour {key}. Options valides : {options}"
+    }
+  },
+  "stats": {
+    "summary": {
+      "title": "XIV Dye Tools Bot",
+      "description": "Un bot Discord pour l'exploration et la correspondance des couleurs de teinture FFXIV",
+      "features": "Fonctionnalités",
+      "featuresList": "• Correspondance et extraction de couleurs\n• Mélange de teintures et dégradés\n• Génération d'harmonies de couleurs\n• Correspondance de couleurs de personnage\n• Intégration des prix du marché",
+      "links": "Liens"
+    },
+    "overview": {
+      "title": "Aperçu de l'utilisation",
+      "period": "{days} derniers jours",
+      "totalCommands": "Total des commandes",
+      "uniqueUsers": "Utilisateurs uniques",
+      "successRate": "Taux de réussite",
+      "avgLatency": "Latence moy."
+    },
+    "commands": {
+      "title": "Statistiques des commandes",
+      "topCommands": "Commandes populaires",
+      "leastUsed": "Moins utilisées",
+      "v4Migration": "Statut de migration V4",
+      "v4Usage": "Commandes V4",
+      "legacyUsage": "Commandes héritées"
+    },
+    "preferences": {
+      "title": "Adoption des préférences",
+      "sampleSize": "Taille de l'échantillon : {count} utilisateurs",
+      "languageDistribution": "Distribution des langues",
+      "blendingModes": "Utilisation des modes de mélange",
+      "matchingMethods": "Utilisation des méthodes de correspondance"
+    },
+    "health": {
+      "title": "Santé du système",
+      "kvLatency": "Latence KV",
+      "analyticsStatus": "Analytics Engine",
+      "cacheStatus": "Cache API",
+      "externalServices": "Services externes",
+      "universalis": "Universalis API",
+      "operational": "Opérationnel",
+      "degraded": "Dégradé",
+      "down": "Hors service"
+    }
+  },
+  "status": {
+    "analyzing": "Analyse en cours...",
+    "rendering": "Génération de l'image...",
+    "fetchingMarket": "Récupération des données du marché...",
+    "processing": "Traitement...",
+    "finalizing": "Finalisation...",
+    "complete": "Terminé !",
+    "queuePosition": "Position dans la file : {position}",
+    "estimatedWait": "Attente estimée : {seconds}s",
+    "cooldown": "Veuillez patienter {seconds}s avant d'utiliser cette commande à nouveau."
+  },
+  "pagination": {
+    "page": "Page {current} sur {total}",
+    "pageCompact": "{current}/{total}",
+    "first": "Première",
+    "previous": "Précédent",
+    "next": "Suivant",
+    "last": "Dernière",
+    "showing": "Affichage {start}-{end} sur {total}",
+    "noResults": "Aucun résultat trouvé.",
+    "emptyPage": "Cette page est vide."
+  },
+  "components": {
+    "blendingModeSelect": {
+      "placeholder": "Sélectionner le mode de mélange...",
+      "label": "Mode de mélange"
+    },
+    "matchingMethodSelect": {
+      "placeholder": "Sélectionner la méthode de correspondance...",
+      "label": "Méthode de correspondance"
+    },
+    "marketToggle": {
+      "show": "Afficher les prix",
+      "hide": "Masquer les prix"
+    },
+    "refresh": {
+      "label": "Actualiser"
+    },
+    "copy": {
+      "hex": "Copier HEX",
+      "rgb": "Copier RGB",
+      "hsv": "Copier HSV",
+      "lab": "Copier LAB"
+    }
+  },
+  "matching": {
+    "methods": {
+      "rgb": "RGB Euclidien",
+      "cie76": "CIE76 (ΔE*)",
+      "ciede2000": "CIEDE2000",
+      "oklab": "Distance OKLAB",
+      "hyab": "HyAB (Hybride)",
+      "oklch_weighted": "OKLCH Pondéré"
+    },
+    "methodDescriptions": {
+      "rgb": "Simple distance dans l'espace colorimétrique RGB",
+      "cie76": "Différence perceptuelle basique (LAB)",
+      "ciede2000": "Différence perceptuelle avancée",
+      "oklab": "Espace colorimétrique perceptuel moderne",
+      "hyab": "Distance hybride LAB + Chroma",
+      "oklch_weighted": "Composants OKLCH pondérés"
     }
   }
 }

@@ -57,17 +57,29 @@
     "dyeInformation": "Farbstoff-Informationen",
     "botInformation": "Bot-Informationen",
     "tipsResources": "Tipps & Ressourcen",
-    "match": {
-      "name": "`/match <Farbe> [Anzahl]`",
-      "description": "Finde den nächsten FFXIV-Farbstoff zu einer beliebigen Farbe.\n• Akzeptiert Hex-Codes (`#FF0000`) oder Farbstoffnamen\n• Optional: zeige bis zu 10 nächste Übereinstimmungen"
+    "extractor": {
+      "name": "`/extractor color <Farbe> [Anzahl]` | `/extractor image <Bild>`",
+      "description": "Extrahiere Farben und finde passende FFXIV-Farbstoffe.\n• `color`: Hex-Code oder Farbstoffname zu nächsten Farbstoffen zuordnen\n• `image`: Dominante Farben aus hochgeladenem Bild extrahieren"
     },
     "harmony": {
       "name": "`/harmony <Farbe> [Typ]`",
       "description": "Generiere harmonische Farbstoffkombinationen.\n• Typen: Komplementär, Analog, Triadisch, Geteilt-Komplementär, Tetradisch, Quadratisch, Monochromatisch\n• Erstellt ein visuelles Farbrad"
     },
     "mixer": {
-      "name": "`/mixer <Start> <Ende> [Schritte]`",
+      "name": "`/mixer <Farbstoff1> <Farbstoff2> [Modus]`",
+      "description": "Mische zwei Farbstoffe mit Farbwissenschaft.\n• 6 Mischmodi: RGB, LAB, OKLAB, RYB, HSL, Spektral\n• Findet den nächsten FFXIV-Farbstoff zum Mischergebnis"
+    },
+    "gradient": {
+      "name": "`/gradient <Start> <Ende> [Schritte]`",
       "description": "Erstelle einen Farbverlauf zwischen zwei Farben.\n• Zeigt passende Farbstoffe für jeden Verlaufsschritt\n• Konfigurierbare Schrittanzahl (2-10)"
+    },
+    "swatch": {
+      "name": "`/swatch color <Typ> <Index>` | `/swatch grid <Typ> <Zeile> <Spalte>`",
+      "description": "FFXIV-Charakterfarben zu Farbstoffen zuordnen.\n• Unterstützt Haut, Haare, Augen, Highlights, Lippen, Tattoos, Gesichtsbemalung\n• Rassen-/Stammspezifische Paletten für Haut und Haare"
+    },
+    "preferences": {
+      "name": "`/preferences show` | `/preferences set <Key> <Wert>` | `/preferences reset`",
+      "description": "Verwalte deine Bot-Einstellungen.\n• Setze Standards für Mischmodus, Matching-Methode, Ergebnisanzahl\n• Konfiguriere Charakter-Stamm/Geschlecht und Markt-Welt"
     },
     "dyeSearch": {
       "name": "`/dye search <Suche>`",
@@ -137,6 +149,25 @@
     "useInfoHint": "Verwende /dye info für Beschaffungsdetails",
     "useInfoNameHint": "Verwende /dye info <Name> für Beschaffungsdetails"
   },
+  "extractor": {
+    "title": "Farbextraktion: {name}",
+    "topMatches": "Top {count} Farbstoff-Übereinstimmungen",
+    "findingMatches": "Finde nächste Übereinstimmungen für {input}",
+    "useInfoHint": "Verwende /dye info für Beschaffungsdetails",
+    "useInfoNameHint": "Verwende /dye info <Name> für Beschaffungsdetails",
+    "colorSubcommand": "Farbstoffe aus einer Farbe extrahieren",
+    "imageSubcommand": "Farbstoffe aus einem Bild extrahieren",
+    "extractedColors": "Extrahierte Farben",
+    "dominantColor": "Dominante Farbe"
+  },
+  "gradient": {
+    "title": "Farbverlauf",
+    "startColor": "Start",
+    "endColor": "Ende",
+    "steps": "{count} Schritte",
+    "gradientFrom": "Verlauf von {start} nach {end}",
+    "description": "Erstelle fließende Farbübergänge zwischen zwei Farben"
+  },
   "harmony": {
     "title": "{type}-Harmonie",
     "baseColor": "Basisfarbe",
@@ -150,11 +181,29 @@
     "monochromatic": "Monochromatisch"
   },
   "mixer": {
-    "title": "Farbverlauf",
-    "startColor": "Start",
-    "endColor": "Ende",
-    "steps": "{count} Schritte",
-    "gradientFrom": "Verlauf von {start} nach {end}"
+    "title": "Farbstoff-Mixer",
+    "blendResult": "Mischergebnis",
+    "inputDyes": "Eingabe-Farbstoffe",
+    "blendedColor": "Gemischte Farbe",
+    "closestMatch": "Nächste Übereinstimmung",
+    "topMatches": "Top {count} Übereinstimmungen",
+    "blendingMode": "Mischmodus",
+    "modes": {
+      "rgb": "RGB-Durchschnitt",
+      "lab": "LAB (Perzeptuell)",
+      "oklab": "OKLAB (Modern Perzeptuell)",
+      "ryb": "RYB (Künstler)",
+      "hsl": "HSL (Farbton-basiert)",
+      "spectral": "Spektral (Pigmentphysik)"
+    },
+    "modeDescriptions": {
+      "rgb": "Einfache additive Kanal-Mittelung",
+      "lab": "Wahrnehmungsgleichmäßiges CIELAB-Mischen",
+      "oklab": "Moderner wahrnehmungsbasierter Farbraum (behebt Blau→Violett)",
+      "ryb": "Traditionelles Künstler-Farbrad-Mischen",
+      "hsl": "Farbton-Sättigung-Helligkeit Interpolation",
+      "spectral": "Kubelka-Munk Pigmentphysik-Simulation"
+    }
   },
   "comparison": {
     "title": "Farbstoff-Vergleich",
@@ -383,6 +432,185 @@
       "presetNotFound": "Schnellauswahl-Vorlage \"{id}\" konnte nicht gefunden werden.",
       "apiError": "Marktbrett-Daten konnten nicht abgerufen werden. Bitte versuche es später erneut.",
       "rateLimited": "Zu viele Anfragen. Bitte warte einen Moment, bevor du erneut Preise abrufst."
+    }
+  },
+  "swatch": {
+    "title": "Charakterfarben-Übereinstimmung",
+    "colorType": "Farbtyp",
+    "colorTypes": {
+      "skin": "Hautton",
+      "hair": "Haarfarbe",
+      "eyes": "Augenfarbe",
+      "highlight": "Haar-Highlight",
+      "lips_dark": "Lippenfarbe (Dunkel)",
+      "lips_light": "Lippenfarbe (Hell)",
+      "tattoo": "Tattoo/Limbalring",
+      "facepaint_dark": "Gesichtsbemalung (Dunkel)",
+      "facepaint_light": "Gesichtsbemalung (Hell)"
+    },
+    "clan": "Stamm",
+    "gender": "Geschlecht",
+    "genders": {
+      "male": "Männlich",
+      "female": "Weiblich"
+    },
+    "gridPosition": "Rasterposition",
+    "row": "Zeile",
+    "column": "Spalte",
+    "colorIndex": "Farbindex",
+    "characterColor": "Charakterfarbe",
+    "closestDye": "Nächster Farbstoff",
+    "topMatches": "Top {count} Übereinstimmungen",
+    "raceSpecific": "Rassenspezifische Farbpalette",
+    "sharedPalette": "Gemeinsame Farbpalette (alle Rassen)"
+  },
+  "preferences": {
+    "title": "Deine Einstellungen",
+    "show": {
+      "title": "Aktuelle Einstellungen",
+      "description": "Deine personalisierten Einstellungen für XIV Dye Tools",
+      "default": "Standard",
+      "notSet": "Nicht gesetzt"
+    },
+    "set": {
+      "success": "Einstellung aktualisiert",
+      "updated": "**{key}** wurde auf **{value}** gesetzt.",
+      "affectedCommands": "Dies betrifft: {commands}"
+    },
+    "reset": {
+      "success": "Einstellung zurückgesetzt",
+      "single": "**{key}** wurde auf den Standardwert zurückgesetzt.",
+      "all": "Alle Einstellungen wurden auf die Standardwerte zurückgesetzt."
+    },
+    "keys": {
+      "language": "Sprache",
+      "blending": "Mischmodus",
+      "matching": "Matching-Methode",
+      "count": "Ergebnisanzahl",
+      "clan": "Charakter-Stamm",
+      "gender": "Charakter-Geschlecht",
+      "world": "Markt-Welt",
+      "market": "Marktpreise anzeigen"
+    },
+    "descriptions": {
+      "language": "Sprache für Farbstoffnamen und Bot-Nachrichten",
+      "blending": "Standard-Algorithmus für /mixer",
+      "matching": "Standard-Farbmatch-Methode",
+      "count": "Standard-Ergebnisanzahl (1-10)",
+      "clan": "Standard-Stamm für /swatch",
+      "gender": "Standard-Geschlecht für /swatch",
+      "world": "Standard-Welt/Datenzentrum für Marktpreise",
+      "market": "Ob Marktpreise standardmäßig angezeigt werden"
+    },
+    "errors": {
+      "invalidKey": "Unbekannter Einstellungsschlüssel: {key}",
+      "invalidValue": "Ungültiger Wert für {key}. Gültige Optionen: {options}"
+    }
+  },
+  "stats": {
+    "summary": {
+      "title": "XIV Dye Tools Bot",
+      "description": "Ein Discord-Bot zum Erkunden und Abgleichen von FFXIV-Farbstofffarben",
+      "features": "Funktionen",
+      "featuresList": "• Farbabgleich & Extraktion\n• Farbstoff-Mischung & Verläufe\n• Farbharmonie-Generierung\n• Charakterfarben-Matching\n• Marktpreis-Integration",
+      "links": "Links"
+    },
+    "overview": {
+      "title": "Nutzungsübersicht",
+      "period": "Letzte {days} Tage",
+      "totalCommands": "Gesamtbefehle",
+      "uniqueUsers": "Einzigartige Benutzer",
+      "successRate": "Erfolgsrate",
+      "avgLatency": "Durchschn. Latenz"
+    },
+    "commands": {
+      "title": "Befehlsstatistiken",
+      "topCommands": "Top-Befehle",
+      "leastUsed": "Am wenigsten verwendet",
+      "v4Migration": "V4-Migrationsstatus",
+      "v4Usage": "V4-Befehle",
+      "legacyUsage": "Legacy-Befehle"
+    },
+    "preferences": {
+      "title": "Einstellungen-Adoption",
+      "sampleSize": "Stichprobengröße: {count} Benutzer",
+      "languageDistribution": "Sprachverteilung",
+      "blendingModes": "Mischmodus-Nutzung",
+      "matchingMethods": "Matching-Methoden-Nutzung"
+    },
+    "health": {
+      "title": "Systemstatus",
+      "kvLatency": "KV-Latenz",
+      "analyticsStatus": "Analytics Engine",
+      "cacheStatus": "Cache API",
+      "externalServices": "Externe Dienste",
+      "universalis": "Universalis API",
+      "operational": "Betriebsbereit",
+      "degraded": "Beeinträchtigt",
+      "down": "Ausgefallen"
+    }
+  },
+  "status": {
+    "analyzing": "Analysiere...",
+    "rendering": "Generiere Bild...",
+    "fetchingMarket": "Rufe Marktdaten ab...",
+    "processing": "Verarbeite...",
+    "finalizing": "Schließe ab...",
+    "complete": "Fertig!",
+    "queuePosition": "Warteschlangenposition: {position}",
+    "estimatedWait": "Geschätzte Wartezeit: {seconds}s",
+    "cooldown": "Bitte warte {seconds}s, bevor du diesen Befehl erneut verwendest."
+  },
+  "pagination": {
+    "page": "Seite {current} von {total}",
+    "pageCompact": "{current}/{total}",
+    "first": "Erste",
+    "previous": "Zurück",
+    "next": "Weiter",
+    "last": "Letzte",
+    "showing": "Zeige {start}-{end} von {total}",
+    "noResults": "Keine Ergebnisse gefunden.",
+    "emptyPage": "Diese Seite ist leer."
+  },
+  "components": {
+    "blendingModeSelect": {
+      "placeholder": "Mischmodus auswählen...",
+      "label": "Mischmodus"
+    },
+    "matchingMethodSelect": {
+      "placeholder": "Matching-Methode auswählen...",
+      "label": "Matching-Methode"
+    },
+    "marketToggle": {
+      "show": "Preise anzeigen",
+      "hide": "Preise ausblenden"
+    },
+    "refresh": {
+      "label": "Aktualisieren"
+    },
+    "copy": {
+      "hex": "HEX kopieren",
+      "rgb": "RGB kopieren",
+      "hsv": "HSV kopieren",
+      "lab": "LAB kopieren"
+    }
+  },
+  "matching": {
+    "methods": {
+      "rgb": "RGB Euklidisch",
+      "cie76": "CIE76 (ΔE*)",
+      "ciede2000": "CIEDE2000",
+      "oklab": "OKLAB-Distanz",
+      "hyab": "HyAB (Hybrid)",
+      "oklch_weighted": "OKLCH Gewichtet"
+    },
+    "methodDescriptions": {
+      "rgb": "Einfache RGB-Farbraum-Distanz",
+      "cie76": "Grundlegende Wahrnehmungsdifferenz (LAB)",
+      "ciede2000": "Fortgeschrittene Wahrnehmungsdifferenz",
+      "oklab": "Moderner wahrnehmungsbasierter Farbraum",
+      "hyab": "Hybride LAB + Chroma Distanz",
+      "oklch_weighted": "Gewichtete OKLCH-Komponenten"
     }
   }
 }

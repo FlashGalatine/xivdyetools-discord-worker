@@ -233,8 +233,8 @@ async function processGradientCommand(
 
       // Label start/end
       let label = '';
-      if (i === 0) label = ` (${t.t('mixer.startColor')})`;
-      else if (i === gradientSteps.length - 1) label = ` (${t.t('mixer.endColor')})`;
+      if (i === 0) label = ` (${t.t('gradient.startColor')})`;
+      else if (i === gradientSteps.length - 1) label = ` (${t.t('gradient.endColor')})`;
 
       return `**${i + 1}.** ${dyeText} • \`${step.hex.toUpperCase()}\` • ${quality}${label}`;
     }).join('\n');
@@ -258,23 +258,21 @@ async function processGradientCommand(
       : `\`${endColor.hex.toUpperCase()}\``;
 
     // Send follow-up with image
-    // Note: Locale keys still use 'mixer.' prefix for backward compatibility
-    // These will be migrated to 'gradient.' in Phase 6 (Localization Updates)
     await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [
         {
-          title: `${t.t('mixer.title')} • ${t.t('mixer.steps', { count: stepCount })}`,
+          title: `${t.t('gradient.title')} • ${t.t('gradient.steps', { count: stepCount })}`,
           description: [
-            `**${t.t('mixer.startColor')}:** ${startText}`,
-            `**${t.t('mixer.endColor')}:** ${endText}`,
+            `**${t.t('gradient.startColor')}:** ${startText}`,
+            `**${t.t('gradient.endColor')}:** ${endText}`,
             '',
-            `**${t.t('match.topMatches', { count: stepCount })}:**`,
+            `**${t.t('extractor.topMatches', { count: stepCount })}:**`,
             dyeLines,
           ].join('\n'),
           color: hexToDiscordColor(startColor.hex),
           image: { url: 'attachment://image.png' },
           footer: {
-            text: `${t.t('common.footer')} • ${t.t('match.useInfoNameHint')}`,
+            text: `${t.t('common.footer')} • ${t.t('extractor.useInfoNameHint')}`,
           },
         },
       ],

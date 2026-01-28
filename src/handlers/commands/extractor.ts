@@ -322,7 +322,7 @@ function buildSingleMatchResponse(
   return messageResponse({
     embeds: [
       {
-        title: `${quality.emoji} ${t.t('match.title', { name: localizedDyeName })}`,
+        title: `${quality.emoji} ${t.t('extractor.title', { name: localizedDyeName })}`,
         color: hexToDiscordColor(dye.hex),
         fields: [
           {
@@ -342,7 +342,7 @@ function buildSingleMatchResponse(
           },
         ],
         footer: {
-          text: `${t.t('common.footer')} • ${t.t('match.useInfoHint')}`,
+          text: `${t.t('common.footer')} • ${t.t('extractor.useInfoHint')}`,
         },
       },
     ],
@@ -379,11 +379,11 @@ function buildMultiMatchResponse(
   return messageResponse({
     embeds: [
       {
-        title: `🎨 ${t.t('match.topMatches', { count: matches.length })}`,
-        description: `${t.t('match.findingMatches', { input: inputText })}\n\n${matchLines}`,
+        title: `🎨 ${t.t('extractor.topMatches', { count: matches.length })}`,
+        description: `${t.t('extractor.findingMatches', { input: inputText })}\n\n${matchLines}`,
         color: hexToDiscordColor(matches[0].dye.hex),
         footer: {
-          text: `${t.t('common.footer')} • ${t.t('match.useInfoNameHint')}`,
+          text: `${t.t('common.footer')} • ${t.t('extractor.useInfoNameHint')}`,
         },
       },
     ],

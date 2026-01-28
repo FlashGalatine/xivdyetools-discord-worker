@@ -57,17 +57,29 @@
     "dyeInformation": "染剂信息",
     "botInformation": "机器人信息",
     "tipsResources": "技巧与资源",
-    "match": {
-      "name": "`/match <颜色> [数量]`",
-      "description": "查找与任何颜色最接近的FFXIV染剂。\n• 接受十六进制代码（`#FF0000`）或染剂名称\n• 可选：显示最多10个匹配结果"
+    "extractor": {
+      "name": "`/extractor color <颜色> [数量]` | `/extractor image <图像>`",
+      "description": "提取颜色并匹配FFXIV染剂。\n• `color`：将十六进制代码或染剂名称匹配到最接近的染剂\n• `image`：从上传的图像中提取主要颜色"
     },
     "harmony": {
       "name": "`/harmony <颜色> [类型]`",
       "description": "生成和谐的染剂组合。\n• 类型：互补色、类似色、三色、分裂互补、四色、正方形、单色\n• 创建可视化色轮"
     },
     "mixer": {
-      "name": "`/mixer <起始> <结束> [步骤]`",
+      "name": "`/mixer <染剂1> <染剂2> [模式]`",
+      "description": "使用色彩科学混合两种染剂。\n• 6种混合模式：RGB、LAB、OKLAB、RYB、HSL、光谱\n• 查找与混合结果最接近的FFXIV染剂"
+    },
+    "gradient": {
+      "name": "`/gradient <起始> <结束> [步骤]`",
       "description": "在两种颜色之间创建渐变。\n• 显示每个渐变步骤的匹配染剂\n• 可配置步骤数（2-10）"
+    },
+    "swatch": {
+      "name": "`/swatch color <类型> <索引>` | `/swatch grid <类型> <行> <列>`",
+      "description": "将FFXIV角色颜色与染剂匹配。\n• 支持肤色、发色、眼色、高光、唇色、纹身、面部彩绘\n• 肤色和发色有种族/部族特定面板"
+    },
+    "preferences": {
+      "name": "`/preferences show` | `/preferences set <键> <值>` | `/preferences reset`",
+      "description": "管理机器人偏好设置。\n• 设置混合模式、匹配方法、结果数量的默认值\n• 配置角色部族/性别和市场服务器"
     },
     "dyeSearch": {
       "name": "`/dye search <搜索词>`",
@@ -137,6 +149,25 @@
     "useInfoHint": "使用 /dye info 查看获取方式",
     "useInfoNameHint": "使用 /dye info <名称> 查看获取方式"
   },
+  "extractor": {
+    "title": "颜色提取：{name}",
+    "topMatches": "前 {count} 个染剂匹配",
+    "findingMatches": "正在为 {input} 查找最接近的匹配",
+    "useInfoHint": "使用 /dye info 查看获取方式",
+    "useInfoNameHint": "使用 /dye info <名称> 查看获取方式",
+    "colorSubcommand": "从颜色提取染剂",
+    "imageSubcommand": "从图像提取染剂",
+    "extractedColors": "提取的颜色",
+    "dominantColor": "主要颜色"
+  },
+  "gradient": {
+    "title": "颜色渐变",
+    "startColor": "起始",
+    "endColor": "结束",
+    "steps": "{count} 步",
+    "gradientFrom": "从 {start} 到 {end} 的渐变",
+    "description": "在两种颜色之间创建平滑的颜色过渡"
+  },
   "harmony": {
     "title": "{type}和谐",
     "baseColor": "基础色",
@@ -150,11 +181,29 @@
     "monochromatic": "单色"
   },
   "mixer": {
-    "title": "颜色渐变",
-    "startColor": "起始",
-    "endColor": "结束",
-    "steps": "{count} 步",
-    "gradientFrom": "从 {start} 到 {end} 的渐变"
+    "title": "染剂混合器",
+    "blendResult": "混合结果",
+    "inputDyes": "输入染剂",
+    "blendedColor": "混合颜色",
+    "closestMatch": "最接近的匹配",
+    "topMatches": "前 {count} 个匹配",
+    "blendingMode": "混合模式",
+    "modes": {
+      "rgb": "RGB平均",
+      "lab": "LAB（感知型）",
+      "oklab": "OKLAB（现代感知型）",
+      "ryb": "RYB（艺术家）",
+      "hsl": "HSL（色调型）",
+      "spectral": "光谱（颜料物理）"
+    },
+    "modeDescriptions": {
+      "rgb": "简单加法通道平均",
+      "lab": "感知均匀的CIELAB混合",
+      "oklab": "现代感知色彩空间（修复蓝→紫问题）",
+      "ryb": "传统艺术家色轮混合",
+      "hsl": "色调-饱和度-明度插值",
+      "spectral": "Kubelka-Munk颜料物理模拟"
+    }
   },
   "comparison": {
     "title": "染剂比较",
@@ -383,6 +432,185 @@
       "presetNotFound": "找不到快速选择预设「{id}」。",
       "apiError": "无法获取市场板数据。请稍后再试。",
       "rateLimited": "请求过多。请稍等片刻后再查询价格。"
+    }
+  },
+  "swatch": {
+    "title": "角色颜色匹配",
+    "colorType": "颜色类型",
+    "colorTypes": {
+      "skin": "肤色",
+      "hair": "发色",
+      "eyes": "眼色",
+      "highlight": "发色高光",
+      "lips_dark": "唇色（深色）",
+      "lips_light": "唇色（浅色）",
+      "tattoo": "纹身/瞳环",
+      "facepaint_dark": "面部彩绘（深色）",
+      "facepaint_light": "面部彩绘（浅色）"
+    },
+    "clan": "部族",
+    "gender": "性别",
+    "genders": {
+      "male": "男性",
+      "female": "女性"
+    },
+    "gridPosition": "网格位置",
+    "row": "行",
+    "column": "列",
+    "colorIndex": "颜色索引",
+    "characterColor": "角色颜色",
+    "closestDye": "最接近的染剂",
+    "topMatches": "前 {count} 个匹配",
+    "raceSpecific": "种族特定颜色面板",
+    "sharedPalette": "共享颜色面板（所有种族）"
+  },
+  "preferences": {
+    "title": "您的偏好设置",
+    "show": {
+      "title": "当前偏好设置",
+      "description": "您的 XIV Dye Tools 个性化设置",
+      "default": "默认",
+      "notSet": "未设置"
+    },
+    "set": {
+      "success": "偏好设置已更新",
+      "updated": "**{key}** 已设置为 **{value}**。",
+      "affectedCommands": "影响的命令：{commands}"
+    },
+    "reset": {
+      "success": "偏好设置已重置",
+      "single": "**{key}** 已重置为默认值。",
+      "all": "所有偏好设置已重置为默认值。"
+    },
+    "keys": {
+      "language": "语言",
+      "blending": "混合模式",
+      "matching": "匹配方法",
+      "count": "结果数量",
+      "clan": "角色部族",
+      "gender": "角色性别",
+      "world": "市场服务器",
+      "market": "显示市场价格"
+    },
+    "descriptions": {
+      "language": "染剂名称和机器人消息的语言",
+      "blending": "/mixer 的默认算法",
+      "matching": "默认颜色匹配方法",
+      "count": "默认结果数量（1-10）",
+      "clan": "/swatch 的默认部族",
+      "gender": "/swatch 的默认性别",
+      "world": "市场价格的默认服务器/数据中心",
+      "market": "是否默认显示市场价格"
+    },
+    "errors": {
+      "invalidKey": "未知偏好设置键：{key}",
+      "invalidValue": "{key} 的值无效。有效选项：{options}"
+    }
+  },
+  "stats": {
+    "summary": {
+      "title": "XIV Dye Tools 机器人",
+      "description": "用于探索和匹配FFXIV染剂颜色的Discord机器人",
+      "features": "功能",
+      "featuresList": "• 颜色匹配与提取\n• 染剂混合与渐变\n• 颜色和谐生成\n• 角色颜色匹配\n• 市场价格集成",
+      "links": "链接"
+    },
+    "overview": {
+      "title": "使用概览",
+      "period": "最近 {days} 天",
+      "totalCommands": "总命令数",
+      "uniqueUsers": "独立用户",
+      "successRate": "成功率",
+      "avgLatency": "平均延迟"
+    },
+    "commands": {
+      "title": "命令统计",
+      "topCommands": "热门命令",
+      "leastUsed": "使用最少",
+      "v4Migration": "V4迁移状态",
+      "v4Usage": "V4命令",
+      "legacyUsage": "旧版命令"
+    },
+    "preferences": {
+      "title": "偏好设置采用率",
+      "sampleSize": "样本量：{count} 用户",
+      "languageDistribution": "语言分布",
+      "blendingModes": "混合模式使用",
+      "matchingMethods": "匹配方法使用"
+    },
+    "health": {
+      "title": "系统健康",
+      "kvLatency": "KV延迟",
+      "analyticsStatus": "Analytics Engine",
+      "cacheStatus": "Cache API",
+      "externalServices": "外部服务",
+      "universalis": "Universalis API",
+      "operational": "正常",
+      "degraded": "降级",
+      "down": "停止"
+    }
+  },
+  "status": {
+    "analyzing": "分析中...",
+    "rendering": "生成图像...",
+    "fetchingMarket": "获取市场数据...",
+    "processing": "处理中...",
+    "finalizing": "最终处理...",
+    "complete": "完成！",
+    "queuePosition": "队列位置：{position}",
+    "estimatedWait": "预计等待：{seconds}秒",
+    "cooldown": "请等待 {seconds} 秒后再次使用此命令。"
+  },
+  "pagination": {
+    "page": "第 {current} 页，共 {total} 页",
+    "pageCompact": "{current}/{total}",
+    "first": "第一页",
+    "previous": "上一页",
+    "next": "下一页",
+    "last": "最后一页",
+    "showing": "显示 {start}-{end}，共 {total}",
+    "noResults": "未找到结果。",
+    "emptyPage": "此页为空。"
+  },
+  "components": {
+    "blendingModeSelect": {
+      "placeholder": "选择混合模式...",
+      "label": "混合模式"
+    },
+    "matchingMethodSelect": {
+      "placeholder": "选择匹配方法...",
+      "label": "匹配方法"
+    },
+    "marketToggle": {
+      "show": "显示价格",
+      "hide": "隐藏价格"
+    },
+    "refresh": {
+      "label": "刷新"
+    },
+    "copy": {
+      "hex": "复制HEX",
+      "rgb": "复制RGB",
+      "hsv": "复制HSV",
+      "lab": "复制LAB"
+    }
+  },
+  "matching": {
+    "methods": {
+      "rgb": "RGB欧几里得",
+      "cie76": "CIE76 (ΔE*)",
+      "ciede2000": "CIEDE2000",
+      "oklab": "OKLAB距离",
+      "hyab": "HyAB（混合）",
+      "oklch_weighted": "OKLCH加权"
+    },
+    "methodDescriptions": {
+      "rgb": "简单RGB色彩空间距离",
+      "cie76": "基本感知差异（LAB）",
+      "ciede2000": "高级感知差异",
+      "oklab": "现代感知色彩空间",
+      "hyab": "混合LAB + 色度距离",
+      "oklch_weighted": "加权OKLCH分量"
     }
   }
 }

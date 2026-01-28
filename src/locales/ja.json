@@ -57,17 +57,29 @@
     "dyeInformation": "カララント情報",
     "botInformation": "ボット情報",
     "tipsResources": "ヒントとリソース",
-    "match": {
-      "name": "`/match <色> [件数]`",
-      "description": "任意の色に最も近いFFXIVカララントを検索します。\n• 16進数コード（`#FF0000`）またはカララント名を使用できます\n• オプション：最大10件のマッチを表示"
+    "extractor": {
+      "name": "`/extractor color <色> [件数]` | `/extractor image <画像>`",
+      "description": "色を抽出してFFXIVカララントにマッチング。\n• `color`：16進数コードまたはカララント名を最も近いカララントにマッチング\n• `image`：アップロードした画像から主要な色を抽出"
     },
     "harmony": {
       "name": "`/harmony <色> [タイプ]`",
       "description": "調和のとれたカララントの組み合わせを生成します。\n• タイプ：補色、類似色、トライアド、スプリット補色、テトラード、スクエア、モノクロマティック\n• カラーホイールを視覚的に作成"
     },
     "mixer": {
-      "name": "`/mixer <開始> <終了> [ステップ数]`",
+      "name": "`/mixer <カララント1> <カララント2> [モード]`",
+      "description": "色科学を使用して2つのカララントをブレンド。\n• 6つのブレンドモード：RGB、LAB、OKLAB、RYB、HSL、スペクトル\n• ブレンド結果に最も近いFFXIVカララントを検索"
+    },
+    "gradient": {
+      "name": "`/gradient <開始> <終了> [ステップ数]`",
       "description": "2色間のカラーグラデーションを作成します。\n• 各グラデーションステップに対応するカララントを表示\n• ステップ数を設定可能（2〜10）"
+    },
+    "swatch": {
+      "name": "`/swatch color <タイプ> <インデックス>` | `/swatch grid <タイプ> <行> <列>`",
+      "description": "FFXIVキャラクターカラーをカララントにマッチング。\n• 肌、髪、目、ハイライト、唇、タトゥー、フェイスペイントをサポート\n• 肌と髪は種族/部族固有のパレット"
+    },
+    "preferences": {
+      "name": "`/preferences show` | `/preferences set <キー> <値>` | `/preferences reset`",
+      "description": "ボット設定を管理します。\n• ブレンドモード、マッチング方法、結果件数のデフォルトを設定\n• キャラクターの部族/性別とマーケットワールドを設定"
     },
     "dyeSearch": {
       "name": "`/dye search <検索語>`",
@@ -137,6 +149,25 @@
     "useInfoHint": "/dye info で入手方法の詳細を確認できます",
     "useInfoNameHint": "/dye info <名前> で入手方法の詳細を確認できます"
   },
+  "extractor": {
+    "title": "カラー抽出：{name}",
+    "topMatches": "上位{count}件のカララントマッチ",
+    "findingMatches": "{input}に最も近いマッチを検索中",
+    "useInfoHint": "/dye info で入手方法の詳細を確認できます",
+    "useInfoNameHint": "/dye info <名前> で入手方法の詳細を確認できます",
+    "colorSubcommand": "色からカララントを抽出",
+    "imageSubcommand": "画像からカララントを抽出",
+    "extractedColors": "抽出された色",
+    "dominantColor": "主要な色"
+  },
+  "gradient": {
+    "title": "カラーグラデーション",
+    "startColor": "開始",
+    "endColor": "終了",
+    "steps": "{count}ステップ",
+    "gradientFrom": "{start}から{end}へのグラデーション",
+    "description": "2色間のスムーズな色の変化を作成"
+  },
   "harmony": {
     "title": "{type}ハーモニー",
     "baseColor": "ベースカラー",
@@ -150,11 +181,29 @@
     "monochromatic": "モノクロマティック"
   },
   "mixer": {
-    "title": "カラーグラデーション",
-    "startColor": "開始",
-    "endColor": "終了",
-    "steps": "{count}ステップ",
-    "gradientFrom": "{start}から{end}へのグラデーション"
+    "title": "カララントブレンダー",
+    "blendResult": "ブレンド結果",
+    "inputDyes": "入力カララント",
+    "blendedColor": "ブレンド色",
+    "closestMatch": "最も近いマッチ",
+    "topMatches": "上位{count}件のマッチ",
+    "blendingMode": "ブレンドモード",
+    "modes": {
+      "rgb": "RGB平均",
+      "lab": "LAB（知覚的）",
+      "oklab": "OKLAB（最新知覚）",
+      "ryb": "RYB（アーティスト）",
+      "hsl": "HSL（色相ベース）",
+      "spectral": "スペクトル（顔料物理）"
+    },
+    "modeDescriptions": {
+      "rgb": "単純な加法チャンネル平均",
+      "lab": "知覚的に均一なCIELABブレンド",
+      "oklab": "最新の知覚色空間（青→紫の問題を修正）",
+      "ryb": "伝統的なアーティストのカラーホイール混合",
+      "hsl": "色相・彩度・明度の補間",
+      "spectral": "クベルカ・ムンク顔料物理シミュレーション"
+    }
   },
   "comparison": {
     "title": "カララント比較",
@@ -383,6 +432,185 @@
       "presetNotFound": "クイックピックプリセット「{id}」が見つかりませんでした。",
       "apiError": "マーケットボードデータを取得できませんでした。後でもう一度お試しください。",
       "rateLimited": "リクエストが多すぎます。しばらくしてから価格を確認してください。"
+    }
+  },
+  "swatch": {
+    "title": "キャラクターカラーマッチ",
+    "colorType": "カラータイプ",
+    "colorTypes": {
+      "skin": "肌の色",
+      "hair": "髪の色",
+      "eyes": "目の色",
+      "highlight": "ハイライト",
+      "lips_dark": "唇の色（暗）",
+      "lips_light": "唇の色（明）",
+      "tattoo": "タトゥー/リムバルリング",
+      "facepaint_dark": "フェイスペイント（暗）",
+      "facepaint_light": "フェイスペイント（明）"
+    },
+    "clan": "部族",
+    "gender": "性別",
+    "genders": {
+      "male": "男性",
+      "female": "女性"
+    },
+    "gridPosition": "グリッド位置",
+    "row": "行",
+    "column": "列",
+    "colorIndex": "カラーインデックス",
+    "characterColor": "キャラクターカラー",
+    "closestDye": "最も近いカララント",
+    "topMatches": "上位{count}件のマッチ",
+    "raceSpecific": "種族固有のカラーパレット",
+    "sharedPalette": "共有カラーパレット（全種族）"
+  },
+  "preferences": {
+    "title": "設定",
+    "show": {
+      "title": "現在の設定",
+      "description": "XIV Dye Toolsのパーソナライズ設定",
+      "default": "デフォルト",
+      "notSet": "未設定"
+    },
+    "set": {
+      "success": "設定を更新しました",
+      "updated": "**{key}**を**{value}**に設定しました。",
+      "affectedCommands": "影響するコマンド：{commands}"
+    },
+    "reset": {
+      "success": "設定をリセットしました",
+      "single": "**{key}**をデフォルト値にリセットしました。",
+      "all": "すべての設定をデフォルトにリセットしました。"
+    },
+    "keys": {
+      "language": "言語",
+      "blending": "ブレンドモード",
+      "matching": "マッチング方法",
+      "count": "結果件数",
+      "clan": "キャラクター部族",
+      "gender": "キャラクター性別",
+      "world": "マーケットワールド",
+      "market": "マーケット価格表示"
+    },
+    "descriptions": {
+      "language": "カララント名とボットメッセージの言語",
+      "blending": "/mixerのデフォルトアルゴリズム",
+      "matching": "デフォルトのカラーマッチング方法",
+      "count": "デフォルトの結果件数（1-10）",
+      "clan": "/swatchのデフォルト部族",
+      "gender": "/swatchのデフォルト性別",
+      "world": "マーケット価格のデフォルトワールド/データセンター",
+      "market": "デフォルトでマーケット価格を表示するかどうか"
+    },
+    "errors": {
+      "invalidKey": "不明な設定キー：{key}",
+      "invalidValue": "{key}の値が無効です。有効なオプション：{options}"
+    }
+  },
+  "stats": {
+    "summary": {
+      "title": "XIV Dye Tools Bot",
+      "description": "FFXIVカララント色の探索とマッチングのためのDiscordボット",
+      "features": "機能",
+      "featuresList": "• カラーマッチングと抽出\n• カララントブレンドとグラデーション\n• カラーハーモニー生成\n• キャラクターカラーマッチング\n• マーケット価格連携",
+      "links": "リンク"
+    },
+    "overview": {
+      "title": "使用状況概要",
+      "period": "過去{days}日間",
+      "totalCommands": "総コマンド数",
+      "uniqueUsers": "ユニークユーザー",
+      "successRate": "成功率",
+      "avgLatency": "平均レイテンシ"
+    },
+    "commands": {
+      "title": "コマンド統計",
+      "topCommands": "人気コマンド",
+      "leastUsed": "使用頻度の低いコマンド",
+      "v4Migration": "V4移行状況",
+      "v4Usage": "V4コマンド",
+      "legacyUsage": "旧コマンド"
+    },
+    "preferences": {
+      "title": "設定の利用状況",
+      "sampleSize": "サンプルサイズ：{count}ユーザー",
+      "languageDistribution": "言語分布",
+      "blendingModes": "ブレンドモード使用状況",
+      "matchingMethods": "マッチング方法使用状況"
+    },
+    "health": {
+      "title": "システムヘルス",
+      "kvLatency": "KVレイテンシ",
+      "analyticsStatus": "Analytics Engine",
+      "cacheStatus": "Cache API",
+      "externalServices": "外部サービス",
+      "universalis": "Universalis API",
+      "operational": "正常",
+      "degraded": "低下",
+      "down": "停止"
+    }
+  },
+  "status": {
+    "analyzing": "分析中...",
+    "rendering": "画像生成中...",
+    "fetchingMarket": "マーケットデータ取得中...",
+    "processing": "処理中...",
+    "finalizing": "完了処理中...",
+    "complete": "完了！",
+    "queuePosition": "キュー位置：{position}",
+    "estimatedWait": "推定待ち時間：{seconds}秒",
+    "cooldown": "このコマンドを再度使用するには{seconds}秒お待ちください。"
+  },
+  "pagination": {
+    "page": "{total}ページ中{current}ページ",
+    "pageCompact": "{current}/{total}",
+    "first": "最初",
+    "previous": "前へ",
+    "next": "次へ",
+    "last": "最後",
+    "showing": "{total}件中{start}-{end}を表示",
+    "noResults": "結果が見つかりませんでした。",
+    "emptyPage": "このページは空です。"
+  },
+  "components": {
+    "blendingModeSelect": {
+      "placeholder": "ブレンドモードを選択...",
+      "label": "ブレンドモード"
+    },
+    "matchingMethodSelect": {
+      "placeholder": "マッチング方法を選択...",
+      "label": "マッチング方法"
+    },
+    "marketToggle": {
+      "show": "価格を表示",
+      "hide": "価格を非表示"
+    },
+    "refresh": {
+      "label": "更新"
+    },
+    "copy": {
+      "hex": "HEXをコピー",
+      "rgb": "RGBをコピー",
+      "hsv": "HSVをコピー",
+      "lab": "LABをコピー"
+    }
+  },
+  "matching": {
+    "methods": {
+      "rgb": "RGBユークリッド",
+      "cie76": "CIE76 (ΔE*)",
+      "ciede2000": "CIEDE2000",
+      "oklab": "OKLAB距離",
+      "hyab": "HyAB（ハイブリッド）",
+      "oklch_weighted": "OKLCH重み付け"
+    },
+    "methodDescriptions": {
+      "rgb": "単純なRGB色空間距離",
+      "cie76": "基本的な知覚差（LAB）",
+      "ciede2000": "高度な知覚差",
+      "oklab": "最新の知覚色空間",
+      "hyab": "LAB + 彩度のハイブリッド距離",
+      "oklch_weighted": "重み付けOKLCHコンポーネント"
     }
   }
 }

@@ -57,17 +57,29 @@
     "dyeInformation": "염료 정보",
     "botInformation": "봇 정보",
     "tipsResources": "팁 및 리소스",
-    "match": {
-      "name": "`/match <색상> [개수]`",
-      "description": "모든 색상에 가장 가까운 FFXIV 염료를 찾습니다.\n• 16진수 코드(`#FF0000`) 또는 염료 이름 사용 가능\n• 선택사항: 최대 10개의 일치 결과 표시"
+    "extractor": {
+      "name": "`/extractor color <색상> [개수]` | `/extractor image <이미지>`",
+      "description": "색상을 추출하고 FFXIV 염료에 매칭합니다.\n• `color`: 16진수 코드 또는 염료 이름을 가장 가까운 염료에 매칭\n• `image`: 업로드된 이미지에서 주요 색상 추출"
     },
     "harmony": {
       "name": "`/harmony <색상> [유형]`",
       "description": "조화로운 염료 조합을 생성합니다.\n• 유형: 보색, 유사색, 삼원색, 분할보색, 사각배색, 정방형, 단색\n• 시각적 색상환 생성"
     },
     "mixer": {
-      "name": "`/mixer <시작> <끝> [단계]`",
+      "name": "`/mixer <염료1> <염료2> [모드]`",
+      "description": "색 과학을 사용하여 두 염료를 블렌드합니다.\n• 6가지 블렌딩 모드: RGB, LAB, OKLAB, RYB, HSL, 스펙트럼\n• 블렌드 결과에 가장 가까운 FFXIV 염료 검색"
+    },
+    "gradient": {
+      "name": "`/gradient <시작> <끝> [단계]`",
       "description": "두 색상 사이의 그라데이션을 생성합니다.\n• 각 그라데이션 단계에 맞는 염료 표시\n• 단계 수 설정 가능 (2-10)"
+    },
+    "swatch": {
+      "name": "`/swatch color <유형> <인덱스>` | `/swatch grid <유형> <행> <열>`",
+      "description": "FFXIV 캐릭터 색상을 염료에 매칭합니다.\n• 피부, 머리, 눈, 하이라이트, 입술, 문신, 페이스페인트 지원\n• 피부와 머리에 종족/부족별 팔레트"
+    },
+    "preferences": {
+      "name": "`/preferences show` | `/preferences set <키> <값>` | `/preferences reset`",
+      "description": "봇 설정을 관리합니다.\n• 블렌딩 모드, 매칭 방법, 결과 수의 기본값 설정\n• 캐릭터 부족/성별 및 마켓 월드 설정"
     },
     "dyeSearch": {
       "name": "`/dye search <검색어>`",
@@ -137,6 +149,25 @@
     "useInfoHint": "/dye info로 획득 방법을 확인하세요",
     "useInfoNameHint": "/dye info <이름>으로 획득 방법을 확인하세요"
   },
+  "extractor": {
+    "title": "색상 추출: {name}",
+    "topMatches": "상위 {count}개 염료 매치",
+    "findingMatches": "{input}에 가장 가까운 매치 검색 중",
+    "useInfoHint": "/dye info로 획득 방법을 확인하세요",
+    "useInfoNameHint": "/dye info <이름>으로 획득 방법을 확인하세요",
+    "colorSubcommand": "색상에서 염료 추출",
+    "imageSubcommand": "이미지에서 염료 추출",
+    "extractedColors": "추출된 색상",
+    "dominantColor": "주요 색상"
+  },
+  "gradient": {
+    "title": "색상 그라데이션",
+    "startColor": "시작",
+    "endColor": "끝",
+    "steps": "{count}단계",
+    "gradientFrom": "{start}에서 {end}까지 그라데이션",
+    "description": "두 색상 사이의 부드러운 색상 전환 생성"
+  },
   "harmony": {
     "title": "{type} 하모니",
     "baseColor": "기본 색상",
@@ -150,11 +181,29 @@
     "monochromatic": "단색"
   },
   "mixer": {
-    "title": "색상 그라데이션",
-    "startColor": "시작",
-    "endColor": "끝",
-    "steps": "{count}단계",
-    "gradientFrom": "{start}에서 {end}까지 그라데이션"
+    "title": "염료 블렌더",
+    "blendResult": "블렌드 결과",
+    "inputDyes": "입력 염료",
+    "blendedColor": "블렌드 색상",
+    "closestMatch": "가장 가까운 매치",
+    "topMatches": "상위 {count}개 매치",
+    "blendingMode": "블렌딩 모드",
+    "modes": {
+      "rgb": "RGB 평균",
+      "lab": "LAB (지각적)",
+      "oklab": "OKLAB (최신 지각적)",
+      "ryb": "RYB (아티스트)",
+      "hsl": "HSL (색조 기반)",
+      "spectral": "스펙트럼 (안료 물리)"
+    },
+    "modeDescriptions": {
+      "rgb": "단순 가산 채널 평균",
+      "lab": "지각적으로 균일한 CIELAB 블렌딩",
+      "oklab": "최신 지각 색 공간 (파랑→보라 문제 수정)",
+      "ryb": "전통 아티스트 색상환 혼합",
+      "hsl": "색조-채도-명도 보간",
+      "spectral": "Kubelka-Munk 안료 물리 시뮬레이션"
+    }
   },
   "comparison": {
     "title": "염료 비교",
@@ -383,6 +432,185 @@
       "presetNotFound": "빠른 선택 프리셋 \"{id}\"를 찾을 수 없습니다.",
       "apiError": "장터 데이터를 가져올 수 없습니다. 나중에 다시 시도해 주세요.",
       "rateLimited": "요청이 너무 많습니다. 잠시 후에 가격을 다시 확인해 주세요."
+    }
+  },
+  "swatch": {
+    "title": "캐릭터 색상 매치",
+    "colorType": "색상 유형",
+    "colorTypes": {
+      "skin": "피부색",
+      "hair": "머리색",
+      "eyes": "눈 색상",
+      "highlight": "머리 하이라이트",
+      "lips_dark": "입술 색상 (어두운)",
+      "lips_light": "입술 색상 (밝은)",
+      "tattoo": "문신/림발 링",
+      "facepaint_dark": "페이스페인트 (어두운)",
+      "facepaint_light": "페이스페인트 (밝은)"
+    },
+    "clan": "부족",
+    "gender": "성별",
+    "genders": {
+      "male": "남성",
+      "female": "여성"
+    },
+    "gridPosition": "그리드 위치",
+    "row": "행",
+    "column": "열",
+    "colorIndex": "색상 인덱스",
+    "characterColor": "캐릭터 색상",
+    "closestDye": "가장 가까운 염료",
+    "topMatches": "상위 {count}개 매치",
+    "raceSpecific": "종족별 색상 팔레트",
+    "sharedPalette": "공유 색상 팔레트 (모든 종족)"
+  },
+  "preferences": {
+    "title": "설정",
+    "show": {
+      "title": "현재 설정",
+      "description": "XIV Dye Tools 개인 설정",
+      "default": "기본값",
+      "notSet": "미설정"
+    },
+    "set": {
+      "success": "설정 업데이트됨",
+      "updated": "**{key}**이(가) **{value}**(으)로 설정되었습니다.",
+      "affectedCommands": "영향 받는 명령어: {commands}"
+    },
+    "reset": {
+      "success": "설정 초기화됨",
+      "single": "**{key}**이(가) 기본값으로 초기화되었습니다.",
+      "all": "모든 설정이 기본값으로 초기화되었습니다."
+    },
+    "keys": {
+      "language": "언어",
+      "blending": "블렌딩 모드",
+      "matching": "매칭 방법",
+      "count": "결과 수",
+      "clan": "캐릭터 부족",
+      "gender": "캐릭터 성별",
+      "world": "마켓 월드",
+      "market": "마켓 가격 표시"
+    },
+    "descriptions": {
+      "language": "염료 이름과 봇 메시지 언어",
+      "blending": "/mixer의 기본 알고리즘",
+      "matching": "기본 색상 매칭 방법",
+      "count": "기본 결과 수 (1-10)",
+      "clan": "/swatch의 기본 부족",
+      "gender": "/swatch의 기본 성별",
+      "world": "마켓 가격의 기본 월드/데이터센터",
+      "market": "기본으로 마켓 가격 표시 여부"
+    },
+    "errors": {
+      "invalidKey": "알 수 없는 설정 키: {key}",
+      "invalidValue": "{key}의 값이 유효하지 않습니다. 유효한 옵션: {options}"
+    }
+  },
+  "stats": {
+    "summary": {
+      "title": "XIV Dye Tools Bot",
+      "description": "FFXIV 염료 색상 탐색 및 매칭을 위한 Discord 봇",
+      "features": "기능",
+      "featuresList": "• 색상 매칭 및 추출\n• 염료 블렌딩 및 그라데이션\n• 색상 하모니 생성\n• 캐릭터 색상 매칭\n• 마켓 가격 연동",
+      "links": "링크"
+    },
+    "overview": {
+      "title": "사용 현황",
+      "period": "최근 {days}일",
+      "totalCommands": "총 명령어 수",
+      "uniqueUsers": "고유 사용자",
+      "successRate": "성공률",
+      "avgLatency": "평균 지연"
+    },
+    "commands": {
+      "title": "명령어 통계",
+      "topCommands": "인기 명령어",
+      "leastUsed": "사용 빈도 낮은 명령어",
+      "v4Migration": "V4 마이그레이션 상태",
+      "v4Usage": "V4 명령어",
+      "legacyUsage": "레거시 명령어"
+    },
+    "preferences": {
+      "title": "설정 채택률",
+      "sampleSize": "샘플 크기: {count}명",
+      "languageDistribution": "언어 분포",
+      "blendingModes": "블렌딩 모드 사용",
+      "matchingMethods": "매칭 방법 사용"
+    },
+    "health": {
+      "title": "시스템 상태",
+      "kvLatency": "KV 지연",
+      "analyticsStatus": "Analytics Engine",
+      "cacheStatus": "Cache API",
+      "externalServices": "외부 서비스",
+      "universalis": "Universalis API",
+      "operational": "정상",
+      "degraded": "저하",
+      "down": "중단"
+    }
+  },
+  "status": {
+    "analyzing": "분석 중...",
+    "rendering": "이미지 생성 중...",
+    "fetchingMarket": "마켓 데이터 가져오는 중...",
+    "processing": "처리 중...",
+    "finalizing": "마무리 중...",
+    "complete": "완료!",
+    "queuePosition": "대기열 위치: {position}",
+    "estimatedWait": "예상 대기 시간: {seconds}초",
+    "cooldown": "이 명령어를 다시 사용하려면 {seconds}초 기다려 주세요."
+  },
+  "pagination": {
+    "page": "{total}페이지 중 {current}페이지",
+    "pageCompact": "{current}/{total}",
+    "first": "처음",
+    "previous": "이전",
+    "next": "다음",
+    "last": "마지막",
+    "showing": "{total}개 중 {start}-{end} 표시",
+    "noResults": "결과를 찾을 수 없습니다.",
+    "emptyPage": "이 페이지는 비어 있습니다."
+  },
+  "components": {
+    "blendingModeSelect": {
+      "placeholder": "블렌딩 모드 선택...",
+      "label": "블렌딩 모드"
+    },
+    "matchingMethodSelect": {
+      "placeholder": "매칭 방법 선택...",
+      "label": "매칭 방법"
+    },
+    "marketToggle": {
+      "show": "가격 표시",
+      "hide": "가격 숨기기"
+    },
+    "refresh": {
+      "label": "새로고침"
+    },
+    "copy": {
+      "hex": "HEX 복사",
+      "rgb": "RGB 복사",
+      "hsv": "HSV 복사",
+      "lab": "LAB 복사"
+    }
+  },
+  "matching": {
+    "methods": {
+      "rgb": "RGB 유클리드",
+      "cie76": "CIE76 (ΔE*)",
+      "ciede2000": "CIEDE2000",
+      "oklab": "OKLAB 거리",
+      "hyab": "HyAB (하이브리드)",
+      "oklch_weighted": "OKLCH 가중"
+    },
+    "methodDescriptions": {
+      "rgb": "단순 RGB 색 공간 거리",
+      "cie76": "기본 지각 차이 (LAB)",
+      "ciede2000": "고급 지각 차이",
+      "oklab": "최신 지각 색 공간",
+      "hyab": "하이브리드 LAB + 채도 거리",
+      "oklch_weighted": "가중 OKLCH 성분"
     }
   }
 }
