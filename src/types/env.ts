@@ -25,6 +25,12 @@ export interface Env {
   /** Shared secret for incoming webhook notifications */
   INTERNAL_WEBHOOK_SECRET?: string;
 
+  /** HMAC secret for verifying GitHub webhook signatures */
+  GITHUB_WEBHOOK_SECRET?: string;
+
+  /** Discord channel ID for changelog announcements */
+  ANNOUNCEMENT_CHANNEL_ID?: string;
+
   // =========================================================================
   // Moderation Configuration (set via wrangler secret put)
   // =========================================================================

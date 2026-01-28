@@ -255,6 +255,108 @@ app.post('/webhooks/preset-submission', async (c) => {
 });
 
 /**
+ * Webhook endpoint for GitHub push events
+ *
+ * Listens for pushes to main that modify CHANGELOG-laymans.md,
+ * parses the latest version, and posts a Discord announcement embed.
+ *
+ * @see Phase 7 of v4.0.0 migration plan
+ */
+app.post('/webhooks/github', async (c) => {
+  const env = c.env;
+  const logger = c.get('logger');
+
+  // Ensure webhook secret is configured
+  if (!env.GITHUB_WEBHOOK_SECRET) {
+    logger.error('GitHub webhook secret not configured');
+    return c.json({ error: 'Unauthorized' }, 401);
+  }
+
+  if (!env.ANNOUNCEMENT_CHANNEL_ID) {
+    logger.error('Announcement channel ID not configured');
+    return c.json({ error: 'Not configured' }, 500);
+  }
+
+  // Read raw body for signature verification
+  const rawBody = await c.req.text();
+
+  // DISCORD-HIGH-001: Validate request body size
+  if (rawBody.length > 10240) {
+    logger.warn('GitHub webhook payload too large', { size: rawBody.length });
+    return c.json({ error: 'Payload too large' }, 413);
+  }
+
+  // Verify GitHub signature (HMAC-SHA256)
+  const signature = c.req.header('X-Hub-Signature-256') || '';
+  const { verifyGitHubSignature } = await import('./utils/github-verify.js');
+
+  if (!(await verifyGitHubSignature(env.GITHUB_WEBHOOK_SECRET, rawBody, signature))) {
+    logger.error('GitHub webhook signature verification failed');
+    return c.json({ error: 'Unauthorized' }, 401);
+  }
+
+  // Parse payload
+  let payload: import('./types/github.js').GitHubPushPayload;
+  try {
+    payload = JSON.parse(rawBody);
+  } catch {
+    return c.json({ error: 'Invalid JSON body' }, 400);
+  }
+
+  // Only process pushes to main branch
+  if (payload.ref !== 'refs/heads/main') {
+    return c.json({ success: true, message: 'Not main branch, skipping' });
+  }
+
+  // Check if any commit modified CHANGELOG-laymans.md
+  const changelogModified = payload.commits.some(
+    (commit) =>
+      commit.added.includes('CHANGELOG-laymans.md') ||
+      commit.modified.includes('CHANGELOG-laymans.md')
+  );
+
+  if (!changelogModified) {
+    return c.json({ success: true, message: 'Changelog not modified, skipping' });
+  }
+
+  logger.info('Changelog update detected, fetching latest version', {
+    repo: payload.repository.full_name,
+  });
+
+  // Fetch the raw changelog from GitHub
+  const changelogUrl = `https://raw.githubusercontent.com/${payload.repository.full_name}/main/CHANGELOG-laymans.md`;
+  const changelogResponse = await fetch(changelogUrl);
+
+  if (!changelogResponse.ok) {
+    logger.error('Failed to fetch changelog', { status: changelogResponse.status });
+    return c.json({ error: 'Failed to fetch changelog' }, 502);
+  }
+
+  const changelogContent = await changelogResponse.text();
+
+  // Parse the latest version
+  const { parseLatestVersion } = await import('./services/changelog-parser.js');
+  const latestEntry = parseLatestVersion(changelogContent);
+
+  if (!latestEntry) {
+    logger.warn('No version entry found in changelog');
+    return c.json({ success: true, message: 'No version entry found' });
+  }
+
+  // Send announcement to Discord
+  const { sendAnnouncement } = await import('./services/announcements.js');
+  await sendAnnouncement(
+    env.DISCORD_TOKEN,
+    env.ANNOUNCEMENT_CHANNEL_ID,
+    latestEntry,
+    payload.repository.html_url
+  );
+
+  logger.info('Changelog announcement sent', { version: latestEntry.version });
+  return c.json({ success: true, version: latestEntry.version });
+});
+
+/**
  * Main Discord interactions endpoint
  *
  * All Discord interactions (slash commands, buttons, etc.) are sent here as POST requests.
