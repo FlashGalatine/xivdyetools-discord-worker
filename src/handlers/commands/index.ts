@@ -17,8 +17,12 @@ export { handleDyeCommand } from './dye.js';
 // V4 Commands
 export { handleExtractorCommand } from './extractor.js';
 export { handleGradientCommand } from './gradient.js';
+export { handlePreferencesCommand } from './preferences.js';
+export { handleMixerV4Command } from './mixer-v4.js';
+export { handleSwatchCommand } from './swatch.js';
 
 // Legacy commands (deprecated in v4, kept for backward compatibility)
+// Note: handleMixerCommand (old gradient) is deprecated - use handleGradientCommand
 export { handleMixerCommand } from './mixer.js';
 export { handleMatchCommand } from './match.js';
 export { handleMatchImageCommand } from './match-image.js';

@@ -269,30 +269,45 @@ const commands = [
     ],
   },
 
+  // V4: New /mixer for dye blending (old /mixer gradient is now /gradient)
   {
     name: 'mixer',
-    description: '[DEPRECATED: Use /gradient] Generate a color gradient between two colors',
+    description: 'Blend two dyes using various color mixing algorithms',
     options: [
       {
-        name: 'start_color',
-        description: 'Starting color: hex (e.g., #FF0000) or dye name',
+        name: 'dye1',
+        description: 'First dye to blend (hex code or dye name)',
         type: OptionType.STRING,
         required: true,
         autocomplete: true,
       },
       {
-        name: 'end_color',
-        description: 'Ending color: hex (e.g., #0000FF) or dye name',
+        name: 'dye2',
+        description: 'Second dye to blend (hex code or dye name)',
         type: OptionType.STRING,
         required: true,
         autocomplete: true,
       },
       {
-        name: 'steps',
-        description: 'Number of color steps (default: 6)',
+        name: 'mode',
+        description: 'Color blending algorithm',
+        type: OptionType.STRING,
+        required: false,
+        choices: [
+          { name: 'RGB - Simple additive averaging', value: 'rgb' },
+          { name: 'LAB - Perceptual CIELAB blending', value: 'lab' },
+          { name: 'OKLAB - Modern perceptual (recommended)', value: 'oklab' },
+          { name: 'RYB - Traditional artist color wheel', value: 'ryb' },
+          { name: 'HSL - Hue-Saturation-Lightness', value: 'hsl' },
+          { name: 'Spectral - Pigment physics simulation', value: 'spectral' },
+        ],
+      },
+      {
+        name: 'count',
+        description: 'Number of closest dye matches to show (1-10)',
         type: OptionType.INTEGER,
         required: false,
-        min_value: 2,
+        min_value: 1,
         max_value: 10,
       },
     ],
@@ -384,9 +399,256 @@ const commands = [
     ],
   },
 
+  // V4: /stats with 5 subcommands
   {
     name: 'stats',
-    description: 'Display bot usage statistics (authorized users only)',
+    description: 'Display bot usage statistics and information',
+    options: [
+      {
+        name: 'summary',
+        description: 'Show basic bot information (public)',
+        type: OptionType.SUB_COMMAND,
+      },
+      {
+        name: 'overview',
+        description: 'Show usage metrics (admin only)',
+        type: OptionType.SUB_COMMAND,
+      },
+      {
+        name: 'commands',
+        description: 'Show per-command breakdown (admin only)',
+        type: OptionType.SUB_COMMAND,
+      },
+      {
+        name: 'preferences',
+        description: 'Show preference adoption rates (admin only)',
+        type: OptionType.SUB_COMMAND,
+      },
+      {
+        name: 'health',
+        description: 'Show system health status (admin only)',
+        type: OptionType.SUB_COMMAND,
+      },
+    ],
+  },
+
+  // V4: /preferences - Unified settings management
+  {
+    name: 'preferences',
+    description: 'Manage your personal bot preferences',
+    options: [
+      {
+        name: 'show',
+        description: 'Display your current preferences',
+        type: OptionType.SUB_COMMAND,
+      },
+      {
+        name: 'set',
+        description: 'Set a preference value',
+        type: OptionType.SUB_COMMAND,
+        options: [
+          {
+            name: 'key',
+            description: 'Preference to set',
+            type: OptionType.STRING,
+            required: true,
+            choices: [
+              { name: 'Language - UI language', value: 'language' },
+              { name: 'Blending - Default blend mode', value: 'blending' },
+              { name: 'Matching - Default match method', value: 'matching' },
+              { name: 'Count - Default result count', value: 'count' },
+              { name: 'Clan - Default clan for /swatch', value: 'clan' },
+              { name: 'Gender - Default gender for /swatch', value: 'gender' },
+              { name: 'World - Market board world', value: 'world' },
+              { name: 'Market - Show prices by default', value: 'market' },
+            ],
+          },
+          {
+            name: 'value',
+            description: 'Value to set',
+            type: OptionType.STRING,
+            required: true,
+          },
+        ],
+      },
+      {
+        name: 'reset',
+        description: 'Reset a preference to default (or all if no key specified)',
+        type: OptionType.SUB_COMMAND,
+        options: [
+          {
+            name: 'key',
+            description: 'Preference to reset (omit for all)',
+            type: OptionType.STRING,
+            required: false,
+            choices: [
+              { name: 'Language', value: 'language' },
+              { name: 'Blending Mode', value: 'blending' },
+              { name: 'Matching Method', value: 'matching' },
+              { name: 'Result Count', value: 'count' },
+              { name: 'Default Clan', value: 'clan' },
+              { name: 'Default Gender', value: 'gender' },
+              { name: 'Market World', value: 'world' },
+              { name: 'Show Prices', value: 'market' },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+
+  // V4: /swatch - Character color matching
+  {
+    name: 'swatch',
+    description: 'Match FFXIV character colors (skin, hair, eyes) to available dyes',
+    options: [
+      {
+        name: 'color',
+        description: 'Match a character color by its index',
+        type: OptionType.SUB_COMMAND,
+        options: [
+          {
+            name: 'type',
+            description: 'Character color type',
+            type: OptionType.STRING,
+            required: true,
+            choices: [
+              { name: '👤 Skin Tone', value: 'skin' },
+              { name: '💇 Hair Color', value: 'hair' },
+              { name: '👁️ Eye Color', value: 'eye' },
+              { name: '✨ Hair Highlight', value: 'highlight' },
+              { name: '💋 Lip Color (Dark)', value: 'lip_dark' },
+              { name: '💋 Lip Color (Light)', value: 'lip_light' },
+              { name: '🎭 Tattoo/Limbal Ring', value: 'tattoo' },
+              { name: '🎨 Face Paint (Dark)', value: 'facepaint_dark' },
+              { name: '🎨 Face Paint (Light)', value: 'facepaint_light' },
+            ],
+          },
+          {
+            name: 'index',
+            description: 'Color index (0-191, or 0-95 for lips/facepaint)',
+            type: OptionType.INTEGER,
+            required: true,
+            min_value: 0,
+            max_value: 191,
+          },
+          {
+            name: 'clan',
+            description: 'Character clan (required for skin/hair)',
+            type: OptionType.STRING,
+            required: false,
+          },
+          {
+            name: 'gender',
+            description: 'Character gender (required for skin/hair)',
+            type: OptionType.STRING,
+            required: false,
+            choices: [
+              { name: 'Male', value: 'male' },
+              { name: 'Female', value: 'female' },
+            ],
+          },
+          {
+            name: 'matching',
+            description: 'Color matching algorithm',
+            type: OptionType.STRING,
+            required: false,
+            choices: [
+              { name: 'OKLAB - Modern perceptual (default)', value: 'oklab' },
+              { name: 'RGB - Simple Euclidean', value: 'rgb' },
+              { name: 'CIE76 - CIELAB distance', value: 'cie76' },
+              { name: 'CIEDE2000 - Industry standard', value: 'ciede2000' },
+              { name: 'HyAB - Hybrid for large differences', value: 'hyab' },
+            ],
+          },
+          {
+            name: 'count',
+            description: 'Number of dye matches to show (1-10)',
+            type: OptionType.INTEGER,
+            required: false,
+            min_value: 1,
+            max_value: 10,
+          },
+        ],
+      },
+      {
+        name: 'grid',
+        description: 'Match a character color by grid position (row/column)',
+        type: OptionType.SUB_COMMAND,
+        options: [
+          {
+            name: 'type',
+            description: 'Character color type',
+            type: OptionType.STRING,
+            required: true,
+            choices: [
+              { name: '👤 Skin Tone', value: 'skin' },
+              { name: '💇 Hair Color', value: 'hair' },
+              { name: '👁️ Eye Color', value: 'eye' },
+              { name: '✨ Hair Highlight', value: 'highlight' },
+              { name: '💋 Lip Color (Dark)', value: 'lip_dark' },
+              { name: '💋 Lip Color (Light)', value: 'lip_light' },
+              { name: '🎭 Tattoo/Limbal Ring', value: 'tattoo' },
+              { name: '🎨 Face Paint (Dark)', value: 'facepaint_dark' },
+              { name: '🎨 Face Paint (Light)', value: 'facepaint_light' },
+            ],
+          },
+          {
+            name: 'row',
+            description: 'Grid row (0-23 for most, 0-11 for lips/facepaint)',
+            type: OptionType.INTEGER,
+            required: true,
+            min_value: 0,
+            max_value: 23,
+          },
+          {
+            name: 'col',
+            description: 'Grid column (0-7)',
+            type: OptionType.INTEGER,
+            required: true,
+            min_value: 0,
+            max_value: 7,
+          },
+          {
+            name: 'clan',
+            description: 'Character clan (required for skin/hair)',
+            type: OptionType.STRING,
+            required: false,
+          },
+          {
+            name: 'gender',
+            description: 'Character gender (required for skin/hair)',
+            type: OptionType.STRING,
+            required: false,
+            choices: [
+              { name: 'Male', value: 'male' },
+              { name: 'Female', value: 'female' },
+            ],
+          },
+          {
+            name: 'matching',
+            description: 'Color matching algorithm',
+            type: OptionType.STRING,
+            required: false,
+            choices: [
+              { name: 'OKLAB - Modern perceptual (default)', value: 'oklab' },
+              { name: 'RGB - Simple Euclidean', value: 'rgb' },
+              { name: 'CIE76 - CIELAB distance', value: 'cie76' },
+              { name: 'CIEDE2000 - Industry standard', value: 'ciede2000' },
+              { name: 'HyAB - Hybrid for large differences', value: 'hyab' },
+            ],
+          },
+          {
+            name: 'count',
+            description: 'Number of dye matches to show (1-10)',
+            type: OptionType.INTEGER,
+            required: false,
+            min_value: 1,
+            max_value: 10,
+          },
+        ],
+      },
+    ],
   },
 
   // =========================================================================

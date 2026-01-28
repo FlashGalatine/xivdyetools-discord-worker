@@ -41,6 +41,10 @@ describe('commands/index exports', () => {
         expect(commands.handleGradientCommand).toBeDefined();
         expect(typeof commands.handleGradientCommand).toBe('function');
 
+        // V4: Swatch command
+        expect(commands.handleSwatchCommand).toBeDefined();
+        expect(typeof commands.handleSwatchCommand).toBe('function');
+
         // Legacy commands (still exported for backward compatibility)
         expect(commands.handleMixerCommand).toBeDefined();
         expect(typeof commands.handleMixerCommand).toBe('function');

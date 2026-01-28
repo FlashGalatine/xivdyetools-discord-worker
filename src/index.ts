@@ -21,6 +21,9 @@ import {
   // V4 Commands
   handleExtractorCommand,
   handleGradientCommand,
+  handlePreferencesCommand,
+  handleMixerV4Command,
+  handleSwatchCommand,
   // Legacy commands (kept for backward compatibility during migration)
   handleMixerCommand,
   handleMatchCommand,
@@ -372,11 +375,20 @@ async function handleCommand(
         response = await handleGradientCommand(interaction, env, ctx, logger);
         break;
 
-      // Legacy commands (kept for backward compatibility during migration)
-      case 'mixer':
-        response = await handleMixerCommand(interaction, env, ctx, logger);
+      case 'preferences':
+        response = await handlePreferencesCommand(interaction, env, ctx, logger);
         break;
 
+      case 'mixer':
+        // V4: New /mixer command for dye blending (old /mixer gradient is now /gradient)
+        response = await handleMixerV4Command(interaction, env, ctx, logger);
+        break;
+
+      case 'swatch':
+        response = await handleSwatchCommand(interaction, env, ctx, logger);
+        break;
+
+      // Legacy commands (kept for backward compatibility during migration)
       case 'match':
         response = await handleMatchCommand(interaction, env, ctx);
         break;
