@@ -1,21 +1,29 @@
 /**
- * /dye Command Handler
+ * /dye Command Handler (V4 Enhanced)
  *
  * Provides subcommands for searching and exploring FFXIV dyes:
  * - /dye search <query> - Search dyes by name
- * - /dye info <name> - Get detailed information about a specific dye
+ * - /dye info <name> - Get detailed information about a specific dye (V4: visual card)
  * - /dye list [category] - List dyes by category
- * - /dye random - Show 5 randomly selected dyes
+ * - /dye random - Show 5 randomly selected dyes (V4: visual grid)
  *
  * All subcommands exclude Facewear dyes (generic names like "Red", "Blue").
+ *
+ * V4 Enhancements:
+ * - /dye info now generates a visual result card
+ * - /dye random now generates a visual infographic grid
  */
 
 import { DyeService, dyeDatabase, type Dye } from '@xivdyetools/core';
-import { messageResponse, errorEmbed, hexToDiscordColor } from '../../utils/response.js';
+import { messageResponse, deferredResponse, errorEmbed, hexToDiscordColor } from '../../utils/response.js';
+import { editOriginalResponse } from '../../utils/discord-api.js';
 import { getDyeEmoji } from '../../services/emoji.js';
 import { createCopyButtons } from '../buttons/index.js';
-import { createUserTranslator, type Translator } from '../../services/bot-i18n.js';
-import { initializeLocale, getLocalizedDyeName, getLocalizedCategory } from '../../services/i18n.js';
+import { createUserTranslator, createTranslator, type Translator } from '../../services/bot-i18n.js';
+import { initializeLocale, getLocalizedDyeName, getLocalizedCategory, type LocaleCode } from '../../services/i18n.js';
+import { generateDyeInfoCard } from '../../services/svg/dye-info-card.js';
+import { generateRandomDyesGrid, type RandomDyeInfo } from '../../services/svg/random-dyes-grid.js';
+import { renderSvgToPng } from '../../services/svg/renderer.js';
 import type { Env, DiscordInteraction } from '../../types/env.js';
 
 // Initialize DyeService with the database
@@ -48,9 +56,10 @@ export async function handleDyeCommand(
 ): Promise<Response> {
   const userId = interaction.member?.user?.id ?? interaction.user?.id ?? 'unknown';
   const t = await createUserTranslator(env.KV, userId, interaction.locale);
+  const locale = t.getLocale();
 
-  // Initialize xivdyetools-core localization for dye names using translator's resolved locale
-  await initializeLocale(t.getLocale());
+  // Initialize xivdyetools-core localization for dye names
+  await initializeLocale(locale);
 
   const options = interaction.data?.options || [];
   const subcommand = options[0];
@@ -65,12 +74,18 @@ export async function handleDyeCommand(
   switch (subcommand.name) {
     case 'search':
       return handleSearchSubcommand(t, subcommand.options);
+
     case 'info':
-      return handleInfoSubcommand(t, subcommand.options);
+      // V4: Visual card requires deferred response
+      return handleInfoSubcommand(interaction, env, ctx, t, locale, subcommand.options);
+
     case 'list':
       return handleListSubcommand(t, subcommand.options);
+
     case 'random':
-      return handleRandomSubcommand(t, subcommand.options);
+      // V4: Visual grid requires deferred response
+      return handleRandomSubcommand(interaction, env, ctx, t, locale, subcommand.options);
+
     default:
       return messageResponse({
         embeds: [errorEmbed(t.t('common.error'), t.t('errors.unknownSubcommand', { name: subcommand.name }))],
@@ -137,9 +152,14 @@ function handleSearchSubcommand(
 
 /**
  * Handles /dye info <name>
+ * V4 Enhanced: Generates a visual result card
  */
 function handleInfoSubcommand(
+  interaction: DiscordInteraction,
+  env: Env,
+  ctx: ExecutionContext,
   t: Translator,
+  locale: LocaleCode,
   options?: Array<{ name: string; value?: string | number | boolean }>
 ): Response {
   const nameOption = options?.find((opt) => opt.name === 'name');
@@ -165,56 +185,109 @@ function handleInfoSubcommand(
     });
   }
 
-  // Get emoji if available
-  const emoji = getDyeEmoji(dye.id);
-  const emojiPrefix = emoji ? `${emoji} ` : '';
+  // Defer response for image generation
+  const deferResponse = deferredResponse();
 
-  // Get localized dye name and category
-  const localizedDyeName = getLocalizedDyeName(dye.itemID, dye.name);
-  const localizedCategory = getLocalizedCategory(dye.category);
+  // Process in background
+  ctx.waitUntil(processInfoCard(interaction, env, dye, locale));
 
-  // Build detailed info embed
-  const fields = [
-    { name: t.t('common.hexColor'), value: `\`${dye.hex.toUpperCase()}\``, inline: true },
-    { name: t.t('common.category'), value: localizedCategory, inline: true },
-    { name: t.t('common.itemId'), value: `\`${dye.id}\``, inline: true },
-  ];
+  return deferResponse;
+}
 
-  // Add RGB values
-  const rgb = dye.rgb;
-  fields.push({
-    name: t.t('common.rgb'),
-    value: `\`rgb(${rgb.r}, ${rgb.g}, ${rgb.b})\``,
-    inline: true,
-  });
+/**
+ * Background processing for dye info visual card
+ */
+async function processInfoCard(
+  interaction: DiscordInteraction,
+  env: Env,
+  dye: Dye,
+  locale: LocaleCode
+): Promise<void> {
+  const t = createTranslator(locale);
 
-  // Add HSV values
-  const hsv = dye.hsv;
-  fields.push({
-    name: t.t('common.hsv'),
-    value: `\`${Math.round(hsv.h)}°, ${Math.round(hsv.s)}%, ${Math.round(hsv.v)}%\``,
-    inline: true,
-  });
+  try {
+    // Get localized names
+    const localizedName = getLocalizedDyeName(dye.itemID, dye.name);
+    const localizedCategory = getLocalizedCategory(dye.category);
 
-  // Create copy buttons
-  const copyButtons = createCopyButtons(
-    dye.hex,
-    rgb,
-    { h: Math.round(hsv.h), s: Math.round(hsv.s), v: Math.round(hsv.v) }
-  );
+    // Generate visual card SVG
+    const svg = generateDyeInfoCard({
+      dye,
+      localizedName,
+      localizedCategory,
+    });
 
-  return messageResponse({
-    embeds: [
-      {
-        title: `${emojiPrefix}${localizedDyeName}`,
-        description: t.t('dye.info.detailedInfo', { category: localizedCategory }),
-        color: hexToDiscordColor(dye.hex),
-        fields,
-        footer: { text: t.t('common.footer') },
+    // Render to PNG
+    const pngBuffer = await renderSvgToPng(svg, { scale: 2 });
+
+    // Get emoji if available
+    const emoji = getDyeEmoji(dye.id);
+    const emojiPrefix = emoji ? `${emoji} ` : '';
+
+    // Create copy buttons for hex/RGB/HSV
+    const rgb = dye.rgb;
+    const hsv = dye.hsv;
+    const copyButtons = createCopyButtons(
+      dye.hex,
+      rgb,
+      { h: Math.round(hsv.h), s: Math.round(hsv.s), v: Math.round(hsv.v) }
+    );
+
+    // Send response with image
+    await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+      embeds: [
+        {
+          title: `${emojiPrefix}${localizedName}`,
+          description: t.t('dye.info.detailedInfo', { category: localizedCategory }),
+          color: hexToDiscordColor(dye.hex),
+          image: { url: 'attachment://image.png' },
+          footer: { text: t.t('common.footer') },
+        },
+      ],
+      components: [copyButtons],
+      file: {
+        name: `dye-${dye.name.toLowerCase().replace(/\s+/g, '-')}.png`,
+        data: pngBuffer,
+        contentType: 'image/png',
       },
-    ],
-    components: [copyButtons],
-  });
+    });
+  } catch (error) {
+    // Fallback to text-based response on error
+    const localizedName = getLocalizedDyeName(dye.itemID, dye.name);
+    const localizedCategory = getLocalizedCategory(dye.category);
+
+    const emoji = getDyeEmoji(dye.id);
+    const emojiPrefix = emoji ? `${emoji} ` : '';
+    const rgb = dye.rgb;
+    const hsv = dye.hsv;
+
+    const fields = [
+      { name: t.t('common.hexColor'), value: `\`${dye.hex.toUpperCase()}\``, inline: true },
+      { name: t.t('common.category'), value: localizedCategory, inline: true },
+      { name: t.t('common.itemId'), value: `\`${dye.id}\``, inline: true },
+      { name: t.t('common.rgb'), value: `\`rgb(${rgb.r}, ${rgb.g}, ${rgb.b})\``, inline: true },
+      { name: t.t('common.hsv'), value: `\`${Math.round(hsv.h)}°, ${Math.round(hsv.s)}%, ${Math.round(hsv.v)}%\``, inline: true },
+    ];
+
+    const copyButtons = createCopyButtons(
+      dye.hex,
+      rgb,
+      { h: Math.round(hsv.h), s: Math.round(hsv.s), v: Math.round(hsv.v) }
+    );
+
+    await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+      embeds: [
+        {
+          title: `${emojiPrefix}${localizedName}`,
+          description: t.t('dye.info.detailedInfo', { category: localizedCategory }),
+          color: hexToDiscordColor(dye.hex),
+          fields,
+          footer: { text: t.t('common.footer') },
+        },
+      ],
+      components: [copyButtons],
+    });
+  }
 }
 
 /**
@@ -286,11 +359,14 @@ function handleListSubcommand(
 
 /**
  * Handles /dye random
- * Shows 5 randomly selected non-Facewear dyes
- * Optional: unique_categories limits to 1 dye per category
+ * V4 Enhanced: Generates a visual infographic grid
  */
 function handleRandomSubcommand(
+  interaction: DiscordInteraction,
+  env: Env,
+  ctx: ExecutionContext,
   t: Translator,
+  locale: LocaleCode,
   options?: Array<{ name: string; value?: string | number | boolean }>
 ): Response {
   // Check for unique_categories option
@@ -344,36 +420,101 @@ function handleRandomSubcommand(
     }
   }
 
-  // Format the dyes with localized names
-  const dyeList = selectedDyes
-    .map((dye, i) => {
-      const emoji = getDyeEmoji(dye.id);
-      const emojiPrefix = emoji ? `${emoji} ` : '';
-      const localizedName = getLocalizedDyeName(dye.itemID, dye.name);
-      const localizedCategory = getLocalizedCategory(dye.category);
-      return `**${i + 1}.** ${emojiPrefix}**${localizedName}** (\`${dye.hex.toUpperCase()}\`) • ${localizedCategory}`;
-    })
-    .join('\n');
+  // Defer response for image generation
+  const deferResponse = deferredResponse();
 
-  // Use the first dye's color for the embed
-  const embedColor = selectedDyes[0] ? hexToDiscordColor(selectedDyes[0].hex) : 0x5865f2;
+  // Process in background
+  ctx.waitUntil(processRandomGrid(interaction, env, selectedDyes, uniqueCategories, locale));
 
-  // Build title and description based on mode
-  const title = uniqueCategories ? t.t('dye.random.titleUnique') : t.t('dye.random.title');
-  const description = uniqueCategories
-    ? `${t.t('dye.random.descriptionUnique', { count: selectedDyes.length })}\n\n${dyeList}`
-    : `${t.t('dye.random.description', { count: selectedDyes.length })}\n\n${dyeList}`;
+  return deferResponse;
+}
 
-  return messageResponse({
-    embeds: [
-      {
-        title,
-        description,
-        color: embedColor,
-        footer: { text: `${t.t('dye.search.useInfoHint')} • ${t.t('dye.random.runAgainHint')}` },
+/**
+ * Background processing for random dyes visual grid
+ */
+async function processRandomGrid(
+  interaction: DiscordInteraction,
+  env: Env,
+  dyes: Dye[],
+  uniqueCategories: boolean,
+  locale: LocaleCode
+): Promise<void> {
+  const t = createTranslator(locale);
+
+  try {
+    // Build dye info with localized names
+    const dyeInfos: RandomDyeInfo[] = dyes.map((dye) => ({
+      dye,
+      localizedName: getLocalizedDyeName(dye.itemID, dye.name),
+      localizedCategory: getLocalizedCategory(dye.category),
+    }));
+
+    // Generate visual grid SVG
+    const title = uniqueCategories ? t.t('dye.random.titleUnique') : t.t('dye.random.title');
+    const svg = generateRandomDyesGrid({
+      dyes: dyeInfos,
+      title,
+      uniqueCategories,
+    });
+
+    // Render to PNG
+    const pngBuffer = await renderSvgToPng(svg, { scale: 2 });
+
+    // Build text list for embed description (fallback/accessibility)
+    const dyeList = dyes
+      .map((dye, i) => {
+        const emoji = getDyeEmoji(dye.id);
+        const emojiPrefix = emoji ? `${emoji} ` : '';
+        const localizedName = getLocalizedDyeName(dye.itemID, dye.name);
+        return `**${i + 1}.** ${emojiPrefix}${localizedName} (\`${dye.hex.toUpperCase()}\`)`;
+      })
+      .join('\n');
+
+    // Send response with image
+    await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+      embeds: [
+        {
+          title,
+          description: dyeList,
+          color: hexToDiscordColor(dyes[0].hex),
+          image: { url: 'attachment://image.png' },
+          footer: { text: `${t.t('dye.search.useInfoHint')} • ${t.t('dye.random.runAgainHint')}` },
+        },
+      ],
+      file: {
+        name: 'random-dyes.png',
+        data: pngBuffer,
+        contentType: 'image/png',
       },
-    ],
-  });
+    });
+  } catch (error) {
+    // Fallback to text-based response on error
+    const dyeList = dyes
+      .map((dye, i) => {
+        const emoji = getDyeEmoji(dye.id);
+        const emojiPrefix = emoji ? `${emoji} ` : '';
+        const localizedName = getLocalizedDyeName(dye.itemID, dye.name);
+        const localizedCategory = getLocalizedCategory(dye.category);
+        return `**${i + 1}.** ${emojiPrefix}**${localizedName}** (\`${dye.hex.toUpperCase()}\`) • ${localizedCategory}`;
+      })
+      .join('\n');
+
+    const title = uniqueCategories ? t.t('dye.random.titleUnique') : t.t('dye.random.title');
+    const description = uniqueCategories
+      ? `${t.t('dye.random.descriptionUnique', { count: dyes.length })}\n\n${dyeList}`
+      : `${t.t('dye.random.description', { count: dyes.length })}\n\n${dyeList}`;
+
+    await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+      embeds: [
+        {
+          title,
+          description,
+          color: hexToDiscordColor(dyes[0].hex),
+          footer: { text: `${t.t('dye.search.useInfoHint')} • ${t.t('dye.random.runAgainHint')}` },
+        },
+      ],
+    });
+  }
 }
 
 /**

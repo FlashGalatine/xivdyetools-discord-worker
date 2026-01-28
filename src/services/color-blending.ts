@@ -289,8 +289,9 @@ function reflectanceToRgb(ref: { r: number; g: number; b: number }): RGB {
 
 /**
  * RGB to CIELAB conversion
+ * Exported for use in other modules (e.g., comparison grid)
  */
-function rgbToLab(rgb: RGB): LAB {
+export function rgbToLab(rgb: RGB): LAB {
   // First convert to XYZ
   let r = rgb.r / 255;
   let g = rgb.g / 255;

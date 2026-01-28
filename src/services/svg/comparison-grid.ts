@@ -31,6 +31,7 @@ import {
   getContrastTextColor,
   hexToRgb,
 } from './base.js';
+import { rgbToLab, type LAB } from '../color-blending.js';
 
 // ============================================================================
 // Types
@@ -70,6 +71,8 @@ export interface ComparisonGridOptions {
   width?: number;
   /** Show HSV values (default: true) */
   showHsv?: boolean;
+  /** Show LAB values (default: true) - V4 enhancement for perceptual color info */
+  showLab?: boolean;
 }
 
 // ============================================================================
@@ -81,7 +84,7 @@ const PADDING = 24;
 const SWATCH_SIZE = 100;
 const SWATCH_GAP = 20;
 const TITLE_HEIGHT = 50;
-const DYE_SECTION_HEIGHT = 200;
+const DYE_SECTION_HEIGHT = 220; // Increased for LAB values
 const MATRIX_SECTION_HEIGHT = 120;
 
 // ============================================================================
@@ -191,7 +194,7 @@ function getDistanceLabel(distance: number): { label: string; color: string } {
  * Generate a comparison grid SVG showing dyes side-by-side
  */
 export function generateComparisonGrid(options: ComparisonGridOptions): string {
-  const { dyes, width = DEFAULT_WIDTH, showHsv = true } = options;
+  const { dyes, width = DEFAULT_WIDTH, showHsv = true, showLab = true } = options;
 
   if (dyes.length < 2) {
     return generateEmptyComparison(width);
@@ -240,7 +243,7 @@ export function generateComparisonGrid(options: ComparisonGridOptions): string {
 
   dyes.forEach((dye, index) => {
     const columnX = PADDING + index * columnWidth + columnWidth / 2;
-    elements.push(generateDyeColumn(dye, index + 1, columnX, dyeStartY, columnWidth, showHsv));
+    elements.push(generateDyeColumn(dye, index + 1, columnX, dyeStartY, columnWidth, showHsv, showLab));
   });
 
   // Separator line
@@ -262,11 +265,13 @@ function generateDyeColumn(
   centerX: number,
   startY: number,
   columnWidth: number,
-  showHsv: boolean
+  showHsv: boolean,
+  showLab: boolean
 ): string {
   const elements: string[] = [];
   const rgb = hexToRgb(dye.hex);
   const hsv = rgbToHsv(rgb.r, rgb.g, rgb.b);
+  const lab = showLab ? rgbToLab(rgb) : null;
 
   // Index badge
   elements.push(
@@ -361,6 +366,19 @@ function generateDyeColumn(
     infoY += 14;
     elements.push(
       text(centerX, infoY, `HSV(${hsv.h}, ${hsv.s}%, ${hsv.v}%)`, {
+        fill: THEME.textDim,
+        fontSize: 10,
+        fontFamily: FONTS.mono,
+        textAnchor: 'middle',
+      })
+    );
+  }
+
+  // LAB value (V4 enhancement - perceptual color space)
+  if (showLab && lab) {
+    infoY += 14;
+    elements.push(
+      text(centerX, infoY, `LAB(${lab.l.toFixed(0)}, ${lab.a.toFixed(0)}, ${lab.b.toFixed(0)})`, {
         fill: THEME.textDim,
         fontSize: 10,
         fontFamily: FONTS.mono,
