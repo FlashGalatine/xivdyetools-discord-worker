@@ -40,11 +40,11 @@ const OptionType = {
 
 /**
  * All slash commands for the bot
- * Start with minimal set for Phase 0, expand in later phases
+ * V4.0.0 command set
  */
 const commands = [
   // =========================================================================
-  // Phase 0: Basic commands for testing
+  // General
   // =========================================================================
   {
     name: 'about',
@@ -52,7 +52,7 @@ const commands = [
   },
 
   // =========================================================================
-  // Phase 1: Core commands (to be implemented)
+  // Color Analysis
   // =========================================================================
   {
     name: 'harmony',
@@ -155,10 +155,8 @@ const commands = [
   },
 
   // =========================================================================
-  // V4 Commands: Renamed and reorganized commands
+  // Color Extraction & Matching
   // =========================================================================
-
-  // /extractor - Replaces /match and /match_image
   {
     name: 'extractor',
     description: 'Extract colors from inputs and find matching FFXIV dyes',
@@ -183,8 +181,7 @@ const commands = [
             min_value: 1,
             max_value: 10,
           },
-          // TODO: Add matching method option in Phase 3
-          // TODO: Add market option in Phase 3
+
         ],
       },
       {
@@ -211,7 +208,7 @@ const commands = [
     ],
   },
 
-  // /gradient - Replaces old /mixer (gradient functionality)
+  // /gradient - Color gradient between two colors
   {
     name: 'gradient',
     description: 'Generate a color gradient between two colors with intermediate dyes',
@@ -238,38 +235,13 @@ const commands = [
         min_value: 2,
         max_value: 10,
       },
-      // TODO: Add mode option in Phase 3 (interpolation mode)
+
       // TODO: Add matching method option in Phase 3
       // TODO: Add market option in Phase 3
     ],
   },
 
-  // =========================================================================
-  // Legacy Commands (deprecated in v4, kept for backward compatibility)
-  // Will be removed in a future version
-  // =========================================================================
-  {
-    name: 'match',
-    description: '[DEPRECATED: Use /extractor color] Find the closest FFXIV dye to a color',
-    options: [
-      {
-        name: 'color',
-        description: 'Color to match (hex code like #FF5733)',
-        type: OptionType.STRING,
-        required: true,
-      },
-      {
-        name: 'count',
-        description: 'Number of matches to show (1-10)',
-        type: OptionType.INTEGER,
-        required: false,
-        min_value: 1,
-        max_value: 10,
-      },
-    ],
-  },
-
-  // V4: New /mixer for dye blending (old /mixer gradient is now /gradient)
+  // /mixer - Dye blending with color science
   {
     name: 'mixer',
     description: 'Blend two dyes using various color mixing algorithms',
@@ -314,29 +286,8 @@ const commands = [
   },
 
   // =========================================================================
-  // Phase 2: Image processing commands (legacy)
+  // Utility Commands
   // =========================================================================
-  {
-    name: 'match_image',
-    description: '[DEPRECATED: Use /extractor image] Extract colors from an image',
-    options: [
-      {
-        name: 'image',
-        description: 'Image to analyze',
-        type: OptionType.ATTACHMENT,
-        required: true,
-      },
-      {
-        name: 'colors',
-        description: 'Number of colors to extract (1-5)',
-        type: OptionType.INTEGER,
-        required: false,
-        min_value: 1,
-        max_value: 5,
-      },
-    ],
-  },
-
   {
     name: 'accessibility',
     description: 'Check color accessibility for colorblind users or contrast',
@@ -399,7 +350,7 @@ const commands = [
     ],
   },
 
-  // V4: /stats with 5 subcommands
+  // /stats - Bot usage statistics (5 subcommands)
   {
     name: 'stats',
     description: 'Display bot usage statistics and information',
@@ -432,7 +383,7 @@ const commands = [
     ],
   },
 
-  // V4: /preferences - Unified settings management
+  // /preferences - Unified settings management
   {
     name: 'preferences',
     description: 'Manage your personal bot preferences',
@@ -497,7 +448,7 @@ const commands = [
     ],
   },
 
-  // V4: /swatch - Character color matching
+  // /swatch - Character color matching
   {
     name: 'swatch',
     description: 'Match FFXIV character colors (skin, hair, eyes) to available dyes',
@@ -652,7 +603,7 @@ const commands = [
   },
 
   // =========================================================================
-  // Phase 3: Feature parity commands
+  // Comparison & Settings
   // =========================================================================
   {
     name: 'comparison',
@@ -727,174 +678,8 @@ const commands = [
     ],
   },
 
-  {
-    name: 'favorites',
-    description: '[DEPRECATED: Use /preset] Manage your favorite dyes',
-    options: [
-      {
-        name: 'add',
-        description: 'Add a dye to your favorites',
-        type: OptionType.SUB_COMMAND,
-        options: [
-          {
-            name: 'dye',
-            description: 'Dye name or hex color',
-            type: OptionType.STRING,
-            required: true,
-            autocomplete: true,
-          },
-        ],
-      },
-      {
-        name: 'remove',
-        description: 'Remove a dye from your favorites',
-        type: OptionType.SUB_COMMAND,
-        options: [
-          {
-            name: 'dye',
-            description: 'Dye name',
-            type: OptionType.STRING,
-            required: true,
-            autocomplete: true,
-          },
-        ],
-      },
-      {
-        name: 'list',
-        description: 'Show all your favorite dyes',
-        type: OptionType.SUB_COMMAND,
-      },
-      {
-        name: 'clear',
-        description: 'Remove all favorites',
-        type: OptionType.SUB_COMMAND,
-      },
-    ],
-  },
-
-  {
-    name: 'collection',
-    description: '[DEPRECATED: Use /preset] Manage your dye collections',
-    options: [
-      {
-        name: 'create',
-        description: 'Create a new collection',
-        type: OptionType.SUB_COMMAND,
-        options: [
-          {
-            name: 'name',
-            description: 'Collection name (max 50 characters)',
-            type: OptionType.STRING,
-            required: true,
-          },
-          {
-            name: 'description',
-            description: 'Optional description for the collection',
-            type: OptionType.STRING,
-            required: false,
-          },
-        ],
-      },
-      {
-        name: 'delete',
-        description: 'Delete a collection',
-        type: OptionType.SUB_COMMAND,
-        options: [
-          {
-            name: 'name',
-            description: 'Collection name',
-            type: OptionType.STRING,
-            required: true,
-            autocomplete: true,
-          },
-        ],
-      },
-      {
-        name: 'add',
-        description: 'Add a dye to a collection',
-        type: OptionType.SUB_COMMAND,
-        options: [
-          {
-            name: 'name',
-            description: 'Collection name',
-            type: OptionType.STRING,
-            required: true,
-            autocomplete: true,
-          },
-          {
-            name: 'dye',
-            description: 'Dye name or hex color',
-            type: OptionType.STRING,
-            required: true,
-            autocomplete: true,
-          },
-        ],
-      },
-      {
-        name: 'remove',
-        description: 'Remove a dye from a collection',
-        type: OptionType.SUB_COMMAND,
-        options: [
-          {
-            name: 'name',
-            description: 'Collection name',
-            type: OptionType.STRING,
-            required: true,
-            autocomplete: true,
-          },
-          {
-            name: 'dye',
-            description: 'Dye name',
-            type: OptionType.STRING,
-            required: true,
-            autocomplete: true,
-          },
-        ],
-      },
-      {
-        name: 'show',
-        description: 'Display a collection',
-        type: OptionType.SUB_COMMAND,
-        options: [
-          {
-            name: 'name',
-            description: 'Collection name',
-            type: OptionType.STRING,
-            required: true,
-            autocomplete: true,
-          },
-        ],
-      },
-      {
-        name: 'list',
-        description: 'List all your collections',
-        type: OptionType.SUB_COMMAND,
-      },
-      {
-        name: 'rename',
-        description: 'Rename a collection',
-        type: OptionType.SUB_COMMAND,
-        options: [
-          {
-            name: 'name',
-            description: 'Current collection name',
-            type: OptionType.STRING,
-            required: true,
-            autocomplete: true,
-          },
-          {
-            name: 'new_name',
-            description: 'New collection name',
-            type: OptionType.STRING,
-            required: true,
-          },
-        ],
-      },
-    ],
-  },
-
   // =========================================================================
-  // Phase 4: Community presets
+  // Community Presets
   // =========================================================================
   {
     name: 'preset',
@@ -1128,7 +913,7 @@ const commands = [
   },
 
   // =========================================================================
-  // Phase 5: Budget/Market integration
+  // Budget/Market Integration
   // =========================================================================
   {
     name: 'budget',
