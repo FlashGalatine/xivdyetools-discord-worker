@@ -1,26 +1,49 @@
 /**
- * /language Command Handler
+ * /language Command Handler (DEPRECATED in V4)
  *
- * Manages user language preferences for bot responses.
- * Preferences are stored in Cloudflare KV and persist across sessions.
+ * This command is deprecated in v4.0.0. Users should use /preferences instead.
+ * The command still works but shows a deprecation notice.
+ *
+ * Functionality is now delegated to the unified preferences system.
+ *
+ * @deprecated Use /preferences set language instead
+ * @module handlers/commands/language
  */
 
-import { ephemeralResponse, successEmbed, errorEmbed, infoEmbed } from '../../utils/response.js';
+import { messageResponse, errorEmbed } from '../../utils/response.js';
 import {
   type LocaleCode,
   SUPPORTED_LOCALES,
   isValidLocale,
   getLocaleInfo,
-  getUserLanguagePreference,
-  setUserLanguagePreference,
-  clearUserLanguagePreference,
   discordLocaleToLocaleCode,
 } from '../../services/i18n.js';
 import { createUserTranslator, type Translator } from '../../services/bot-i18n.js';
+import {
+  getUserPreferences,
+  setPreference,
+  resetPreference,
+} from '../../services/preferences.js';
 import type { Env, DiscordInteraction } from '../../types/env.js';
 
+// ============================================================================
+// Constants
+// ============================================================================
+
+/** Deprecation warning shown with all responses */
+const DEPRECATION_NOTICE = '⚠️ **This command is deprecated.** Use `/preferences set language <code>` instead.\n\n';
+
+/** Color for deprecation warning embeds */
+const DEPRECATION_COLOR = 0xfee75c; // Yellow
+
+// ============================================================================
+// Main Handler
+// ============================================================================
+
 /**
- * Handles the /language command
+ * Handles the /language command (deprecated)
+ *
+ * @deprecated Use /preferences command instead
  */
 export async function handleLanguageCommand(
   interaction: DiscordInteraction,
@@ -30,7 +53,10 @@ export async function handleLanguageCommand(
   const userId = interaction.member?.user?.id ?? interaction.user?.id;
 
   if (!userId) {
-    return ephemeralResponse('Could not identify user.');
+    return messageResponse({
+      embeds: [errorEmbed('Error', 'Could not identify user.')],
+      flags: 64,
+    });
   }
 
   // Get translator for user's current locale
@@ -41,7 +67,10 @@ export async function handleLanguageCommand(
   const subcommand = options.find((opt) => opt.type === 1); // SUB_COMMAND type
 
   if (!subcommand) {
-    return ephemeralResponse('Please specify a subcommand: `set`, `show`, or `reset`.');
+    return messageResponse({
+      embeds: [errorEmbed(t.t('common.error'), 'Please specify a subcommand: `set`, `show`, or `reset`.')],
+      flags: 64,
+    });
   }
 
   switch (subcommand.name) {
@@ -55,12 +84,20 @@ export async function handleLanguageCommand(
       return handleResetLanguage(env, userId, t);
 
     default:
-      return ephemeralResponse(`Unknown subcommand: ${subcommand.name}`);
+      return messageResponse({
+        embeds: [errorEmbed(t.t('common.error'), `Unknown subcommand: ${subcommand.name}`)],
+        flags: 64,
+      });
   }
 }
 
+// ============================================================================
+// Subcommand Handlers
+// ============================================================================
+
 /**
  * Handle /language set <locale>
+ * Delegates to preferences system with deprecation notice
  */
 async function handleSetLanguage(
   env: Env,
@@ -72,41 +109,32 @@ async function handleSetLanguage(
   const locale = localeOption?.value as string | undefined;
 
   if (!locale) {
-    return Response.json({
-      type: 4,
-      data: {
-        embeds: [errorEmbed(t.t('common.error'), t.t('language.missingLanguage'))],
-        flags: 64,
-      },
+    return messageResponse({
+      embeds: [errorEmbed(t.t('common.error'), t.t('language.missingLanguage'))],
+      flags: 64,
     });
   }
 
   if (!isValidLocale(locale)) {
     const validLocales = SUPPORTED_LOCALES.map((l) => `\`${l.code}\``).join(', ');
-    return Response.json({
-      type: 4,
-      data: {
-        embeds: [
-          errorEmbed(
-            t.t('common.error'),
-            t.t('language.invalidLanguage', { locale, validList: validLocales })
-          ),
-        ],
-        flags: 64,
-      },
+    return messageResponse({
+      embeds: [
+        errorEmbed(
+          t.t('common.error'),
+          t.t('language.invalidLanguage', { locale, validList: validLocales })
+        ),
+      ],
+      flags: 64,
     });
   }
 
-  // Save preference to KV
-  const success = await setUserLanguagePreference(env.KV, userId, locale);
+  // Delegate to unified preferences system
+  const result = await setPreference(env.KV, userId, 'language', locale);
 
-  if (!success) {
-    return Response.json({
-      type: 4,
-      data: {
-        embeds: [errorEmbed(t.t('common.error'), t.t('errors.failedToSave'))],
-        flags: 64,
-      },
+  if (!result.success) {
+    return messageResponse({
+      embeds: [errorEmbed(t.t('common.error'), t.t('errors.failedToSave'))],
+      flags: 64,
     });
   }
 
@@ -115,19 +143,19 @@ async function handleSetLanguage(
     ? `${localeInfo.flag} ${localeInfo.name} (${localeInfo.nativeName})`
     : locale;
 
-  return Response.json({
-    type: 4,
-    data: {
-      embeds: [
-        successEmbed(
-          t.t('common.success'),
+  return messageResponse({
+    embeds: [
+      {
+        title: '✅ ' + t.t('common.success'),
+        description:
+          DEPRECATION_NOTICE +
           t.t('language.updated', { language: displayName }) +
-            '\n\n' +
-            t.t('language.updateNote')
-        ),
-      ],
-      flags: 64,
-    },
+          '\n\n' +
+          t.t('language.updateNote'),
+        color: DEPRECATION_COLOR,
+      },
+    ],
+    flags: 64,
   });
 }
 
@@ -140,15 +168,16 @@ async function handleShowLanguage(
   userId: string,
   t: Translator
 ): Promise<Response> {
-  // Get user's explicit preference
-  const preference = await getUserLanguagePreference(env.KV, userId);
+  // Get user's preferences from unified system
+  const prefs = await getUserPreferences(env.KV, userId);
+  const preference = prefs.language;
 
   // Get Discord's detected locale
   const discordLocale = interaction.locale;
   const mappedDiscord = discordLocale ? discordLocaleToLocaleCode(discordLocale) : null;
 
   // Build status message
-  const lines: string[] = [];
+  const lines: string[] = [DEPRECATION_NOTICE];
 
   if (preference) {
     const prefInfo = getLocaleInfo(preference);
@@ -185,45 +214,55 @@ async function handleShowLanguage(
     lines.push(`${locale.flag} \`${locale.code}\` - ${locale.name} (${locale.nativeName})${marker}`);
   }
 
-  return Response.json({
-    type: 4,
-    data: {
-      embeds: [infoEmbed(t.t('language.title'), lines.join('\n'))],
-      flags: 64,
-    },
+  return messageResponse({
+    embeds: [
+      {
+        title: '🌐 ' + t.t('language.title'),
+        description: lines.join('\n'),
+        color: DEPRECATION_COLOR,
+        footer: {
+          text: 'Use /preferences show to see all your settings',
+        },
+      },
+    ],
+    flags: 64,
   });
 }
 
 /**
  * Handle /language reset
+ * Delegates to preferences system with deprecation notice
  */
 async function handleResetLanguage(
   env: Env,
   userId: string,
   t: Translator
 ): Promise<Response> {
-  const success = await clearUserLanguagePreference(env.KV, userId);
+  // Delegate to unified preferences system
+  const success = await resetPreference(env.KV, userId, 'language');
 
   if (!success) {
-    return Response.json({
-      type: 4,
-      data: {
-        embeds: [errorEmbed(t.t('common.error'), t.t('errors.failedToReset'))],
-        flags: 64,
-      },
+    return messageResponse({
+      embeds: [errorEmbed(t.t('common.error'), t.t('errors.failedToReset'))],
+      flags: 64,
     });
   }
 
-  return Response.json({
-    type: 4,
-    data: {
-      embeds: [
-        successEmbed(
-          t.t('common.success'),
-          t.t('language.reset') + '\n\n' + t.t('language.resetNote')
-        ),
-      ],
-      flags: 64,
-    },
+  return messageResponse({
+    embeds: [
+      {
+        title: '✅ ' + t.t('common.success'),
+        description:
+          DEPRECATION_NOTICE +
+          t.t('language.reset') +
+          '\n\n' +
+          t.t('language.resetNote'),
+        color: DEPRECATION_COLOR,
+        footer: {
+          text: 'Use /preferences reset language instead',
+        },
+      },
+    ],
+    flags: 64,
   });
 }

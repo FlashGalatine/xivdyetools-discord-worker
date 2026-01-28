@@ -691,7 +691,7 @@ const commands = [
 
   {
     name: 'language',
-    description: 'Manage your language preference for bot responses',
+    description: '[DEPRECATED: Use /preferences] Manage your language preference',
     options: [
       {
         name: 'set',
@@ -729,7 +729,7 @@ const commands = [
 
   {
     name: 'favorites',
-    description: 'Manage your favorite dyes',
+    description: '[DEPRECATED: Use /preset] Manage your favorite dyes',
     options: [
       {
         name: 'add',
@@ -774,7 +774,7 @@ const commands = [
 
   {
     name: 'collection',
-    description: 'Manage your dye collections',
+    description: '[DEPRECATED: Use /preset] Manage your dye collections',
     options: [
       {
         name: 'create',

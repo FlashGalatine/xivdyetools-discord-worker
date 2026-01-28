@@ -1,12 +1,15 @@
 /**
- * /collection Command Handler
+ * /collection Command Handler (DEPRECATED in V4)
  *
- * Manages user's dye collections using Cloudflare KV storage.
- * Subcommands: create, delete, add, remove, show, list, rename
+ * This command is deprecated in v4.0.0. Users should use /preset instead.
+ * The command still works but shows a deprecation notice.
+ *
+ * @deprecated Use /preset instead for managing dye collections
+ * @module handlers/commands/collection
  */
 
 import { DyeService, dyeDatabase, type Dye } from '@xivdyetools/core';
-import { ephemeralResponse, successEmbed, errorEmbed, infoEmbed } from '../../utils/response.js';
+import { messageResponse, errorEmbed } from '../../utils/response.js';
 import {
   getCollections,
   getCollection,
@@ -25,8 +28,22 @@ import { createUserTranslator, createTranslator, type Translator } from '../../s
 import { discordLocaleToLocaleCode, initializeLocale, getLocalizedDyeName } from '../../services/i18n.js';
 import type { Env, DiscordInteraction } from '../../types/env.js';
 
+// ============================================================================
+// Constants
+// ============================================================================
+
+/** Deprecation warning shown with all responses */
+const DEPRECATION_NOTICE = '⚠️ **This command is deprecated.** Use `/preset` instead for managing dye collections.\n\n';
+
+/** Color for deprecation warning embeds */
+const DEPRECATION_COLOR = 0xfee75c; // Yellow
+
 // Initialize DyeService
 const dyeService = new DyeService(dyeDatabase);
+
+// ============================================================================
+// Utility Functions
+// ============================================================================
 
 /**
  * Resolve dye input to a Dye object
@@ -48,8 +65,14 @@ function resolveDyeInput(input: string): Dye | null {
   return null;
 }
 
+// ============================================================================
+// Main Handler
+// ============================================================================
+
 /**
- * Handles the /collection command
+ * Handles the /collection command (deprecated)
+ *
+ * @deprecated Use /preset command instead
  */
 export async function handleCollectionCommand(
   interaction: DiscordInteraction,
@@ -61,14 +84,16 @@ export async function handleCollectionCommand(
   if (!userId) {
     const locale = discordLocaleToLocaleCode(interaction.locale ?? 'en') ?? 'en';
     const t = createTranslator(locale);
-    return ephemeralResponse(t.t('errors.userNotFound'));
+    return messageResponse({
+      embeds: [errorEmbed('Error', t.t('errors.userNotFound'))],
+      flags: 64,
+    });
   }
 
   // Get translator for user's locale
   const t = await createUserTranslator(env.KV, userId, interaction.locale);
 
   // Initialize xivdyetools-core localization for dye names
-  // Use translator's resolved locale instead of calling resolveUserLocale again
   const locale = t.getLocale();
   await initializeLocale(locale);
 
@@ -77,7 +102,10 @@ export async function handleCollectionCommand(
   const subcommand = options.find((opt) => opt.type === 1);
 
   if (!subcommand) {
-    return ephemeralResponse(t.t('errors.missingSubcommand'));
+    return messageResponse({
+      embeds: [errorEmbed(t.t('common.error'), 'Please specify a subcommand.')],
+      flags: 64,
+    });
   }
 
   switch (subcommand.name) {
@@ -103,9 +131,16 @@ export async function handleCollectionCommand(
       return handleRename(env, userId, t, subcommand.options);
 
     default:
-      return ephemeralResponse(t.t('errors.unknownSubcommand', { name: subcommand.name }));
+      return messageResponse({
+        embeds: [errorEmbed(t.t('common.error'), `Unknown subcommand: ${subcommand.name}`)],
+        flags: 64,
+      });
   }
 }
+
+// ============================================================================
+// Subcommand Handlers
+// ============================================================================
 
 /**
  * Handle /collection create <name> [description]
@@ -123,12 +158,9 @@ async function handleCreate(
   const description = descOption?.value as string | undefined;
 
   if (!name) {
-    return Response.json({
-      type: 4,
-      data: {
-        embeds: [errorEmbed(t.t('common.error'), t.t('errors.missingName'))],
-        flags: 64,
-      },
+    return messageResponse({
+      embeds: [errorEmbed(t.t('common.error'), t.t('errors.missingName'))],
+      flags: 64,
     });
   }
 
@@ -137,69 +169,58 @@ async function handleCreate(
   if (!result.success) {
     switch (result.reason) {
       case 'nameTooLong':
-        return Response.json({
-          type: 4,
-          data: {
-            embeds: [
-              errorEmbed(
-                t.t('common.error'),
-                t.t('collection.nameTooLong', { max: MAX_COLLECTION_NAME_LENGTH })
-              ),
-            ],
-            flags: 64,
-          },
+        return messageResponse({
+          embeds: [{
+            title: '❌ ' + t.t('common.error'),
+            description: DEPRECATION_NOTICE + t.t('collection.nameTooLong', { max: MAX_COLLECTION_NAME_LENGTH }),
+            color: DEPRECATION_COLOR,
+            footer: { text: 'Use /preset create instead' },
+          }],
+          flags: 64,
         });
 
       case 'alreadyExists':
-        return Response.json({
-          type: 4,
-          data: {
-            embeds: [
-              errorEmbed(t.t('common.error'), t.t('collection.alreadyExists', { name })),
-            ],
-            flags: 64,
-          },
+        return messageResponse({
+          embeds: [{
+            title: '❌ ' + t.t('common.error'),
+            description: DEPRECATION_NOTICE + t.t('collection.alreadyExists', { name }),
+            color: DEPRECATION_COLOR,
+            footer: { text: 'Use /preset create instead' },
+          }],
+          flags: 64,
         });
 
       case 'limitReached':
-        return Response.json({
-          type: 4,
-          data: {
-            embeds: [
-              errorEmbed(
-                t.t('common.error'),
-                t.t('collection.limitReached', { max: MAX_COLLECTIONS })
-              ),
-            ],
-            flags: 64,
-          },
+        return messageResponse({
+          embeds: [{
+            title: '❌ ' + t.t('common.error'),
+            description: DEPRECATION_NOTICE + t.t('collection.limitReached', { max: MAX_COLLECTIONS }),
+            color: DEPRECATION_COLOR,
+            footer: { text: 'Use /preset - supports more presets via cloud sync' },
+          }],
+          flags: 64,
         });
 
       default:
-        return Response.json({
-          type: 4,
-          data: {
-            embeds: [errorEmbed(t.t('common.error'), t.t('errors.failedToSave'))],
-            flags: 64,
-          },
+        return messageResponse({
+          embeds: [errorEmbed(t.t('common.error'), t.t('errors.failedToSave'))],
+          flags: 64,
         });
     }
   }
 
   const descText = description ? `\n\n*${description}*` : '';
 
-  return Response.json({
-    type: 4,
-    data: {
-      embeds: [
-        successEmbed(
-          t.t('common.success'),
-          `${t.t('collection.created', { name })}${descText}\n\n` +
-          t.t('collection.addDyeHint', { name })
-        ),
-      ],
-      flags: 64,
-    },
+  return messageResponse({
+    embeds: [{
+      title: '✅ ' + t.t('common.success'),
+      description: DEPRECATION_NOTICE +
+        `${t.t('collection.created', { name })}${descText}\n\n` +
+        t.t('collection.addDyeHint', { name }),
+      color: DEPRECATION_COLOR,
+      footer: { text: 'Consider using /preset create for the new system' },
+    }],
+    flags: 64,
   });
 }
 
@@ -216,35 +237,34 @@ async function handleDelete(
   const name = nameOption?.value as string | undefined;
 
   if (!name) {
-    return Response.json({
-      type: 4,
-      data: {
-        embeds: [errorEmbed(t.t('common.error'), t.t('errors.missingName'))],
-        flags: 64,
-      },
+    return messageResponse({
+      embeds: [errorEmbed(t.t('common.error'), t.t('errors.missingName'))],
+      flags: 64,
     });
   }
 
   const deleted = await deleteCollection(env.KV, userId, name);
 
   if (!deleted) {
-    return Response.json({
-      type: 4,
-      data: {
-        embeds: [
-          errorEmbed(t.t('common.error'), t.t('collection.notFound', { name })),
-        ],
-        flags: 64,
-      },
+    return messageResponse({
+      embeds: [{
+        title: '❌ ' + t.t('common.error'),
+        description: DEPRECATION_NOTICE + t.t('collection.notFound', { name }),
+        color: DEPRECATION_COLOR,
+        footer: { text: 'Use /preset delete instead' },
+      }],
+      flags: 64,
     });
   }
 
-  return Response.json({
-    type: 4,
-    data: {
-      embeds: [successEmbed(t.t('common.success'), t.t('collection.deleted', { name }))],
-      flags: 64,
-    },
+  return messageResponse({
+    embeds: [{
+      title: '✅ ' + t.t('common.success'),
+      description: DEPRECATION_NOTICE + t.t('collection.deleted', { name }),
+      color: DEPRECATION_COLOR,
+      footer: { text: 'Use /preset for managing dye presets' },
+    }],
+    flags: 64,
   });
 }
 
@@ -264,28 +284,18 @@ async function handleAdd(
   const dyeInput = dyeOption?.value as string | undefined;
 
   if (!name || !dyeInput) {
-    return Response.json({
-      type: 4,
-      data: {
-        embeds: [
-          errorEmbed(t.t('common.error'), t.t('errors.missingInput')),
-        ],
-        flags: 64,
-      },
+    return messageResponse({
+      embeds: [errorEmbed(t.t('common.error'), t.t('errors.missingInput'))],
+      flags: 64,
     });
   }
 
   // Resolve the dye
   const dye = resolveDyeInput(dyeInput);
   if (!dye) {
-    return Response.json({
-      type: 4,
-      data: {
-        embeds: [
-          errorEmbed(t.t('common.error'), t.t('errors.dyeNotFound', { name: dyeInput })),
-        ],
-        flags: 64,
-      },
+    return messageResponse({
+      embeds: [errorEmbed(t.t('common.error'), t.t('errors.dyeNotFound', { name: dyeInput }))],
+      flags: 64,
     });
   }
 
@@ -293,73 +303,62 @@ async function handleAdd(
 
   // Get localized dye name
   const localizedDyeName = getLocalizedDyeName(dye.itemID, dye.name);
+  const emoji = getDyeEmoji(dye.id);
+  const emojiStr = emoji ? `${emoji} ` : '';
 
   if (!result.success) {
     switch (result.reason) {
       case 'notFound':
-        return Response.json({
-          type: 4,
-          data: {
-            embeds: [
-              errorEmbed(t.t('common.error'), t.t('collection.notFound', { name })),
-            ],
-            flags: 64,
-          },
+        return messageResponse({
+          embeds: [{
+            title: '❌ ' + t.t('common.error'),
+            description: DEPRECATION_NOTICE + t.t('collection.notFound', { name }),
+            color: DEPRECATION_COLOR,
+            footer: { text: 'Use /preset instead' },
+          }],
+          flags: 64,
         });
 
       case 'alreadyExists':
-        return Response.json({
-          type: 4,
-          data: {
-            embeds: [
-              infoEmbed(
-                t.t('common.dye'),
-                t.t('collection.dyeAlreadyInCollection', { dye: localizedDyeName, collection: name })
-              ),
-            ],
-            flags: 64,
-          },
+        return messageResponse({
+          embeds: [{
+            title: '⚠️ Already Added',
+            description: DEPRECATION_NOTICE +
+              `${emojiStr}**${localizedDyeName}** is already in **${name}**.`,
+            color: DEPRECATION_COLOR,
+            footer: { text: 'Use /preset instead' },
+          }],
+          flags: 64,
         });
 
       case 'limitReached':
-        return Response.json({
-          type: 4,
-          data: {
-            embeds: [
-              errorEmbed(
-                t.t('common.error'),
-                t.t('collection.dyeLimitReached', { max: MAX_DYES_PER_COLLECTION })
-              ),
-            ],
-            flags: 64,
-          },
+        return messageResponse({
+          embeds: [{
+            title: '❌ ' + t.t('common.error'),
+            description: DEPRECATION_NOTICE + t.t('collection.dyeLimitReached', { max: MAX_DYES_PER_COLLECTION }),
+            color: DEPRECATION_COLOR,
+            footer: { text: 'Use /preset - supports more dyes per preset' },
+          }],
+          flags: 64,
         });
 
       default:
-        return Response.json({
-          type: 4,
-          data: {
-            embeds: [errorEmbed(t.t('common.error'), t.t('errors.failedToSave'))],
-            flags: 64,
-          },
+        return messageResponse({
+          embeds: [errorEmbed(t.t('common.error'), t.t('errors.failedToSave'))],
+          flags: 64,
         });
     }
   }
 
-  const emoji = getDyeEmoji(dye.id);
-  const emojiStr = emoji ? `${emoji} ` : '';
-
-  return Response.json({
-    type: 4,
-    data: {
-      embeds: [
-        successEmbed(
-          t.t('common.success'),
-          `${emojiStr}${t.t('collection.dyeAdded', { dye: localizedDyeName, collection: name })}`
-        ),
-      ],
-      flags: 64,
-    },
+  return messageResponse({
+    embeds: [{
+      title: '✅ ' + t.t('common.success'),
+      description: DEPRECATION_NOTICE +
+        `${emojiStr}${t.t('collection.dyeAdded', { dye: localizedDyeName, collection: name })}`,
+      color: DEPRECATION_COLOR,
+      footer: { text: 'Consider using /preset instead' },
+    }],
+    flags: 64,
   });
 }
 
@@ -379,28 +378,18 @@ async function handleRemove(
   const dyeInput = dyeOption?.value as string | undefined;
 
   if (!name || !dyeInput) {
-    return Response.json({
-      type: 4,
-      data: {
-        embeds: [
-          errorEmbed(t.t('common.error'), t.t('errors.missingInput')),
-        ],
-        flags: 64,
-      },
+    return messageResponse({
+      embeds: [errorEmbed(t.t('common.error'), t.t('errors.missingInput'))],
+      flags: 64,
     });
   }
 
   // Resolve the dye
   const dye = resolveDyeInput(dyeInput);
   if (!dye) {
-    return Response.json({
-      type: 4,
-      data: {
-        embeds: [
-          errorEmbed(t.t('common.error'), t.t('errors.dyeNotFound', { name: dyeInput })),
-        ],
-        flags: 64,
-      },
+    return messageResponse({
+      embeds: [errorEmbed(t.t('common.error'), t.t('errors.dyeNotFound', { name: dyeInput }))],
+      flags: 64,
     });
   }
 
@@ -408,36 +397,31 @@ async function handleRemove(
 
   // Get localized dye name
   const localizedDyeName = getLocalizedDyeName(dye.itemID, dye.name);
-
-  if (!removed) {
-    return Response.json({
-      type: 4,
-      data: {
-        embeds: [
-          infoEmbed(
-            t.t('common.dye'),
-            t.t('collection.dyeNotInCollection', { dye: localizedDyeName, collection: name })
-          ),
-        ],
-        flags: 64,
-      },
-    });
-  }
-
   const emoji = getDyeEmoji(dye.id);
   const emojiStr = emoji ? `${emoji} ` : '';
 
-  return Response.json({
-    type: 4,
-    data: {
-      embeds: [
-        successEmbed(
-          t.t('common.success'),
-          `${emojiStr}${t.t('collection.dyeRemoved', { dye: localizedDyeName, collection: name })}`
-        ),
-      ],
+  if (!removed) {
+    return messageResponse({
+      embeds: [{
+        title: '⚠️ Not Found',
+        description: DEPRECATION_NOTICE +
+          `${emojiStr}**${localizedDyeName}** is not in **${name}**.`,
+        color: DEPRECATION_COLOR,
+        footer: { text: 'Use /preset instead' },
+      }],
       flags: 64,
-    },
+    });
+  }
+
+  return messageResponse({
+    embeds: [{
+      title: '✅ ' + t.t('common.success'),
+      description: DEPRECATION_NOTICE +
+        `${emojiStr}${t.t('collection.dyeRemoved', { dye: localizedDyeName, collection: name })}`,
+      color: DEPRECATION_COLOR,
+      footer: { text: 'Use /preset for managing dye presets' },
+    }],
+    flags: 64,
   });
 }
 
@@ -454,43 +438,38 @@ async function handleShow(
   const name = nameOption?.value as string | undefined;
 
   if (!name) {
-    return Response.json({
-      type: 4,
-      data: {
-        embeds: [errorEmbed(t.t('common.error'), t.t('errors.missingName'))],
-        flags: 64,
-      },
+    return messageResponse({
+      embeds: [errorEmbed(t.t('common.error'), t.t('errors.missingName'))],
+      flags: 64,
     });
   }
 
   const collection = await getCollection(env.KV, userId, name);
 
   if (!collection) {
-    return Response.json({
-      type: 4,
-      data: {
-        embeds: [
-          errorEmbed(t.t('common.error'), t.t('collection.notFound', { name })),
-        ],
-        flags: 64,
-      },
+    return messageResponse({
+      embeds: [{
+        title: '❌ ' + t.t('common.error'),
+        description: DEPRECATION_NOTICE + t.t('collection.notFound', { name }),
+        color: DEPRECATION_COLOR,
+        footer: { text: 'Use /preset show instead' },
+      }],
+      flags: 64,
     });
   }
 
   if (collection.dyes.length === 0) {
-    return Response.json({
-      type: 4,
-      data: {
-        embeds: [
-          infoEmbed(
-            collection.name,
-            `${collection.description ? `*${collection.description}*\n\n` : ''}` +
-            `${t.t('collection.collectionEmpty')}\n\n` +
-            t.t('collection.addDyeHint', { name: collection.name })
-          ),
-        ],
-        flags: 64,
-      },
+    return messageResponse({
+      embeds: [{
+        title: `📁 ${collection.name}`,
+        description: DEPRECATION_NOTICE +
+          (collection.description ? `*${collection.description}*\n\n` : '') +
+          `${t.t('collection.collectionEmpty')}\n\n` +
+          t.t('collection.addDyeHint', { name: collection.name }),
+        color: DEPRECATION_COLOR,
+        footer: { text: 'Use /preset show instead' },
+      }],
+      flags: 64,
     });
   }
 
@@ -508,24 +487,20 @@ async function handleShow(
   });
 
   const description =
+    DEPRECATION_NOTICE +
     (collection.description ? `*${collection.description}*\n\n` : '') +
     dyeList.join('\n');
 
-  return Response.json({
-    type: 4,
-    data: {
-      embeds: [
-        {
-          title: `${collection.name} (${dyes.length}/${MAX_DYES_PER_COLLECTION})`,
-          description,
-          color: dyes.length > 0 ? parseInt(dyes[0].hex.replace('#', ''), 16) : 0x5865f2,
-          footer: {
-            text: `${t.t('common.createdAt')}: ${new Date(collection.createdAt).toLocaleDateString()}`,
-          },
-        },
-      ],
-      flags: 64,
-    },
+  return messageResponse({
+    embeds: [{
+      title: `📁 ${collection.name} (${dyes.length}/${MAX_DYES_PER_COLLECTION})`,
+      description,
+      color: DEPRECATION_COLOR,
+      footer: {
+        text: `Created: ${new Date(collection.createdAt).toLocaleDateString()} • Use /preset show instead`,
+      },
+    }],
+    flags: 64,
   });
 }
 
@@ -536,17 +511,15 @@ async function handleList(env: Env, userId: string, t: Translator): Promise<Resp
   const collections = await getCollections(env.KV, userId);
 
   if (collections.length === 0) {
-    return Response.json({
-      type: 4,
-      data: {
-        embeds: [
-          infoEmbed(
-            t.t('collection.title'),
-            `${t.t('collection.empty')}\n\n${t.t('collection.createHint')}`
-          ),
-        ],
-        flags: 64,
-      },
+    return messageResponse({
+      embeds: [{
+        title: '📁 ' + t.t('collection.title'),
+        description: DEPRECATION_NOTICE +
+          `${t.t('collection.empty')}\n\nConsider using \`/preset\` to create organized dye presets instead.`,
+        color: DEPRECATION_COLOR,
+        footer: { text: 'Use /preset list to see your presets' },
+      }],
+      flags: 64,
     });
   }
 
@@ -558,21 +531,16 @@ async function handleList(env: Env, userId: string, t: Translator): Promise<Resp
     return `${index + 1}. **${c.name}** (${dyeCount} ${dyeWord})${desc}`;
   });
 
-  return Response.json({
-    type: 4,
-    data: {
-      embeds: [
-        {
-          title: `${t.t('collection.title')} (${collections.length}/${MAX_COLLECTIONS})`,
-          description: collectionList.join('\n'),
-          color: 0x5865f2,
-          footer: {
-            text: t.t('collection.showHint'),
-          },
-        },
-      ],
-      flags: 64,
-    },
+  return messageResponse({
+    embeds: [{
+      title: `📁 ${t.t('collection.title')} (${collections.length}/${MAX_COLLECTIONS})`,
+      description: DEPRECATION_NOTICE + collectionList.join('\n'),
+      color: DEPRECATION_COLOR,
+      footer: {
+        text: 'Use /preset list to see presets • Consider migrating to /preset',
+      },
+    }],
+    flags: 64,
   });
 }
 
@@ -592,14 +560,9 @@ async function handleRename(
   const newName = newNameOption?.value as string | undefined;
 
   if (!name || !newName) {
-    return Response.json({
-      type: 4,
-      data: {
-        embeds: [
-          errorEmbed(t.t('common.error'), t.t('errors.missingInput')),
-        ],
-        flags: 64,
-      },
+    return messageResponse({
+      embeds: [errorEmbed(t.t('common.error'), t.t('errors.missingInput'))],
+      flags: 64,
     });
   }
 
@@ -608,62 +571,53 @@ async function handleRename(
   if (!result.success) {
     switch (result.reason) {
       case 'nameTooLong':
-        return Response.json({
-          type: 4,
-          data: {
-            embeds: [
-              errorEmbed(
-                t.t('common.error'),
-                t.t('collection.nameTooLong', { max: MAX_COLLECTION_NAME_LENGTH })
-              ),
-            ],
-            flags: 64,
-          },
+        return messageResponse({
+          embeds: [{
+            title: '❌ ' + t.t('common.error'),
+            description: DEPRECATION_NOTICE + t.t('collection.nameTooLong', { max: MAX_COLLECTION_NAME_LENGTH }),
+            color: DEPRECATION_COLOR,
+            footer: { text: 'Use /preset instead' },
+          }],
+          flags: 64,
         });
 
       case 'notFound':
-        return Response.json({
-          type: 4,
-          data: {
-            embeds: [
-              errorEmbed(t.t('common.error'), t.t('collection.notFound', { name })),
-            ],
-            flags: 64,
-          },
+        return messageResponse({
+          embeds: [{
+            title: '❌ ' + t.t('common.error'),
+            description: DEPRECATION_NOTICE + t.t('collection.notFound', { name }),
+            color: DEPRECATION_COLOR,
+            footer: { text: 'Use /preset instead' },
+          }],
+          flags: 64,
         });
 
       case 'alreadyExists':
-        return Response.json({
-          type: 4,
-          data: {
-            embeds: [
-              errorEmbed(t.t('common.error'), t.t('collection.alreadyExists', { name: newName })),
-            ],
-            flags: 64,
-          },
+        return messageResponse({
+          embeds: [{
+            title: '❌ ' + t.t('common.error'),
+            description: DEPRECATION_NOTICE + t.t('collection.alreadyExists', { name: newName }),
+            color: DEPRECATION_COLOR,
+            footer: { text: 'Use /preset instead' },
+          }],
+          flags: 64,
         });
 
       default:
-        return Response.json({
-          type: 4,
-          data: {
-            embeds: [errorEmbed(t.t('common.error'), t.t('errors.failedToSave'))],
-            flags: 64,
-          },
+        return messageResponse({
+          embeds: [errorEmbed(t.t('common.error'), t.t('errors.failedToSave'))],
+          flags: 64,
         });
     }
   }
 
-  return Response.json({
-    type: 4,
-    data: {
-      embeds: [
-        successEmbed(
-          t.t('common.success'),
-          t.t('collection.renamed', { oldName: name, newName })
-        ),
-      ],
-      flags: 64,
-    },
+  return messageResponse({
+    embeds: [{
+      title: '✅ ' + t.t('common.success'),
+      description: DEPRECATION_NOTICE + t.t('collection.renamed', { oldName: name, newName }),
+      color: DEPRECATION_COLOR,
+      footer: { text: 'Consider migrating to /preset' },
+    }],
+    flags: 64,
   });
 }

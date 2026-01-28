@@ -1,12 +1,15 @@
 /**
- * /favorites Command Handler
+ * /favorites Command Handler (DEPRECATED in V4)
  *
- * Manages user's favorite dyes using Cloudflare KV storage.
- * Subcommands: add, remove, list, clear
+ * This command is deprecated in v4.0.0. Users should use /preset instead.
+ * The command still works but shows a deprecation notice.
+ *
+ * @deprecated Use /preset instead for managing saved dyes
+ * @module handlers/commands/favorites
  */
 
 import { DyeService, dyeDatabase, type Dye } from '@xivdyetools/core';
-import { ephemeralResponse, successEmbed, errorEmbed, infoEmbed } from '../../utils/response.js';
+import { messageResponse, errorEmbed } from '../../utils/response.js';
 import {
   getFavorites,
   addFavorite,
@@ -19,8 +22,22 @@ import { createUserTranslator, type Translator } from '../../services/bot-i18n.j
 import { initializeLocale, getLocalizedDyeName, getLocalizedCategory } from '../../services/i18n.js';
 import type { Env, DiscordInteraction } from '../../types/env.js';
 
+// ============================================================================
+// Constants
+// ============================================================================
+
+/** Deprecation warning shown with all responses */
+const DEPRECATION_NOTICE = '⚠️ **This command is deprecated.** Use `/preset` instead for managing saved dyes.\n\n';
+
+/** Color for deprecation warning embeds */
+const DEPRECATION_COLOR = 0xfee75c; // Yellow
+
 // Initialize DyeService
 const dyeService = new DyeService(dyeDatabase);
+
+// ============================================================================
+// Utility Functions
+// ============================================================================
 
 /**
  * Resolve dye input to a Dye object
@@ -44,8 +61,14 @@ function resolveDyeInput(input: string): Dye | null {
   return null;
 }
 
+// ============================================================================
+// Main Handler
+// ============================================================================
+
 /**
- * Handles the /favorites command
+ * Handles the /favorites command (deprecated)
+ *
+ * @deprecated Use /preset command instead
  */
 export async function handleFavoritesCommand(
   interaction: DiscordInteraction,
@@ -55,7 +78,10 @@ export async function handleFavoritesCommand(
   const userId = interaction.member?.user?.id ?? interaction.user?.id;
 
   if (!userId) {
-    return ephemeralResponse('Could not identify user.');
+    return messageResponse({
+      embeds: [errorEmbed('Error', 'Could not identify user.')],
+      flags: 64,
+    });
   }
 
   // Get translator for user's locale
@@ -69,7 +95,10 @@ export async function handleFavoritesCommand(
   const subcommand = options.find((opt) => opt.type === 1); // SUB_COMMAND type
 
   if (!subcommand) {
-    return ephemeralResponse(t.t('errors.missingSubcommand'));
+    return messageResponse({
+      embeds: [errorEmbed(t.t('common.error'), 'Please specify a subcommand: `add`, `remove`, `list`, or `clear`.')],
+      flags: 64,
+    });
   }
 
   switch (subcommand.name) {
@@ -86,9 +115,16 @@ export async function handleFavoritesCommand(
       return handleClearFavorites(env, userId, t);
 
     default:
-      return ephemeralResponse(t.t('errors.unknownSubcommand', { name: subcommand.name }));
+      return messageResponse({
+        embeds: [errorEmbed(t.t('common.error'), `Unknown subcommand: ${subcommand.name}`)],
+        flags: 64,
+      });
   }
 }
+
+// ============================================================================
+// Subcommand Handlers
+// ============================================================================
 
 /**
  * Handle /favorites add <dye>
@@ -103,26 +139,18 @@ async function handleAddFavorite(
   const dyeInput = dyeOption?.value as string | undefined;
 
   if (!dyeInput) {
-    return Response.json({
-      type: 4,
-      data: {
-        embeds: [errorEmbed(t.t('common.error'), t.t('errors.missingName'))],
-        flags: 64,
-      },
+    return messageResponse({
+      embeds: [errorEmbed(t.t('common.error'), t.t('errors.missingName'))],
+      flags: 64,
     });
   }
 
   // Resolve the dye
   const dye = resolveDyeInput(dyeInput);
   if (!dye) {
-    return Response.json({
-      type: 4,
-      data: {
-        embeds: [
-          errorEmbed(t.t('common.error'), t.t('errors.dyeNotFound', { name: dyeInput })),
-        ],
-        flags: 64,
-      },
+    return messageResponse({
+      embeds: [errorEmbed(t.t('common.error'), t.t('errors.dyeNotFound', { name: dyeInput }))],
+      flags: 64,
     });
   }
 
@@ -131,55 +159,49 @@ async function handleAddFavorite(
 
   // Get localized dye name
   const localizedName = getLocalizedDyeName(dye.itemID, dye.name);
+  const emoji = getDyeEmoji(dye.id);
+  const emojiStr = emoji ? `${emoji} ` : '';
 
   if (!result.success) {
     switch (result.reason) {
       case 'alreadyExists':
-        return Response.json({
-          type: 4,
-          data: {
-            embeds: [
-              infoEmbed(t.t('common.error'), t.t('favorites.alreadyFavorite', { name: localizedName })),
-            ],
-            flags: 64,
-          },
+        return messageResponse({
+          embeds: [{
+            title: '⚠️ Already in Favorites',
+            description: DEPRECATION_NOTICE + `${emojiStr}**${localizedName}** is already in your favorites.`,
+            color: DEPRECATION_COLOR,
+            footer: { text: 'Use /preset create to save dyes in the new system' },
+          }],
+          flags: 64,
         });
 
       case 'limitReached':
-        return Response.json({
-          type: 4,
-          data: {
-            embeds: [
-              errorEmbed(t.t('common.error'), t.t('favorites.limitReached', { max: MAX_FAVORITES })),
-            ],
-            flags: 64,
-          },
+        return messageResponse({
+          embeds: [{
+            title: '❌ ' + t.t('common.error'),
+            description: DEPRECATION_NOTICE + t.t('favorites.limitReached', { max: MAX_FAVORITES }),
+            color: DEPRECATION_COLOR,
+            footer: { text: 'Use /preset create - presets support more dyes' },
+          }],
+          flags: 64,
         });
 
       default:
-        return Response.json({
-          type: 4,
-          data: {
-            embeds: [
-              errorEmbed(t.t('common.error'), t.t('errors.failedToSave')),
-            ],
-            flags: 64,
-          },
+        return messageResponse({
+          embeds: [errorEmbed(t.t('common.error'), t.t('errors.failedToSave'))],
+          flags: 64,
         });
     }
   }
 
-  const emoji = getDyeEmoji(dye.id);
-  const emojiStr = emoji ? `${emoji} ` : '';
-
-  return Response.json({
-    type: 4,
-    data: {
-      embeds: [
-        successEmbed(t.t('common.success'), `${emojiStr}${t.t('favorites.added', { name: localizedName })}`),
-      ],
-      flags: 64,
-    },
+  return messageResponse({
+    embeds: [{
+      title: '✅ ' + t.t('common.success'),
+      description: DEPRECATION_NOTICE + `${emojiStr}${t.t('favorites.added', { name: localizedName })}`,
+      color: DEPRECATION_COLOR,
+      footer: { text: 'Use /preset create to save dyes in the new system' },
+    }],
+    flags: 64,
   });
 }
 
@@ -196,26 +218,18 @@ async function handleRemoveFavorite(
   const dyeInput = dyeOption?.value as string | undefined;
 
   if (!dyeInput) {
-    return Response.json({
-      type: 4,
-      data: {
-        embeds: [errorEmbed(t.t('common.error'), t.t('errors.missingName'))],
-        flags: 64,
-      },
+    return messageResponse({
+      embeds: [errorEmbed(t.t('common.error'), t.t('errors.missingName'))],
+      flags: 64,
     });
   }
 
   // Resolve the dye
   const dye = resolveDyeInput(dyeInput);
   if (!dye) {
-    return Response.json({
-      type: 4,
-      data: {
-        embeds: [
-          errorEmbed(t.t('common.error'), t.t('errors.dyeNotFound', { name: dyeInput })),
-        ],
-        flags: 64,
-      },
+    return messageResponse({
+      embeds: [errorEmbed(t.t('common.error'), t.t('errors.dyeNotFound', { name: dyeInput }))],
+      flags: 64,
     });
   }
 
@@ -224,30 +238,29 @@ async function handleRemoveFavorite(
 
   // Get localized dye name
   const localizedName = getLocalizedDyeName(dye.itemID, dye.name);
-
-  if (!removed) {
-    return Response.json({
-      type: 4,
-      data: {
-        embeds: [
-          infoEmbed(t.t('common.error'), t.t('favorites.notInFavorites', { name: localizedName })),
-        ],
-        flags: 64,
-      },
-    });
-  }
-
   const emoji = getDyeEmoji(dye.id);
   const emojiStr = emoji ? `${emoji} ` : '';
 
-  return Response.json({
-    type: 4,
-    data: {
-      embeds: [
-        successEmbed(t.t('common.success'), `${emojiStr}${t.t('favorites.removed', { name: localizedName })}`),
-      ],
+  if (!removed) {
+    return messageResponse({
+      embeds: [{
+        title: '⚠️ Not Found',
+        description: DEPRECATION_NOTICE + `${emojiStr}**${localizedName}** is not in your favorites.`,
+        color: DEPRECATION_COLOR,
+        footer: { text: 'Use /preset to manage your saved dyes instead' },
+      }],
       flags: 64,
-    },
+    });
+  }
+
+  return messageResponse({
+    embeds: [{
+      title: '✅ ' + t.t('common.success'),
+      description: DEPRECATION_NOTICE + `${emojiStr}${t.t('favorites.removed', { name: localizedName })}`,
+      color: DEPRECATION_COLOR,
+      footer: { text: 'Use /preset to manage your saved dyes instead' },
+    }],
+    flags: 64,
   });
 }
 
@@ -258,17 +271,14 @@ async function handleListFavorites(env: Env, userId: string, t: Translator): Pro
   const favoriteIds = await getFavorites(env.KV, userId);
 
   if (favoriteIds.length === 0) {
-    return Response.json({
-      type: 4,
-      data: {
-        embeds: [
-          infoEmbed(
-            t.t('favorites.title'),
-            `${t.t('favorites.empty')}\n\n${t.t('favorites.addHint')}`
-          ),
-        ],
-        flags: 64,
-      },
+    return messageResponse({
+      embeds: [{
+        title: '📋 ' + t.t('favorites.title'),
+        description: DEPRECATION_NOTICE + `${t.t('favorites.empty')}\n\nConsider using \`/preset\` to create organized dye presets instead.`,
+        color: DEPRECATION_COLOR,
+        footer: { text: 'Use /preset list to see your presets' },
+      }],
+      flags: 64,
     });
   }
 
@@ -296,21 +306,16 @@ async function handleListFavorites(env: Env, userId: string, t: Translator): Pro
     .map(([cat, count]) => `${getLocalizedCategory(cat)}: ${count}`)
     .join(' • ');
 
-  return Response.json({
-    type: 4,
-    data: {
-      embeds: [
-        {
-          title: `${t.t('favorites.title')} (${t.t('favorites.count', { count: dyes.length, max: MAX_FAVORITES })})`,
-          description: dyeList.join('\n'),
-          color: 0x5865f2,
-          footer: {
-            text: categorySummary,
-          },
-        },
-      ],
-      flags: 64,
-    },
+  return messageResponse({
+    embeds: [{
+      title: `📋 ${t.t('favorites.title')} (${t.t('favorites.count', { count: dyes.length, max: MAX_FAVORITES })})`,
+      description: DEPRECATION_NOTICE + dyeList.join('\n'),
+      color: DEPRECATION_COLOR,
+      footer: {
+        text: `${categorySummary} • Use /preset to migrate your favorites`,
+      },
+    }],
+    flags: 64,
   });
 }
 
@@ -323,38 +328,33 @@ async function handleClearFavorites(env: Env, userId: string, t: Translator): Pr
   const count = favorites.length;
 
   if (count === 0) {
-    return Response.json({
-      type: 4,
-      data: {
-        embeds: [
-          infoEmbed(t.t('favorites.title'), t.t('favorites.empty')),
-        ],
-        flags: 64,
-      },
+    return messageResponse({
+      embeds: [{
+        title: '📋 ' + t.t('favorites.title'),
+        description: DEPRECATION_NOTICE + t.t('favorites.empty'),
+        color: DEPRECATION_COLOR,
+        footer: { text: 'Use /preset to create organized dye presets' },
+      }],
+      flags: 64,
     });
   }
 
   const success = await clearFavorites(env.KV, userId);
 
   if (!success) {
-    return Response.json({
-      type: 4,
-      data: {
-        embeds: [
-          errorEmbed(t.t('common.error'), t.t('errors.failedToReset')),
-        ],
-        flags: 64,
-      },
+    return messageResponse({
+      embeds: [errorEmbed(t.t('common.error'), t.t('errors.failedToReset'))],
+      flags: 64,
     });
   }
 
-  return Response.json({
-    type: 4,
-    data: {
-      embeds: [
-        successEmbed(t.t('common.success'), t.t('favorites.cleared')),
-      ],
-      flags: 64,
-    },
+  return messageResponse({
+    embeds: [{
+      title: '✅ ' + t.t('common.success'),
+      description: DEPRECATION_NOTICE + t.t('favorites.cleared'),
+      color: DEPRECATION_COLOR,
+      footer: { text: 'Use /preset create to start fresh with the new system' },
+    }],
+    flags: 64,
   });
 }
