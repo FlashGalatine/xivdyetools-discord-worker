@@ -34,6 +34,14 @@ describe('commands/index exports', () => {
         expect(commands.handleDyeCommand).toBeDefined();
         expect(typeof commands.handleDyeCommand).toBe('function');
 
+        // V4 Commands
+        expect(commands.handleExtractorCommand).toBeDefined();
+        expect(typeof commands.handleExtractorCommand).toBe('function');
+
+        expect(commands.handleGradientCommand).toBeDefined();
+        expect(typeof commands.handleGradientCommand).toBe('function');
+
+        // Legacy commands (still exported for backward compatibility)
         expect(commands.handleMixerCommand).toBeDefined();
         expect(typeof commands.handleMixerCommand).toBe('function');
 

@@ -18,6 +18,10 @@ import {
   handleAboutCommand,
   handleHarmonyCommand,
   handleDyeCommand,
+  // V4 Commands
+  handleExtractorCommand,
+  handleGradientCommand,
+  // Legacy commands (kept for backward compatibility during migration)
   handleMixerCommand,
   handleMatchCommand,
   handleMatchImageCommand,
@@ -359,6 +363,16 @@ async function handleCommand(
         response = await handleDyeCommand(interaction, env, ctx);
         break;
 
+      // V4 Commands
+      case 'extractor':
+        response = await handleExtractorCommand(interaction, env, ctx, logger);
+        break;
+
+      case 'gradient':
+        response = await handleGradientCommand(interaction, env, ctx, logger);
+        break;
+
+      // Legacy commands (kept for backward compatibility during migration)
       case 'mixer':
         response = await handleMixerCommand(interaction, env, ctx, logger);
         break;

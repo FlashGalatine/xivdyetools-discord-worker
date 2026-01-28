@@ -2,14 +2,27 @@
  * Command Handlers Index
  *
  * Re-exports all command handlers for cleaner imports.
+ *
+ * V4 Changes:
+ * - Added: handleExtractorCommand (replaces handleMatchCommand + handleMatchImageCommand)
+ * - Added: handleGradientCommand (replaces handleMixerCommand)
+ * - Deprecated: handleMatchCommand, handleMatchImageCommand, handleMixerCommand
+ *   (kept for backward compatibility during migration)
  */
 
 export { handleAboutCommand } from './about.js';
 export { handleHarmonyCommand, getHarmonyTypeChoices } from './harmony.js';
 export { handleDyeCommand } from './dye.js';
+
+// V4 Commands
+export { handleExtractorCommand } from './extractor.js';
+export { handleGradientCommand } from './gradient.js';
+
+// Legacy commands (deprecated in v4, kept for backward compatibility)
 export { handleMixerCommand } from './mixer.js';
 export { handleMatchCommand } from './match.js';
 export { handleMatchImageCommand } from './match-image.js';
+
 export { handleAccessibilityCommand } from './accessibility.js';
 export { handleManualCommand } from './manual.js';
 export { handleComparisonCommand } from './comparison.js';

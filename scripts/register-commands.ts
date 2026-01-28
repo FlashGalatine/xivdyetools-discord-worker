@@ -154,9 +154,103 @@ const commands = [
     ],
   },
 
+  // =========================================================================
+  // V4 Commands: Renamed and reorganized commands
+  // =========================================================================
+
+  // /extractor - Replaces /match and /match_image
+  {
+    name: 'extractor',
+    description: 'Extract colors from inputs and find matching FFXIV dyes',
+    options: [
+      {
+        name: 'color',
+        description: 'Find the closest FFXIV dye(s) to a color',
+        type: OptionType.SUB_COMMAND,
+        options: [
+          {
+            name: 'color',
+            description: 'Color to match (hex code like #FF5733 or dye name)',
+            type: OptionType.STRING,
+            required: true,
+            autocomplete: true,
+          },
+          {
+            name: 'count',
+            description: 'Number of matches to show (1-10)',
+            type: OptionType.INTEGER,
+            required: false,
+            min_value: 1,
+            max_value: 10,
+          },
+          // TODO: Add matching method option in Phase 3
+          // TODO: Add market option in Phase 3
+        ],
+      },
+      {
+        name: 'image',
+        description: 'Extract colors from an image and find matching dyes',
+        type: OptionType.SUB_COMMAND,
+        options: [
+          {
+            name: 'image',
+            description: 'Image to analyze',
+            type: OptionType.ATTACHMENT,
+            required: true,
+          },
+          {
+            name: 'colors',
+            description: 'Number of colors to extract (1-5)',
+            type: OptionType.INTEGER,
+            required: false,
+            min_value: 1,
+            max_value: 5,
+          },
+        ],
+      },
+    ],
+  },
+
+  // /gradient - Replaces old /mixer (gradient functionality)
+  {
+    name: 'gradient',
+    description: 'Generate a color gradient between two colors with intermediate dyes',
+    options: [
+      {
+        name: 'start_color',
+        description: 'Starting color: hex (e.g., #FF0000) or dye name',
+        type: OptionType.STRING,
+        required: true,
+        autocomplete: true,
+      },
+      {
+        name: 'end_color',
+        description: 'Ending color: hex (e.g., #0000FF) or dye name',
+        type: OptionType.STRING,
+        required: true,
+        autocomplete: true,
+      },
+      {
+        name: 'steps',
+        description: 'Number of color steps (default: 6)',
+        type: OptionType.INTEGER,
+        required: false,
+        min_value: 2,
+        max_value: 10,
+      },
+      // TODO: Add mode option in Phase 3 (interpolation mode)
+      // TODO: Add matching method option in Phase 3
+      // TODO: Add market option in Phase 3
+    ],
+  },
+
+  // =========================================================================
+  // Legacy Commands (deprecated in v4, kept for backward compatibility)
+  // Will be removed in a future version
+  // =========================================================================
   {
     name: 'match',
-    description: 'Find the closest FFXIV dye to a color',
+    description: '[DEPRECATED: Use /extractor color] Find the closest FFXIV dye to a color',
     options: [
       {
         name: 'color',
@@ -177,7 +271,7 @@ const commands = [
 
   {
     name: 'mixer',
-    description: 'Generate a color gradient between two colors with intermediate dyes',
+    description: '[DEPRECATED: Use /gradient] Generate a color gradient between two colors',
     options: [
       {
         name: 'start_color',
@@ -205,11 +299,11 @@ const commands = [
   },
 
   // =========================================================================
-  // Phase 2: Image processing commands
+  // Phase 2: Image processing commands (legacy)
   // =========================================================================
   {
     name: 'match_image',
-    description: 'Extract colors from an image and find matching FFXIV dyes',
+    description: '[DEPRECATED: Use /extractor image] Extract colors from an image',
     options: [
       {
         name: 'image',
