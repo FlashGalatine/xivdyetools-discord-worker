@@ -168,7 +168,7 @@ async function handleShowSubcommand(
   // Add last updated timestamp if available
   const footer = prefs.updatedAt
     ? { text: `Last updated: ${new Date(prefs.updatedAt).toLocaleString()}` }
-    : { text: 'Use /preferences set <key> <value> to customize' };
+    : { text: 'Use /preferences set to customize (e.g., /preferences set language:en)' };
 
   return messageResponse({
     embeds: [
@@ -188,9 +188,11 @@ async function handleShowSubcommand(
 // ============================================================================
 
 /**
- * Handles /preferences set <key> <value>
+ * Handles /preferences set [options...]
  *
- * Sets a single preference value.
+ * Sets one or more preference values. Each preference is an optional parameter.
+ * Users can set multiple preferences in a single command:
+ *   /preferences set language:en blending:oklab market:true
  */
 async function handleSetSubcommand(
   env: Env,
@@ -199,64 +201,125 @@ async function handleSetSubcommand(
   t: Translator,
   logger?: ExtendedLogger
 ): Promise<Response> {
-  const keyOption = options.find((opt) => opt.name === 'key');
-  const valueOption = options.find((opt) => opt.name === 'value');
-
-  if (!keyOption?.value || valueOption?.value === undefined) {
-    return messageResponse({
-      embeds: [errorEmbed(t.t('common.error'), 'Both key and value are required')],
-      flags: 64,
-    });
-  }
-
-  const key = keyOption.value as PreferenceKey;
-  const value = valueOption.value;
-
-  // Validate key
-  if (!PREFERENCE_ORDER.includes(key)) {
+  // Check if any options were provided
+  if (options.length === 0) {
     return messageResponse({
       embeds: [
         errorEmbed(
           t.t('common.error'),
-          `Invalid preference key: \`${key}\`\n\nValid keys: ${PREFERENCE_ORDER.map((k) => `\`${k}\``).join(', ')}`
+          'Please provide at least one preference to set.\n\nExample: `/preferences set language:en blending:oklab`'
         ),
       ],
       flags: 64,
     });
   }
 
-  // Attempt to set the preference
-  const result = await setPreference(env.KV, userId, key, value, logger);
+  // Process each provided option
+  const updates: Array<{ key: PreferenceKey; value: unknown; success: boolean; reason?: string }> = [];
+  const affectedCommandsSet = new Set<string>();
 
-  if (!result.success) {
-    const errorMessage = getValidationErrorMessage(key, result.reason);
+  for (const opt of options) {
+    const key = opt.name as PreferenceKey;
+    const value = opt.value;
+
+    // Skip if no value provided
+    if (value === undefined) continue;
+
+    // Validate key is a known preference
+    if (!PREFERENCE_ORDER.includes(key)) continue;
+
+    // Attempt to set the preference
+    const result = await setPreference(env.KV, userId, key, value, logger);
+    updates.push({ key, value, success: result.success, reason: result.reason });
+
+    // Collect affected commands for successful updates
+    if (result.success) {
+      getAffectedCommands(key).forEach((cmd) => affectedCommandsSet.add(cmd));
+    }
+  }
+
+  // Check if any updates were attempted
+  if (updates.length === 0) {
     return messageResponse({
-      embeds: [errorEmbed(t.t('common.error'), errorMessage)],
+      embeds: [
+        errorEmbed(
+          t.t('common.error'),
+          'No valid preferences were provided. Use options like `language`, `blending`, `matching`, etc.'
+        ),
+      ],
       flags: 64,
     });
   }
 
-  // Success response
-  const emoji = PREFERENCE_EMOJIS[key];
-  const label = PREFERENCE_LABELS[key];
-  const displayValue = formatPreferenceValue(key, value);
-  const affected = getAffectedCommands(key);
+  // Separate successes and failures
+  const successes = updates.filter((u) => u.success);
+  const failures = updates.filter((u) => !u.success);
+
+  // Build response
+  if (successes.length === 0) {
+    // All failed
+    const errorLines = failures.map((f) => {
+      const emoji = PREFERENCE_EMOJIS[f.key];
+      const label = PREFERENCE_LABELS[f.key];
+      const reason = getValidationErrorMessage(f.key, f.reason);
+      return `${emoji} **${label}**: ${reason}`;
+    });
+
+    return messageResponse({
+      embeds: [
+        errorEmbed(t.t('common.error'), errorLines.join('\n\n')),
+      ],
+      flags: 64,
+    });
+  }
+
+  // Build success description
+  const successLines = successes.map((s) => {
+    const emoji = PREFERENCE_EMOJIS[s.key];
+    const label = PREFERENCE_LABELS[s.key];
+    const displayValue = formatPreferenceValue(s.key, s.value);
+    return `${emoji} **${label}** → **${displayValue}**`;
+  });
+
+  // Build response embed
+  const fields: Array<{ name: string; value: string; inline: boolean }> = [];
+
+  // Add affected commands field
+  if (affectedCommandsSet.size > 0) {
+    fields.push({
+      name: '📋 Affects',
+      value: Array.from(affectedCommandsSet).join(', '),
+      inline: false,
+    });
+  }
+
+  // Add failures field if any
+  if (failures.length > 0) {
+    const failureLines = failures.map((f) => {
+      const emoji = PREFERENCE_EMOJIS[f.key];
+      const label = PREFERENCE_LABELS[f.key];
+      return `${emoji} ${label}: ${f.reason || 'Invalid value'}`;
+    });
+    fields.push({
+      name: '⚠️ Failed to Update',
+      value: failureLines.join('\n'),
+      inline: false,
+    });
+  }
+
+  const title = successes.length === 1
+    ? '✅ Preference Updated'
+    : `✅ ${successes.length} Preferences Updated`;
 
   return messageResponse({
     embeds: [
       {
-        title: '✅ Preference Updated',
-        description: `**${emoji} ${label}** set to **${displayValue}**`,
-        color: 0x57f287, // Green
-        fields: [
-          {
-            name: '📋 Affects',
-            value: affected.join(', '),
-            inline: false,
-          },
-        ],
+        title,
+        description: successLines.join('\n'),
+        color: failures.length > 0 ? 0xfee75c : 0x57f287, // Yellow if partial, green if all succeeded
+        fields,
         footer: {
-          text: 'Command parameters will override this setting',
+          text: 'Command parameters will override these settings',
         },
       },
     ],
