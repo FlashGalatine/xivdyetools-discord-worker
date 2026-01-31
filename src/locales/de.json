@@ -612,5 +612,27 @@
       "hyab": "Hybride LAB + Chroma Distanz",
       "oklch_weighted": "Gewichtete OKLCH-Komponenten"
     }
+  },
+  "webhook": {
+    "newPresetPending": "Neue Vorlage wartet auf Überprüfung",
+    "newPresetPublished": "Neue Vorlage veröffentlicht",
+    "fields": {
+      "category": "Kategorie",
+      "author": "Autor",
+      "source": "Quelle",
+      "dyes": "Farbstoffe",
+      "tags": "Tags"
+    },
+    "autoApproved": "Automatisch genehmigt",
+    "buttons": {
+      "approve": "Genehmigen",
+      "reject": "Ablehnen",
+      "revert": "Zurücksetzen"
+    },
+    "editPending": "Vorlagen-Änderung wartet auf Überprüfung",
+    "sources": {
+      "web": "Web-App",
+      "discord": "Discord"
+    }
   }
 }

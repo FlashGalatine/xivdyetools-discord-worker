@@ -612,5 +612,27 @@
       "hyab": "混合LAB + 色度距离",
       "oklch_weighted": "加权OKLCH分量"
     }
+  },
+  "webhook": {
+    "newPresetPending": "新预设待审核",
+    "newPresetPublished": "新预设已发布",
+    "fields": {
+      "category": "类别",
+      "author": "作者",
+      "source": "来源",
+      "dyes": "染剂",
+      "tags": "标签"
+    },
+    "autoApproved": "自动批准",
+    "buttons": {
+      "approve": "批准",
+      "reject": "拒绝",
+      "revert": "还原"
+    },
+    "editPending": "预设编辑待审核",
+    "sources": {
+      "web": "网页应用",
+      "discord": "Discord"
+    }
   }
 }

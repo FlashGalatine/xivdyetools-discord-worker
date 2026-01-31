@@ -612,5 +612,27 @@
       "hyab": "Hybrid LAB + Chroma distance",
       "oklch_weighted": "Weighted OKLCH components"
     }
+  },
+  "webhook": {
+    "newPresetPending": "New Preset Awaiting Review",
+    "newPresetPublished": "New Preset Published",
+    "fields": {
+      "category": "Category",
+      "author": "Author",
+      "source": "Source",
+      "dyes": "Dyes",
+      "tags": "Tags"
+    },
+    "autoApproved": "Auto-approved",
+    "buttons": {
+      "approve": "Approve",
+      "reject": "Reject",
+      "revert": "Revert"
+    },
+    "editPending": "Preset Edit Pending Review",
+    "sources": {
+      "web": "Web App",
+      "discord": "Discord"
+    }
   }
 }

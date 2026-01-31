@@ -48,10 +48,13 @@ import * as presetApi from './services/preset-api.js';
 import { sendMessage } from './utils/discord-api.js';
 import { STATUS_DISPLAY, type PresetNotificationPayload } from './types/preset.js';
 import { getLocalizedDyeName } from './services/i18n.js';
+import { createTranslator } from './services/bot-i18n.js';
 import { validateEnv, logValidationErrors } from './utils/env-validation.js';
 import { requestIdMiddleware, getRequestId, type RequestIdVariables } from './middleware/request-id.js';
 import { loggerMiddleware, getLogger } from './middleware/logger.js';
 import { sanitizePresetName, sanitizePresetDescription } from './utils/sanitize.js';
+import { VALID_CLANS, CLANS_BY_RACE } from './types/preferences.js';
+import { getWorldAutocomplete } from './services/budget/index.js';
 
 // Initialize DyeService for autocomplete
 const dyeService = new DyeService(dyeDatabase);
@@ -185,18 +188,20 @@ app.post('/webhooks/preset-submission', async (c) => {
     // SECURITY: Sanitize user-provided content before display
     const safeName = sanitizePresetName(preset.name);
     const safeDescription = sanitizePresetDescription(preset.description);
+    // Use English translator for admin notifications (no user context)
+    const adminT = createTranslator('en');
     await sendMessage(env.DISCORD_TOKEN, env.MODERATION_CHANNEL_ID, {
       embeds: [
         {
-          title: '🟡 Preset Awaiting Moderation',
+          title: `🟡 ${adminT.t('webhook.newPresetPending')}`,
           description: `**${safeName}**\n\n${safeDescription}`,
           color: STATUS_DISPLAY.pending.color,
           fields: [
-            { name: 'Category', value: preset.category_id, inline: true },
-            { name: 'Author', value: preset.author_name || 'Unknown', inline: true },
-            { name: 'Source', value: preset.source === 'web' ? 'Web App' : 'Discord', inline: true },
-            { name: 'Dyes', value: formatDyesForEmbed(preset.dyes), inline: false },
-            ...(preset.tags.length > 0 ? [{ name: 'Tags', value: preset.tags.join(', '), inline: false }] : []),
+            { name: adminT.t('webhook.fields.category'), value: preset.category_id, inline: true },
+            { name: adminT.t('webhook.fields.author'), value: preset.author_name || 'Unknown', inline: true },
+            { name: adminT.t('webhook.fields.source'), value: preset.source === 'web' ? adminT.t('webhook.sources.web') : adminT.t('webhook.sources.discord'), inline: true },
+            { name: adminT.t('webhook.fields.dyes'), value: formatDyesForEmbed(preset.dyes), inline: false },
+            ...(preset.tags.length > 0 ? [{ name: adminT.t('webhook.fields.tags'), value: preset.tags.join(', '), inline: false }] : []),
           ],
           footer: { text: `ID: ${preset.id}` },
           timestamp: preset.created_at,
@@ -209,14 +214,14 @@ app.post('/webhooks/preset-submission', async (c) => {
             {
               type: 2, // Button
               style: 3, // Success (green)
-              label: 'Approve',
+              label: adminT.t('webhook.buttons.approve'),
               emoji: { name: '✅' },
               custom_id: `preset_approve_${preset.id}`,
             },
             {
               type: 2, // Button
               style: 4, // Danger (red)
-              label: 'Reject',
+              label: adminT.t('webhook.buttons.reject'),
               emoji: { name: '❌' },
               custom_id: `preset_reject_${preset.id}`,
             },
@@ -231,20 +236,22 @@ app.post('/webhooks/preset-submission', async (c) => {
     // SECURITY: Sanitize user-provided content before display
     const safeName = sanitizePresetName(preset.name);
     const safeDescription = sanitizePresetDescription(preset.description);
+    // Use English translator for admin notifications (no user context)
+    const adminT = createTranslator('en');
     await sendMessage(env.DISCORD_TOKEN, env.SUBMISSION_LOG_CHANNEL_ID, {
       embeds: [
         {
-          title: '🟢 New Preset Published',
+          title: `🟢 ${adminT.t('webhook.newPresetPublished')}`,
           description: `**${safeName}**\n\n${safeDescription}`,
           color: STATUS_DISPLAY.approved.color,
           fields: [
-            { name: 'Category', value: preset.category_id, inline: true },
-            { name: 'Author', value: preset.author_name || 'Unknown', inline: true },
-            { name: 'Source', value: preset.source === 'web' ? 'Web App' : 'Discord', inline: true },
-            { name: 'Dyes', value: formatDyesForEmbed(preset.dyes), inline: false },
-            ...(preset.tags.length > 0 ? [{ name: 'Tags', value: preset.tags.join(', '), inline: false }] : []),
+            { name: adminT.t('webhook.fields.category'), value: preset.category_id, inline: true },
+            { name: adminT.t('webhook.fields.author'), value: preset.author_name || 'Unknown', inline: true },
+            { name: adminT.t('webhook.fields.source'), value: preset.source === 'web' ? adminT.t('webhook.sources.web') : adminT.t('webhook.sources.discord'), inline: true },
+            { name: adminT.t('webhook.fields.dyes'), value: formatDyesForEmbed(preset.dyes), inline: false },
+            ...(preset.tags.length > 0 ? [{ name: adminT.t('webhook.fields.tags'), value: preset.tags.join(', '), inline: false }] : []),
           ],
-          footer: { text: `ID: ${preset.id} • Auto-approved` },
+          footer: { text: `ID: ${preset.id} • ${adminT.t('webhook.autoApproved')}` },
           timestamp: preset.created_at,
         },
       ],
@@ -637,6 +644,18 @@ async function handleAutocomplete(
   else if (commandName === 'budget') {
     return handleBudgetAutocomplete(interaction, env, logger);
   }
+  // Handle preferences command autocomplete
+  else if (commandName === 'preferences') {
+    const focusedName = focusedOption?.name;
+
+    if (focusedName === 'clan') {
+      // Clan autocomplete - show race-grouped clan suggestions
+      choices = getClanAutocompleteChoices(query);
+    } else if (focusedName === 'world') {
+      // World/datacenter autocomplete - reuse budget world autocomplete
+      choices = await getWorldAutocomplete(env, query, logger);
+    }
+  }
   // Default: Dye autocomplete for other commands
   else {
     choices = getDyeAutocompleteChoices(query);
@@ -720,6 +739,36 @@ function getDyeAutocompleteChoices(query: string): Array<{ name: string; value: 
         value: dye.name,
       }));
   }
+}
+
+/**
+ * Get clan autocomplete choices for the given query
+ *
+ * Shows clans grouped by race, filtered by query.
+ * When no query, shows all clans organized by race.
+ */
+function getClanAutocompleteChoices(query: string): Array<{ name: string; value: string }> {
+  const lowerQuery = query.toLowerCase().trim();
+  const choices: Array<{ name: string; value: string }> = [];
+
+  for (const [race, clans] of Object.entries(CLANS_BY_RACE)) {
+    for (const clan of clans) {
+      // Match against clan name or race name
+      if (
+        lowerQuery.length === 0 ||
+        clan.toLowerCase().includes(lowerQuery) ||
+        race.toLowerCase().includes(lowerQuery)
+      ) {
+        choices.push({
+          name: `${clan} (${race})`,
+          value: clan,
+        });
+      }
+    }
+  }
+
+  // Limit to 25 for Discord autocomplete
+  return choices.slice(0, 25);
 }
 
 /**

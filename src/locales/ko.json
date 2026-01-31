@@ -612,5 +612,27 @@
       "hyab": "하이브리드 LAB + 채도 거리",
       "oklch_weighted": "가중 OKLCH 성분"
     }
+  },
+  "webhook": {
+    "newPresetPending": "새 프리셋 검토 대기 중",
+    "newPresetPublished": "새 프리셋 게시됨",
+    "fields": {
+      "category": "카테고리",
+      "author": "작성자",
+      "source": "출처",
+      "dyes": "염료",
+      "tags": "태그"
+    },
+    "autoApproved": "자동 승인됨",
+    "buttons": {
+      "approve": "승인",
+      "reject": "거부",
+      "revert": "되돌리기"
+    },
+    "editPending": "프리셋 편집 검토 대기 중",
+    "sources": {
+      "web": "웹 앱",
+      "discord": "Discord"
+    }
   }
 }

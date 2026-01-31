@@ -612,5 +612,27 @@
       "hyab": "LAB + 彩度のハイブリッド距離",
       "oklch_weighted": "重み付けOKLCHコンポーネント"
     }
+  },
+  "webhook": {
+    "newPresetPending": "新規プリセット審査待ち",
+    "newPresetPublished": "新規プリセット公開",
+    "fields": {
+      "category": "カテゴリ",
+      "author": "作成者",
+      "source": "ソース",
+      "dyes": "カララント",
+      "tags": "タグ"
+    },
+    "autoApproved": "自動承認",
+    "buttons": {
+      "approve": "承認",
+      "reject": "却下",
+      "revert": "元に戻す"
+    },
+    "editPending": "プリセット編集審査待ち",
+    "sources": {
+      "web": "Webアプリ",
+      "discord": "Discord"
+    }
   }
 }

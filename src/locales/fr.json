@@ -612,5 +612,27 @@
       "hyab": "Distance hybride LAB + Chroma",
       "oklch_weighted": "Composants OKLCH pondérés"
     }
+  },
+  "webhook": {
+    "newPresetPending": "Nouveau modèle en attente de validation",
+    "newPresetPublished": "Nouveau modèle publié",
+    "fields": {
+      "category": "Catégorie",
+      "author": "Auteur",
+      "source": "Source",
+      "dyes": "Teintures",
+      "tags": "Tags"
+    },
+    "autoApproved": "Approuvé automatiquement",
+    "buttons": {
+      "approve": "Approuver",
+      "reject": "Rejeter",
+      "revert": "Annuler"
+    },
+    "editPending": "Modification de modèle en attente de validation",
+    "sources": {
+      "web": "Application Web",
+      "discord": "Discord"
+    }
   }
 }

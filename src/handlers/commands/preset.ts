@@ -869,6 +869,8 @@ async function notifySubmissionChannel(
 
   const categoryDisplay = CATEGORY_DISPLAY[preset.category_id];
   const statusDisplay = STATUS_DISPLAY[status];
+  // Use English translator for admin notifications (no user context)
+  const adminT = createTranslator('en');
 
   try {
     await sendMessage(env.DISCORD_TOKEN, env.SUBMISSION_LOG_CHANNEL_ID, {
@@ -878,9 +880,9 @@ async function notifySubmissionChannel(
           description: preset.description,
           color: statusDisplay.color,
           fields: [
-            { name: 'Category', value: categoryDisplay?.name || preset.category_id, inline: true },
-            { name: 'Author', value: preset.author_name || 'Unknown', inline: true },
-            { name: 'Dyes', value: `${preset.dyes.length} colors`, inline: true },
+            { name: adminT.t('webhook.fields.category'), value: categoryDisplay?.name || preset.category_id, inline: true },
+            { name: adminT.t('webhook.fields.author'), value: preset.author_name || 'Unknown', inline: true },
+            { name: adminT.t('webhook.fields.dyes'), value: `${preset.dyes.length} colors`, inline: true },
           ],
           footer: { text: `ID: ${preset.id}` },
           timestamp: new Date().toISOString(),
@@ -905,18 +907,20 @@ async function notifyModerationChannel(
   if (!env.MODERATION_CHANNEL_ID) return;
 
   const categoryDisplay = CATEGORY_DISPLAY[preset.category_id];
+  // Use English translator for admin notifications (no user context)
+  const adminT = createTranslator('en');
 
   try {
     await sendMessage(env.DISCORD_TOKEN, env.MODERATION_CHANNEL_ID, {
       embeds: [
         {
-          title: `🟡 Preset Pending Review`,
+          title: `🟡 ${adminT.t('webhook.newPresetPending')}`,
           description: [
             `**Name:** ${preset.name}`,
             `**Description:** ${preset.description}`,
             `**Author:** ${preset.author_name} (<@${preset.author_discord_id}>)`,
-            `**Category:** ${categoryDisplay?.name || preset.category_id}`,
-            `**Dyes:** ${preset.dyes.length} colors`,
+            `**${adminT.t('webhook.fields.category')}:** ${categoryDisplay?.name || preset.category_id}`,
+            `**${adminT.t('webhook.fields.dyes')}:** ${preset.dyes.length} colors`,
           ].join('\n'),
           color: 0xfee75c,
           footer: { text: `ID: ${preset.id}` },
@@ -930,14 +934,14 @@ async function notifyModerationChannel(
             {
               type: 2, // Button
               style: 3, // Success (green)
-              label: 'Approve',
+              label: adminT.t('webhook.buttons.approve'),
               custom_id: `preset_approve_${preset.id}`,
               emoji: { name: '✅' },
             },
             {
               type: 2, // Button
               style: 4, // Danger (red)
-              label: 'Reject',
+              label: adminT.t('webhook.buttons.reject'),
               custom_id: `preset_reject_${preset.id}`,
               emoji: { name: '❌' },
             },
@@ -964,6 +968,8 @@ async function notifyEditModerationChannel(
   if (!env.MODERATION_CHANNEL_ID) return;
 
   const categoryDisplay = CATEGORY_DISPLAY[updatedPreset.category_id];
+  // Use English translator for admin notifications (no user context)
+  const adminT = createTranslator('en');
 
   // Build a diff summary
   const changes: string[] = [];
@@ -974,21 +980,21 @@ async function notifyEditModerationChannel(
     changes.push(`**Description:** Changed`);
   }
   if (JSON.stringify(updatedPreset.dyes) !== JSON.stringify(originalPreset.dyes)) {
-    changes.push(`**Dyes:** ${originalPreset.dyes.length} → ${updatedPreset.dyes.length} colors`);
+    changes.push(`**${adminT.t('webhook.fields.dyes')}:** ${originalPreset.dyes.length} → ${updatedPreset.dyes.length} colors`);
   }
   if (JSON.stringify(updatedPreset.tags) !== JSON.stringify(originalPreset.tags)) {
-    changes.push(`**Tags:** Updated`);
+    changes.push(`**${adminT.t('webhook.fields.tags')}:** Updated`);
   }
 
   try {
     await sendMessage(env.DISCORD_TOKEN, env.MODERATION_CHANNEL_ID, {
       embeds: [
         {
-          title: `✏️ Preset Edit Pending Review`,
+          title: `✏️ ${adminT.t('webhook.editPending')}`,
           description: [
             `**Preset:** ${updatedPreset.name}`,
-            `**Author:** ${updatedPreset.author_name} (<@${updatedPreset.author_discord_id}>)`,
-            `**Category:** ${categoryDisplay?.name || updatedPreset.category_id}`,
+            `**${adminT.t('webhook.fields.author')}:** ${updatedPreset.author_name} (<@${updatedPreset.author_discord_id}>)`,
+            `**${adminT.t('webhook.fields.category')}:** ${categoryDisplay?.name || updatedPreset.category_id}`,
             '',
             '**Changes:**',
             changes.join('\n') || 'No visible changes',
@@ -1007,21 +1013,21 @@ async function notifyEditModerationChannel(
             {
               type: 2, // Button
               style: 3, // Success (green)
-              label: 'Approve',
+              label: adminT.t('webhook.buttons.approve'),
               custom_id: `preset_approve_${updatedPreset.id}`,
               emoji: { name: '✅' },
             },
             {
               type: 2, // Button
               style: 4, // Danger (red)
-              label: 'Reject',
+              label: adminT.t('webhook.buttons.reject'),
               custom_id: `preset_reject_${updatedPreset.id}`,
               emoji: { name: '❌' },
             },
             {
               type: 2, // Button
               style: 4, // Danger (red)
-              label: 'Revert',
+              label: adminT.t('webhook.buttons.revert'),
               custom_id: `preset_revert_${updatedPreset.id}`,
               emoji: { name: '↩️' },
             },
