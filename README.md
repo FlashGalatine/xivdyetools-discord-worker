@@ -126,6 +126,27 @@
 | `npm run type-check` | Run TypeScript type checking |
 | `npm run register-commands` | Register slash commands with Discord |
 
+### CJK Font Support (Japanese/Korean/Chinese)
+
+The bot generates PNG images for Discord responses using resvg-wasm. By default, the bundled fonts (Space Grotesk, Onest, Habibi) only support Latin characters. To display Japanese, Korean, or Chinese dye names correctly, you need to add a CJK font:
+
+1. **Download Noto Sans SC** from [Google Fonts](https://fonts.google.com/noto/specimen/Noto+Sans+SC)
+2. Extract `NotoSansSC-Regular.ttf` from the downloaded ZIP
+3. Copy it to `src/fonts/NotoSansSC-Regular.ttf`
+4. Edit `src/services/fonts.ts` and uncomment the CJK import:
+   ```typescript
+   // Change this:
+   // import notoSansCjkData from '../fonts/NotoSansSC-Regular.ttf';
+   const notoSansCjkData: ArrayBuffer | null = null;
+
+   // To this:
+   import notoSansCjkData from '../fonts/NotoSansSC-Regular.ttf';
+   // const notoSansCjkData: ArrayBuffer | null = null;
+   ```
+5. Deploy with `npm run deploy`
+
+**Note:** The CJK font adds ~4-6MB to the Worker bundle size. Without it, CJK characters will appear as boxes (□) in generated images.
+
 ### Registering Commands
 
 Set environment variables and run:

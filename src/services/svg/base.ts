@@ -249,9 +249,16 @@ export const THEME = {
  * - header: Space Grotesk (variable 300-700) - titles, headers
  * - primary: Onest (variable 100-900) - body text, labels
  * - mono: Habibi (regular only) - hex codes, monospace-like text
+ * - cjk: Noto Sans SC (optional) - Japanese, Korean, Chinese text
+ * - primaryCjk: Onest with CJK fallback - for localized text that may contain CJK
  */
 export const FONTS = {
   header: 'Space Grotesk',
   primary: 'Onest',
   mono: 'Habibi',
+  cjk: 'Noto Sans SC',
+  /** Use this for headings that may contain CJK characters (e.g., dye names) */
+  headerCjk: 'Space Grotesk, Noto Sans SC',
+  /** Use this for body text that may contain CJK characters (e.g., dye names) */
+  primaryCjk: 'Onest, Noto Sans SC',
 } as const;

@@ -21,6 +21,9 @@
 import { LocalizationService } from '@xivdyetools/core';
 import type { ExtendedLogger } from '@xivdyetools/logger';
 
+// Note: getPreference import is lazy to avoid circular dependency
+// We use dynamic import within resolveUserLocale
+
 /**
  * Supported locale codes
  */
@@ -163,9 +166,10 @@ export async function clearUserLanguagePreference(
  * Resolve the effective locale for a user
  *
  * Priority:
- * 1. User's explicit preference (KV)
- * 2. Discord client locale (interaction.locale)
- * 3. Default (English)
+ * 1. User's unified preferences (prefs:v1:{userId})
+ * 2. User's legacy preference (i18n:user:{userId})
+ * 3. Discord client locale (interaction.locale)
+ * 4. Default (English)
  *
  * @param kv - KV namespace binding
  * @param userId - Discord user ID
@@ -177,13 +181,28 @@ export async function resolveUserLocale(
   userId: string,
   discordLocale?: string
 ): Promise<LocaleCode> {
-  // 1. Check user preference
+  // 1. Check unified preferences first (V4 system)
+  // Direct KV read to avoid circular dependency with preferences.ts
+  try {
+    const unifiedPrefsKey = `prefs:v1:${userId}`;
+    const unifiedData = await kv.get(unifiedPrefsKey);
+    if (unifiedData) {
+      const prefs = JSON.parse(unifiedData) as { language?: string };
+      if (prefs.language && isValidLocale(prefs.language)) {
+        return prefs.language;
+      }
+    }
+  } catch {
+    // Continue to fallbacks if unified prefs read fails
+  }
+
+  // 2. Check legacy i18n preference
   const preference = await getUserLanguagePreference(kv, userId);
   if (preference) {
     return preference;
   }
 
-  // 2. Try Discord locale
+  // 3. Try Discord locale
   if (discordLocale) {
     const mapped = discordLocaleToLocaleCode(discordLocale);
     if (mapped) {
@@ -191,7 +210,7 @@ export async function resolveUserLocale(
     }
   }
 
-  // 3. Default to English
+  // 4. Default to English
   return 'en';
 }
 

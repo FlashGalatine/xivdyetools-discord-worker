@@ -166,7 +166,11 @@
     "endColor": "结束",
     "steps": "{count} 步",
     "gradientFrom": "从 {start} 到 {end} 的渐变",
-    "description": "在两种颜色之间创建平滑的颜色过渡"
+    "description": "在两种颜色之间创建平滑的颜色过渡",
+    "start": "起始",
+    "end": "结束",
+    "colorSpace": "色彩空间",
+    "matching": "匹配"
   },
   "harmony": {
     "title": "{type}和谐",

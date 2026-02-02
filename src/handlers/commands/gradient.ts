@@ -12,14 +12,13 @@
  * @module handlers/commands/gradient
  */
 
-import { ColorService, type Dye } from '@xivdyetools/core';
+import { ColorService, type Dye, type MatchingMethod } from '@xivdyetools/core';
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import { deferredResponse, errorEmbed, hexToDiscordColor } from '../../utils/response.js';
 import { resolveColorInput, dyeService } from '../../utils/color.js';
 import { editOriginalResponse } from '../../utils/discord-api.js';
 import {
   generateGradientBar,
-  generateGradientColors,
   type GradientStep,
 } from '../../services/svg/gradient.js';
 import { renderSvgToPng } from '../../services/svg/renderer.js';
@@ -36,6 +35,11 @@ import {
   type LocaleCode,
 } from '../../services/i18n.js';
 import type { Env, DiscordInteraction } from '../../types/env.js';
+
+/**
+ * Supported color space interpolation modes
+ */
+type InterpolationMode = 'rgb' | 'hsv' | 'lab' | 'oklch' | 'lch';
 
 /**
  * Gets match quality description based on color distance
@@ -63,6 +67,120 @@ function getColorDistance(hex1: string, hex2: string): number {
 }
 
 /**
+ * Generates an array of interpolated colors between start and end using the specified color space.
+ *
+ * Interpolation modes:
+ * - RGB: Linear RGB interpolation (gray midpoints for complementary colors)
+ * - HSV: Hue-based interpolation with wraparound (vibrant, takes shorter hue path)
+ * - LAB: Perceptually uniform (good for natural transitions)
+ * - OKLCH: Modern perceptual with hue (best for gradients, fixes LAB's blue distortion)
+ * - LCH: Cylindrical LAB with hue (good balance of perceptual uniformity)
+ *
+ * @param startColor - Starting hex color
+ * @param endColor - Ending hex color
+ * @param stepCount - Number of steps (including start and end)
+ * @param mode - Color space interpolation mode
+ */
+function generateGradientColorsMultiSpace(
+  startColor: string,
+  endColor: string,
+  stepCount: number,
+  mode: InterpolationMode
+): string[] {
+  const colors: string[] = [];
+
+  for (let i = 0; i < stepCount; i++) {
+    const t = stepCount === 1 ? 0 : i / (stepCount - 1);
+    let interpolatedColor: string;
+
+    switch (mode) {
+      case 'rgb': {
+        // RGB interpolation (linear)
+        const startRgb = ColorService.hexToRgb(startColor);
+        const endRgb = ColorService.hexToRgb(endColor);
+        const r = Math.round(startRgb.r + (endRgb.r - startRgb.r) * t);
+        const g = Math.round(startRgb.g + (endRgb.g - startRgb.g) * t);
+        const b = Math.round(startRgb.b + (endRgb.b - startRgb.b) * t);
+        interpolatedColor = ColorService.rgbToHex(r, g, b);
+        break;
+      }
+
+      case 'hsv': {
+        // HSV interpolation (with hue wraparound)
+        const startHsv = ColorService.hexToHsv(startColor);
+        const endHsv = ColorService.hexToHsv(endColor);
+        // Handle hue wraparound (take shorter path)
+        let hueDiff = endHsv.h - startHsv.h;
+        if (hueDiff > 180) hueDiff -= 360;
+        if (hueDiff < -180) hueDiff += 360;
+        const h = (startHsv.h + hueDiff * t + 360) % 360;
+        const s = startHsv.s + (endHsv.s - startHsv.s) * t;
+        const v = startHsv.v + (endHsv.v - startHsv.v) * t;
+        interpolatedColor = ColorService.hsvToHex(h, s, v);
+        break;
+      }
+
+      case 'lab': {
+        // LAB interpolation (perceptually uniform)
+        const startLab = ColorService.hexToLab(startColor);
+        const endLab = ColorService.hexToLab(endColor);
+        const L = startLab.L + (endLab.L - startLab.L) * t;
+        const a = startLab.a + (endLab.a - startLab.a) * t;
+        const b = startLab.b + (endLab.b - startLab.b) * t;
+        interpolatedColor = ColorService.labToHex(L, a, b);
+        break;
+      }
+
+      case 'oklch': {
+        // OKLCH interpolation (modern perceptual with hue)
+        const startOklch = ColorService.hexToOklch(startColor);
+        const endOklch = ColorService.hexToOklch(endColor);
+        // Handle hue wraparound (take shorter path)
+        let hueDiff = endOklch.h - startOklch.h;
+        if (hueDiff > 180) hueDiff -= 360;
+        if (hueDiff < -180) hueDiff += 360;
+        const L = startOklch.L + (endOklch.L - startOklch.L) * t;
+        const C = startOklch.C + (endOklch.C - startOklch.C) * t;
+        const h = (startOklch.h + hueDiff * t + 360) % 360;
+        interpolatedColor = ColorService.oklchToHex(L, C, h);
+        break;
+      }
+
+      case 'lch': {
+        // LCH interpolation (cylindrical LAB with hue)
+        const startLch = ColorService.hexToLch(startColor);
+        const endLch = ColorService.hexToLch(endColor);
+        // Handle hue wraparound (take shorter path)
+        let hueDiff = endLch.h - startLch.h;
+        if (hueDiff > 180) hueDiff -= 360;
+        if (hueDiff < -180) hueDiff += 360;
+        const L = startLch.L + (endLch.L - startLch.L) * t;
+        const C = startLch.C + (endLch.C - startLch.C) * t;
+        const h = (startLch.h + hueDiff * t + 360) % 360;
+        interpolatedColor = ColorService.lchToHex(L, C, h);
+        break;
+      }
+
+      default:
+        // Default to HSV for backward compatibility
+        const startHsv = ColorService.hexToHsv(startColor);
+        const endHsv = ColorService.hexToHsv(endColor);
+        let hueDiff = endHsv.h - startHsv.h;
+        if (hueDiff > 180) hueDiff -= 360;
+        if (hueDiff < -180) hueDiff += 360;
+        const h = (startHsv.h + hueDiff * t + 360) % 360;
+        const s = startHsv.s + (endHsv.s - startHsv.s) * t;
+        const v = startHsv.v + (endHsv.v - startHsv.v) * t;
+        interpolatedColor = ColorService.hsvToHex(h, s, v);
+    }
+
+    colors.push(interpolatedColor);
+  }
+
+  return colors;
+}
+
+/**
  * Handles the /gradient command
  */
 export async function handleGradientCommand(
@@ -78,10 +196,14 @@ export async function handleGradientCommand(
   const startOption = options.find((opt) => opt.name === 'start_color');
   const endOption = options.find((opt) => opt.name === 'end_color');
   const stepsOption = options.find((opt) => opt.name === 'steps');
+  const colorSpaceOption = options.find((opt) => opt.name === 'color_space');
+  const matchingOption = options.find((opt) => opt.name === 'matching');
 
   const startInput = startOption?.value as string | undefined;
   const endInput = endOption?.value as string | undefined;
   const stepCount = (stepsOption?.value as number) || 6;
+  const colorSpace = (colorSpaceOption?.value as InterpolationMode) || 'hsv';
+  const matchingMethod = (matchingOption?.value as MatchingMethod) || 'oklab';
 
   // Get translator for validation errors (before deferring)
   const t = userId
@@ -141,6 +263,8 @@ export async function handleGradientCommand(
       startResolved,
       endResolved,
       stepCount,
+      colorSpace,
+      matchingMethod,
       locale,
       logger
     )
@@ -165,6 +289,8 @@ async function processGradientCommand(
   startColor: ResolvedColor,
   endColor: ResolvedColor,
   stepCount: number,
+  colorSpace: InterpolationMode,
+  matchingMethod: MatchingMethod,
   locale: LocaleCode,
   logger?: ExtendedLogger
 ): Promise<void> {
@@ -174,19 +300,27 @@ async function processGradientCommand(
   await initializeLocale(locale);
 
   try {
-    // Generate gradient colors
-    const gradientHexColors = generateGradientColors(startColor.hex, endColor.hex, stepCount);
+    // Generate gradient colors using the specified color space
+    const gradientHexColors = generateGradientColorsMultiSpace(
+      startColor.hex,
+      endColor.hex,
+      stepCount,
+      colorSpace
+    );
 
     // Find closest dye for each color (excluding Facewear)
     const gradientSteps: Array<GradientStep & { dye?: Dye; distance: number }> = [];
 
     for (const hex of gradientHexColors) {
-      // Find closest dye, iterating until we find a non-Facewear dye
+      // Find closest dye using the specified matching method, iterating until we find a non-Facewear dye
       let closestDye: Dye | null = null;
       const excludeIds: number[] = [];
 
       for (let attempt = 0; attempt < 10; attempt++) {
-        const candidate = dyeService.findClosestDye(hex, excludeIds);
+        const candidate = dyeService.findClosestDye(hex, {
+          excludeIds,
+          matchingMethod,
+        });
         if (!candidate) break;
 
         if (candidate.category !== 'Facewear') {
@@ -212,11 +346,13 @@ async function processGradientCommand(
       });
     }
 
-    // Generate SVG (800x200)
+    // Generate SVG (800x200) with localized labels
     const svg = generateGradientBar({
       steps: gradientSteps,
       width: 800,
       height: 200,
+      startLabel: t.t('gradient.start') || 'START',
+      endLabel: t.t('gradient.end') || 'END',
     });
 
     // Render to PNG
@@ -257,6 +393,12 @@ async function processGradientCommand(
       ? `${endEmojiPrefix}**${localizedEndName}** (\`${endColor.hex.toUpperCase()}\`)`
       : `\`${endColor.hex.toUpperCase()}\``;
 
+    // Build color space label (uppercase for display)
+    const colorSpaceLabel = colorSpace.toUpperCase();
+    const matchingLabel = matchingMethod === 'ciede2000' ? 'CIEDE2000' :
+      matchingMethod === 'cie76' ? 'CIE76' :
+      matchingMethod.toUpperCase();
+
     // Send follow-up with image
     await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [
@@ -265,6 +407,7 @@ async function processGradientCommand(
           description: [
             `**${t.t('gradient.startColor')}:** ${startText}`,
             `**${t.t('gradient.endColor')}:** ${endText}`,
+            `**${t.t('gradient.colorSpace') || 'Color Space'}:** ${colorSpaceLabel} • **${t.t('gradient.matching') || 'Matching'}:** ${matchingLabel}`,
             '',
             `**${t.t('extractor.topMatches', { count: stepCount })}:**`,
             dyeLines,

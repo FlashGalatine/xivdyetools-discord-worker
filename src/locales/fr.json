@@ -166,7 +166,11 @@
     "endColor": "Fin",
     "steps": "{count} étapes",
     "gradientFrom": "Dégradé de {start} à {end}",
-    "description": "Créez des transitions de couleur fluides entre deux couleurs"
+    "description": "Créez des transitions de couleur fluides entre deux couleurs",
+    "start": "DÉBUT",
+    "end": "FIN",
+    "colorSpace": "Espace colorimétrique",
+    "matching": "Correspondance"
   },
   "harmony": {
     "title": "Harmonie {type}",

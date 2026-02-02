@@ -166,7 +166,11 @@
     "endColor": "끝",
     "steps": "{count}단계",
     "gradientFrom": "{start}에서 {end}까지 그라데이션",
-    "description": "두 색상 사이의 부드러운 색상 전환 생성"
+    "description": "두 색상 사이의 부드러운 색상 전환 생성",
+    "start": "시작",
+    "end": "끝",
+    "colorSpace": "색 공간",
+    "matching": "매칭"
   },
   "harmony": {
     "title": "{type} 하모니",

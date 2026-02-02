@@ -32,3 +32,7 @@ coverage/
 
 # TypeScript cache
 *.tsbuildinfo
+
+# CJK fonts (too large for git, download separately)
+# See README.md for setup instructions
+src/fonts/NotoSans*.ttf

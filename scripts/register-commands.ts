@@ -235,9 +235,32 @@ const commands = [
         min_value: 2,
         max_value: 10,
       },
-
-      // TODO: Add matching method option in Phase 3
-      // TODO: Add market option in Phase 3
+      {
+        name: 'color_space',
+        description: 'Color interpolation mode for gradient',
+        type: OptionType.STRING,
+        required: false,
+        choices: [
+          { name: 'HSV - Vibrant hue transitions (default)', value: 'hsv' },
+          { name: 'OKLCH - Modern perceptual', value: 'oklch' },
+          { name: 'LAB - Perceptually uniform', value: 'lab' },
+          { name: 'LCH - Cylindrical perceptual', value: 'lch' },
+          { name: 'RGB - Linear blending', value: 'rgb' },
+        ],
+      },
+      {
+        name: 'matching',
+        description: 'Algorithm for finding closest dyes',
+        type: OptionType.STRING,
+        required: false,
+        choices: [
+          { name: 'OKLAB - Modern perceptual (default)', value: 'oklab' },
+          { name: 'CIEDE2000 - Industry standard', value: 'ciede2000' },
+          { name: 'CIE76 - CIELAB distance', value: 'cie76' },
+          { name: 'HyAB - Hybrid distance', value: 'hyab' },
+          { name: 'RGB - Simple Euclidean', value: 'rgb' },
+        ],
+      },
     ],
   },
 

@@ -8,6 +8,18 @@
  * - Space Grotesk: Headers (variable weight 300-700)
  * - Onest: Body text, labels (variable weight 100-900)
  * - Habibi: Hex codes (static, regular weight only)
+ *
+ * CJK fonts (for Japanese/Korean/Chinese support):
+ * - Noto Sans CJK SC: Pan-CJK font supporting Japanese, Korean, and Chinese
+ *
+ * To enable CJK support:
+ * 1. Download Noto Sans CJK SC from Google Fonts:
+ *    https://fonts.google.com/noto/specimen/Noto+Sans+SC
+ * 2. Extract NotoSansSC-Regular.ttf (or use the variable font)
+ * 3. Place it in src/fonts/NotoSansSC-Regular.ttf
+ * 4. Uncomment the CJK import below and rebuild
+ *
+ * Note: The CJK font adds ~4-6MB to the Worker bundle size.
  */
 
 // Static font imports - wrangler bundles these as ArrayBuffer at build time
@@ -18,8 +30,20 @@ import onestData from '../fonts/Onest-VariableFont_wght.ttf';
 // @ts-expect-error - Binary imports are handled by wrangler bundler
 import habibiData from '../fonts/Habibi-Regular.ttf';
 
+// CJK font import - uncomment after adding the font file
+// @ts-expect-error - Binary imports are handled by wrangler bundler
+// import notoSansCjkData from '../fonts/NotoSansSC-Regular.ttf';
+const notoSansCjkData: ArrayBuffer | null = null; // Set to imported data when available
+
 // Cache font buffers to avoid repeated conversions
 let fontBuffersCache: Uint8Array[] | null = null;
+
+/**
+ * Check if CJK font is available
+ */
+export function hasCjkFont(): boolean {
+  return notoSansCjkData !== null;
+}
 
 /**
  * Returns font file data as Uint8Array buffers for resvg-wasm.
@@ -40,12 +64,18 @@ export function getFontBuffers(): Uint8Array[] {
     return fontBuffersCache;
   }
 
-  fontBuffersCache = [
+  const buffers: Uint8Array[] = [
     new Uint8Array(spaceGroteskData),
     new Uint8Array(onestData),
     new Uint8Array(habibiData),
   ];
 
+  // Add CJK font if available
+  if (notoSansCjkData) {
+    buffers.push(new Uint8Array(notoSansCjkData));
+  }
+
+  fontBuffersCache = buffers;
   return fontBuffersCache;
 }
 
@@ -60,4 +90,20 @@ export const FONT_FAMILIES = {
   body: 'Onest',
   /** Habibi - for hex codes and monospace-like text */
   mono: 'Habibi',
+  /** Noto Sans SC - for CJK (Japanese/Korean/Chinese) text */
+  cjk: 'Noto Sans SC',
 } as const;
+
+/**
+ * Get a font-family string with CJK fallback for text that may contain
+ * Japanese, Korean, or Chinese characters.
+ *
+ * @param primaryFont - The primary font to use (e.g., 'Onest')
+ * @returns A font-family string with CJK fallback if available
+ */
+export function getFontWithCjkFallback(primaryFont: string): string {
+  if (!hasCjkFont()) {
+    return primaryFont;
+  }
+  return `${primaryFont}, ${FONT_FAMILIES.cjk}`;
+}

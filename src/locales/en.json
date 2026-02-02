@@ -164,9 +164,13 @@
     "title": "Color Gradient",
     "startColor": "Start",
     "endColor": "End",
+    "start": "START",
+    "end": "END",
     "steps": "{count} Steps",
     "gradientFrom": "Gradient from {start} to {end}",
-    "description": "Create smooth color transitions between two colors"
+    "description": "Create smooth color transitions between two colors",
+    "colorSpace": "Color Space",
+    "matching": "Matching"
   },
   "harmony": {
     "title": "{type} Harmony",

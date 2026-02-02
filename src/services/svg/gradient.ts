@@ -35,6 +35,10 @@ export interface GradientBarOptions {
   showTicks?: boolean;
   /** Show START/END labels */
   showEndLabels?: boolean;
+  /** Localized "START" label text (default: "START") */
+  startLabel?: string;
+  /** Localized "END" label text (default: "END") */
+  endLabel?: string;
 }
 
 /**
@@ -47,6 +51,8 @@ export function generateGradientBar(options: GradientBarOptions): string {
     height = 200,
     showTicks = true,
     showEndLabels = true,
+    startLabel = 'START',
+    endLabel = 'END',
   } = options;
 
   if (steps.length < 2) {
@@ -93,13 +99,14 @@ export function generateGradientBar(options: GradientBarOptions): string {
     );
 
     // Dye name below hex (if available)
+    // Uses primaryCjk font for CJK language support (Japanese/Korean/Chinese dye names)
     if (step.dyeName) {
       const truncatedName = truncateName(step.dyeName, 12);
       elements.push(
         text(centerX, nameLabelY, truncatedName, {
           fill: THEME.text,
           fontSize: 10,
-          fontFamily: FONTS.primary,
+          fontFamily: FONTS.primaryCjk,
           textAnchor: 'middle',
         })
       );
@@ -119,22 +126,23 @@ export function generateGradientBar(options: GradientBarOptions): string {
     }
   }
 
-  // Draw START/END labels
+  // Draw START/END labels (localized)
+  // Uses primaryCjk font for CJK language support (e.g., 開始/終了 in Japanese)
   if (showEndLabels) {
     elements.push(
-      text(padding + stepWidth / 2, endLabelY, 'START', {
+      text(padding + stepWidth / 2, endLabelY, startLabel, {
         fill: THEME.textMuted,
         fontSize: 10,
-        fontFamily: FONTS.primary,
+        fontFamily: FONTS.primaryCjk,
         textAnchor: 'middle',
         fontWeight: 'bold',
       })
     );
     elements.push(
-      text(padding + (steps.length - 0.5) * stepWidth, endLabelY, 'END', {
+      text(padding + (steps.length - 0.5) * stepWidth, endLabelY, endLabel, {
         fill: THEME.textMuted,
         fontSize: 10,
-        fontFamily: FONTS.primary,
+        fontFamily: FONTS.primaryCjk,
         textAnchor: 'middle',
         fontWeight: 'bold',
       })

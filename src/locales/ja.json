@@ -164,9 +164,13 @@
     "title": "カラーグラデーション",
     "startColor": "開始",
     "endColor": "終了",
+    "start": "開始",
+    "end": "終了",
     "steps": "{count}ステップ",
     "gradientFrom": "{start}から{end}へのグラデーション",
-    "description": "2色間のスムーズな色の変化を作成"
+    "description": "2色間のスムーズな色の変化を作成",
+    "colorSpace": "色空間",
+    "matching": "マッチング"
   },
   "harmony": {
     "title": "{type}ハーモニー",

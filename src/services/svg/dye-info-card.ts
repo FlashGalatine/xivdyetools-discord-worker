@@ -139,11 +139,12 @@ export function generateDyeInfoCard(options: DyeInfoCardOptions): string {
   elements.push(rect(0, SWATCH_HEIGHT - 16, width, 16, dye.hex));
 
   // Dye name on swatch
+  // Uses headerCjk for CJK language support (Japanese/Korean/Chinese dye names)
   elements.push(
     text(PADDING, SWATCH_HEIGHT - 50, escapeXml(displayName), {
       fill: textColor,
       fontSize: 28,
-      fontFamily: FONTS.header,
+      fontFamily: FONTS.headerCjk,
       fontWeight: 600,
     })
   );
@@ -156,11 +157,12 @@ export function generateDyeInfoCard(options: DyeInfoCardOptions): string {
       ry: 6,
     })
   );
+  // Category badge text - uses CJK font for localized category names
   elements.push(
     text(width - PADDING - categoryWidth / 2, SWATCH_HEIGHT - 28, displayCategory, {
       fill: textColor,
       fontSize: 12,
-      fontFamily: FONTS.primary,
+      fontFamily: FONTS.primaryCjk,
       fontWeight: 500,
       textAnchor: 'middle',
     })
