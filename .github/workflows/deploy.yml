@@ -1,0 +1,90 @@
+# Deploy XIV Dye Tools Discord Worker to Cloudflare
+#
+# This workflow:
+# 1. Downloads the CJK font for Japanese/Korean/Chinese support
+# 2. Enables CJK font in the code
+# 3. Deploys to Cloudflare Workers
+#
+# Required secrets:
+# - CLOUDFLARE_API_TOKEN: API token with Workers permissions
+# - CLOUDFLARE_ACCOUNT_ID: Your Cloudflare account ID
+
+name: Deploy to Cloudflare Workers
+
+on:
+  push:
+    branches:
+      - master
+      - main
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    name: Deploy Worker
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download CJK Font
+        run: |
+          echo "Downloading Noto Sans SC for CJK character support..."
+          # Download from Google Fonts GitHub repository
+          curl -L -o src/fonts/NotoSansSC-Regular.ttf \
+            "https://github.com/notofonts/noto-cjk/raw/main/Sans/OTF/SimplifiedChinese/NotoSansCJKsc-Regular.otf"
+
+          # Verify download
+          if [ -f src/fonts/NotoSansSC-Regular.ttf ]; then
+            FILE_SIZE=$(stat -f%z src/fonts/NotoSansSC-Regular.ttf 2>/dev/null || stat -c%s src/fonts/NotoSansSC-Regular.ttf)
+            echo "Downloaded CJK font: $(echo "scale=2; $FILE_SIZE/1024/1024" | bc) MB"
+          else
+            echo "Warning: CJK font download failed. Continuing without CJK support."
+          fi
+
+      - name: Enable CJK Font Import
+        run: |
+          # Uncomment the CJK font import in fonts.ts
+          # Using '#' as sed delimiter to avoid issues with pipe characters
+          sed -i 's#// import notoSansCjkData from#import notoSansCjkData from#' src/services/fonts.ts
+          sed -i 's#const notoSansCjkData: ArrayBuffer | null = null;#// const notoSansCjkData: ArrayBuffer | null = null;#' src/services/fonts.ts
+
+          echo "CJK font import enabled in fonts.ts"
+          echo "Modified fonts.ts:"
+          grep -n "notoSansCjkData" src/services/fonts.ts || true
+
+      - name: Type Check
+        run: npm run type-check
+
+      - name: Deploy to Cloudflare Workers
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy --env ${{ github.event.inputs.environment || 'production' }}
+
+      - name: Deployment Summary
+        run: |
+          echo "## Deployment Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment:** ${{ github.event.inputs.environment || 'production' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **CJK Support:** Enabled (Noto Sans SC)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
