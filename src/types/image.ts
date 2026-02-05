@@ -90,6 +90,8 @@ export interface ExtractedPaletteEntry {
  * Match quality based on color distance
  */
 export interface MatchQuality {
+  /** Locale key for translation lookup (e.g., 'perfect', 'excellent') */
+  key: string;
   /** Human-readable label */
   label: string;
   /** Short label for display */
@@ -111,11 +113,11 @@ export interface MatchQuality {
  * - Perceptually similar: ~25-30
  */
 export const MATCH_QUALITIES: MatchQuality[] = [
-  { label: 'Perfect Match', shortLabel: 'PERFECT', maxDistance: 0 },
-  { label: 'Excellent Match', shortLabel: 'EXCELLENT', maxDistance: 10 },
-  { label: 'Good Match', shortLabel: 'GOOD', maxDistance: 25 },
-  { label: 'Fair Match', shortLabel: 'FAIR', maxDistance: 50 },
-  { label: 'Approximate Match', shortLabel: 'APPROX', maxDistance: Infinity },
+  { key: 'perfect', label: 'Perfect Match', shortLabel: 'PERFECT', maxDistance: 0 },
+  { key: 'excellent', label: 'Excellent Match', shortLabel: 'EXCELLENT', maxDistance: 10 },
+  { key: 'good', label: 'Good Match', shortLabel: 'GOOD', maxDistance: 25 },
+  { key: 'fair', label: 'Fair Match', shortLabel: 'FAIR', maxDistance: 50 },
+  { key: 'approximate', label: 'Approximate Match', shortLabel: 'APPROX', maxDistance: Infinity },
 ];
 
 /**

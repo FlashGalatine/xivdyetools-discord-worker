@@ -327,6 +327,19 @@
       "stats": "使用統計（権限者のみ）"
     }
   },
+  "paletteGrid": {
+    "extracted": "抽出色",
+    "matchedDye": "マッチしたカララント",
+    "ofImage": "（画像の割合）",
+    "noColors": "画像から色を抽出できませんでした",
+    "quality": {
+      "perfect": "完璧",
+      "excellent": "優秀",
+      "good": "良好",
+      "fair": "まずまず",
+      "approximate": "近似"
+    }
+  },
   "matchImage": {
     "missingImage": "分析する画像を添付してください。",
     "invalidAttachment": "添付された画像が見つかりませんでした。",

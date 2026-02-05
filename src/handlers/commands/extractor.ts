@@ -42,7 +42,7 @@ import {
   getLocalizedDyeName,
   type LocaleCode,
 } from '../../services/i18n.js';
-import { generatePaletteGrid, type PaletteEntry } from '../../services/svg/palette-grid.js';
+import { generatePaletteGrid, type PaletteEntry, type PaletteGridLabels } from '../../services/svg/palette-grid.js';
 import { renderSvgToPng } from '../../services/svg/renderer.js';
 import { validateAndFetchImage, processImageForExtraction } from '../../services/image/index.js';
 import { getMatchQuality as getImageMatchQuality } from '../../types/image.js';
@@ -528,21 +528,37 @@ async function processImageExtraction(
       dominance: match.dominance,
     }));
 
-    // Step 6: Generate SVG
+    // Step 6: Build localized labels for SVG
+    const paletteLabels: PaletteGridLabels = {
+      extracted: t.t('paletteGrid.extracted'),
+      matchedDye: t.t('paletteGrid.matchedDye'),
+      ofImage: t.t('paletteGrid.ofImage'),
+      noColors: t.t('paletteGrid.noColors'),
+      quality: {
+        perfect: t.t('paletteGrid.quality.perfect'),
+        excellent: t.t('paletteGrid.quality.excellent'),
+        good: t.t('paletteGrid.quality.good'),
+        fair: t.t('paletteGrid.quality.fair'),
+        approximate: t.t('paletteGrid.quality.approximate'),
+      },
+    };
+
+    // Step 7: Generate SVG
     const svg = generatePaletteGrid({
       entries,
       title: colorCount === 1
         ? t.t('matchImage.colorMatch')
         : t.t('matchImage.colorPalette', { count: colorCount }),
+      labels: paletteLabels,
     });
 
-    // Step 7: Render to PNG
+    // Step 8: Render to PNG
     const pngBuffer = await renderSvgToPng(svg, { scale: 2 });
 
-    // Step 8: Build description
+    // Step 9: Build description
     const description = buildImageMatchDescription(matches, t);
 
-    // Step 9: Send response
+    // Step 10: Send response
     await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [
         {

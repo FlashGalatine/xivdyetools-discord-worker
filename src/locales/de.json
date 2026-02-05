@@ -327,6 +327,19 @@
       "stats": "Nutzungsstatistiken (nur autorisiert)"
     }
   },
+  "paletteGrid": {
+    "extracted": "EXTRAHIERT",
+    "matchedDye": "PASSENDER FARBSTOFF",
+    "ofImage": "des Bildes",
+    "noColors": "Keine Farben aus dem Bild extrahiert",
+    "quality": {
+      "perfect": "PERFEKT",
+      "excellent": "AUSGEZEICHNET",
+      "good": "GUT",
+      "fair": "AKZEPTABEL",
+      "approximate": "UNGEFÄHR"
+    }
+  },
   "matchImage": {
     "missingImage": "Bitte hänge ein Bild zur Analyse an.",
     "invalidAttachment": "Angehängtes Bild konnte nicht gefunden werden.",

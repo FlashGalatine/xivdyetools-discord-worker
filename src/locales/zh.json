@@ -327,6 +327,19 @@
       "stats": "使用统计（仅限授权）"
     }
   },
+  "paletteGrid": {
+    "extracted": "提取颜色",
+    "matchedDye": "匹配染剂",
+    "ofImage": "（图像占比）",
+    "noColors": "无法从图像中提取颜色",
+    "quality": {
+      "perfect": "完美",
+      "excellent": "优秀",
+      "good": "良好",
+      "fair": "一般",
+      "approximate": "近似"
+    }
+  },
   "matchImage": {
     "missingImage": "请附加一张图片进行分析。",
     "invalidAttachment": "找不到附加的图片。",

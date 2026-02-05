@@ -327,6 +327,19 @@
       "stats": "Usage statistics (authorized only)"
     }
   },
+  "paletteGrid": {
+    "extracted": "EXTRACTED",
+    "matchedDye": "MATCHED DYE",
+    "ofImage": "of image",
+    "noColors": "No colors extracted from image",
+    "quality": {
+      "perfect": "PERFECT",
+      "excellent": "EXCELLENT",
+      "good": "GOOD",
+      "fair": "FAIR",
+      "approximate": "APPROX"
+    }
+  },
   "matchImage": {
     "missingImage": "Please attach an image to analyze.",
     "invalidAttachment": "Could not find the attached image.",

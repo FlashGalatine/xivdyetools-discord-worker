@@ -2,12 +2,12 @@
  * Palette Grid SVG Generator
  *
  * Generates a visual comparison of extracted colors to matched FFXIV dyes.
- * Used by the /match_image command to display color extraction results.
+ * Used by the /extractor image command to display color extraction results.
  *
  * Layout:
  * +----------------------------------------------------------+
  * | [Extracted Color] 42%  -->  [Matched Dye] Dalamud Red    |
- * | #B01515                     #AA1111  [EXCELLENT]         |
+ * | #B01515                     #AA1111 Δ8.5     [EXCELLENT] |
  * +----------------------------------------------------------+
  *
  * @module services/svg/palette-grid
@@ -22,7 +22,6 @@ import {
   THEME,
   FONTS,
   escapeXml,
-  getContrastTextColor,
   rgbToHex,
 } from './base.js';
 import { getMatchQuality } from '../../types/image.js';
@@ -46,6 +45,23 @@ export interface PaletteEntry {
 }
 
 /**
+ * Translatable labels for the palette grid SVG.
+ * Pass these from the bot's i18n system to localize the image.
+ */
+export interface PaletteGridLabels {
+  /** Label above extracted color (e.g., "EXTRACTED") */
+  extracted: string;
+  /** Label above matched dye (e.g., "MATCHED DYE") */
+  matchedDye: string;
+  /** Suffix for dominance percentage (e.g., "of image") */
+  ofImage: string;
+  /** Empty state message (e.g., "No colors extracted from image") */
+  noColors: string;
+  /** Quality badge labels keyed by quality key */
+  quality: Record<string, string>;
+}
+
+/**
  * Options for generating the palette grid
  */
 export interface PaletteGridOptions {
@@ -57,6 +73,8 @@ export interface PaletteGridOptions {
   showDistance?: boolean;
   /** Title text (optional) */
   title?: string;
+  /** Translated labels for i18n (defaults to English if omitted) */
+  labels?: PaletteGridLabels;
 }
 
 // ============================================================================
@@ -67,10 +85,25 @@ const DEFAULT_WIDTH = 800;
 const PADDING = 24;
 const ROW_HEIGHT = 100;
 const SWATCH_SIZE = 60;
-const SWATCH_GAP = 32;
 const ARROW_WIDTH = 40;
 const TITLE_HEIGHT = 50;
-const QUALITY_BADGE_WIDTH = 100;
+const QUALITY_BADGE_WIDTH = 90;
+const QUALITY_BADGE_HEIGHT = 22;
+
+/** Default English labels used when no labels are provided */
+const DEFAULT_LABELS: PaletteGridLabels = {
+  extracted: 'EXTRACTED',
+  matchedDye: 'MATCHED DYE',
+  ofImage: 'of image',
+  noColors: 'No colors extracted from image',
+  quality: {
+    perfect: 'PERFECT',
+    excellent: 'EXCELLENT',
+    good: 'GOOD',
+    fair: 'FAIR',
+    approximate: 'APPROX',
+  },
+};
 
 // ============================================================================
 // SVG Generation
@@ -103,10 +136,11 @@ export function generatePaletteGrid(options: PaletteGridOptions): string {
     width = DEFAULT_WIDTH,
     showDistance = true,
     title,
+    labels = DEFAULT_LABELS,
   } = options;
 
   if (entries.length === 0) {
-    return generateEmptyPalette(width);
+    return generateEmptyPalette(width, labels);
   }
 
   // Calculate dimensions
@@ -126,7 +160,7 @@ export function generatePaletteGrid(options: PaletteGridOptions): string {
       text(width / 2, PADDING + 20, title, {
         fill: THEME.text,
         fontSize: 20,
-        fontFamily: FONTS.header,
+        fontFamily: FONTS.headerCjk,
         fontWeight: 600,
         textAnchor: 'middle',
       })
@@ -137,7 +171,7 @@ export function generatePaletteGrid(options: PaletteGridOptions): string {
   const startY = PADDING + titleSpace;
   entries.forEach((entry, index) => {
     const rowY = startY + index * ROW_HEIGHT;
-    elements.push(generatePaletteRow(entry, PADDING, rowY, width - PADDING * 2, showDistance));
+    elements.push(generatePaletteRow(entry, PADDING, rowY, width - PADDING * 2, showDistance, labels));
 
     // Separator line (except after last row)
     if (index < entries.length - 1) {
@@ -165,7 +199,8 @@ function generatePaletteRow(
   x: number,
   y: number,
   width: number,
-  showDistance: boolean
+  showDistance: boolean,
+  labels: PaletteGridLabels
 ): string {
   const elements: string[] = [];
 
@@ -182,7 +217,8 @@ function generatePaletteRow(
     })
   );
 
-  // Left side: Extracted color
+  // ── Left side: Extracted color ──
+
   const extractedX = x + 16;
   const swatchY = y + (ROW_HEIGHT - SWATCH_SIZE) / 2;
 
@@ -199,7 +235,7 @@ function generatePaletteRow(
   // Extracted info (right of swatch)
   const extractedInfoX = extractedX + SWATCH_SIZE + 12;
   elements.push(
-    text(extractedInfoX, y + 36, 'EXTRACTED', {
+    text(extractedInfoX, y + 36, labels.extracted.toUpperCase(), {
       fill: THEME.textMuted,
       fontSize: 10,
       fontFamily: FONTS.primary,
@@ -215,20 +251,23 @@ function generatePaletteRow(
     })
   );
   elements.push(
-    text(extractedInfoX, y + 75, `${entry.dominance}% of image`, {
+    text(extractedInfoX, y + 75, `${entry.dominance}% ${labels.ofImage}`, {
       fill: THEME.textDim,
       fontSize: 11,
       fontFamily: FONTS.primary,
     })
   );
 
-  // Arrow in the middle
+  // ── Arrow in the middle ──
+
   const arrowX = x + width / 2 - ARROW_WIDTH / 2;
   const arrowY = y + ROW_HEIGHT / 2;
   elements.push(generateArrow(arrowX, arrowY, ARROW_WIDTH, THEME.textMuted));
 
-  // Right side: Matched dye
-  const matchedSwatchX = x + width - 16 - SWATCH_SIZE - QUALITY_BADGE_WIDTH - 16;
+  // ── Right side: Matched dye ──
+  // Position swatch right after the arrow area for maximum text room
+
+  const matchedSwatchX = x + width / 2 + ARROW_WIDTH / 2 + 12;
 
   // Matched dye swatch
   elements.push(
@@ -242,8 +281,10 @@ function generatePaletteRow(
 
   // Matched info (right of swatch)
   const matchedInfoX = matchedSwatchX + SWATCH_SIZE + 12;
+  const rowRightEdge = x + width - 16;
+
   elements.push(
-    text(matchedInfoX, y + 36, 'MATCHED DYE', {
+    text(matchedInfoX, y + 36, labels.matchedDye.toUpperCase(), {
       fill: THEME.textMuted,
       fontSize: 10,
       fontFamily: FONTS.primary,
@@ -259,7 +300,7 @@ function generatePaletteRow(
     })
   );
 
-  // Show hex and optionally distance
+  // Bottom line: hex + distance on left, quality badge on right
   const distanceText = showDistance ? `  Δ${entry.distance.toFixed(1)}` : '';
   elements.push(
     text(matchedInfoX, y + 75, `${matchedHex.toUpperCase()}${distanceText}`, {
@@ -269,10 +310,11 @@ function generatePaletteRow(
     })
   );
 
-  // Quality badge (right edge)
-  const badgeX = x + width - QUALITY_BADGE_WIDTH - 8;
-  const badgeY = y + (ROW_HEIGHT - 28) / 2;
-  elements.push(generateQualityBadge(quality.shortLabel, badgeX, badgeY, entry.distance));
+  // Quality badge (right-aligned on the bottom line)
+  const badgeX = rowRightEdge - QUALITY_BADGE_WIDTH;
+  const badgeY = y + 75 - QUALITY_BADGE_HEIGHT + 4; // vertically center with hex text baseline
+  const qualityLabel = labels.quality[quality.key] ?? quality.shortLabel;
+  elements.push(generateQualityBadge(qualityLabel, badgeX, badgeY, entry.distance));
 
   return elements.join('\n');
 }
@@ -321,11 +363,11 @@ function generateQualityBadge(
   }
 
   return `<g>
-    ${rect(x, y, QUALITY_BADGE_WIDTH, 28, bgColor, { rx: 4, ry: 4 })}
-    ${text(x + QUALITY_BADGE_WIDTH / 2, y + 18, label, {
+    ${rect(x, y, QUALITY_BADGE_WIDTH, QUALITY_BADGE_HEIGHT, bgColor, { rx: 4, ry: 4 })}
+    ${text(x + QUALITY_BADGE_WIDTH / 2, y + QUALITY_BADGE_HEIGHT - 6, label, {
       fill: textColor,
       fontSize: 11,
-      fontFamily: FONTS.primary,
+      fontFamily: FONTS.primaryCjk,
       fontWeight: 600,
       textAnchor: 'middle',
     })}
@@ -335,13 +377,13 @@ function generateQualityBadge(
 /**
  * Generate an empty palette message
  */
-function generateEmptyPalette(width: number): string {
+function generateEmptyPalette(width: number, labels: PaletteGridLabels): string {
   const height = 120;
   const elements: string[] = [];
 
   elements.push(rect(0, 0, width, height, THEME.background, { rx: 12, ry: 12 }));
   elements.push(
-    text(width / 2, height / 2, 'No colors extracted from image', {
+    text(width / 2, height / 2, labels.noColors, {
       fill: THEME.textMuted,
       fontSize: 16,
       fontFamily: FONTS.primary,
