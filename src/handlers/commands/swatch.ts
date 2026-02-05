@@ -34,7 +34,6 @@ import {
 import {
   VALID_CLANS,
   CLANS_BY_RACE,
-  MATCHING_METHODS,
   type MatchingMethod,
   type Gender,
 } from '../../types/preferences.js';
@@ -78,19 +77,40 @@ type ColorType =
   | 'facepaint_light';
 
 /**
- * Color type metadata for display and validation
+ * Color type metadata for validation
  */
-const COLOR_TYPES: Record<ColorType, { name: string; emoji: string; maxIndex: number; needsClan: boolean }> = {
-  skin: { name: 'Skin Tone', emoji: '👤', maxIndex: STANDARD_MAX_INDEX, needsClan: true },
-  hair: { name: 'Hair Color', emoji: '💇', maxIndex: STANDARD_MAX_INDEX, needsClan: true },
-  eye: { name: 'Eye Color', emoji: '👁️', maxIndex: STANDARD_MAX_INDEX, needsClan: false },
-  highlight: { name: 'Hair Highlight', emoji: '✨', maxIndex: STANDARD_MAX_INDEX, needsClan: false },
-  lip_dark: { name: 'Lip Color (Dark)', emoji: '💋', maxIndex: LIP_MAX_INDEX, needsClan: false },
-  lip_light: { name: 'Lip Color (Light)', emoji: '💋', maxIndex: LIP_MAX_INDEX, needsClan: false },
-  tattoo: { name: 'Tattoo/Limbal Ring', emoji: '🎭', maxIndex: STANDARD_MAX_INDEX, needsClan: false },
-  facepaint_dark: { name: 'Face Paint (Dark)', emoji: '🎨', maxIndex: LIP_MAX_INDEX, needsClan: false },
-  facepaint_light: { name: 'Face Paint (Light)', emoji: '🎨', maxIndex: LIP_MAX_INDEX, needsClan: false },
+const COLOR_TYPES: Record<ColorType, { emoji: string; maxIndex: number; needsClan: boolean }> = {
+  skin: { emoji: '👤', maxIndex: STANDARD_MAX_INDEX, needsClan: true },
+  hair: { emoji: '💇', maxIndex: STANDARD_MAX_INDEX, needsClan: true },
+  eye: { emoji: '👁️', maxIndex: STANDARD_MAX_INDEX, needsClan: false },
+  highlight: { emoji: '✨', maxIndex: STANDARD_MAX_INDEX, needsClan: false },
+  lip_dark: { emoji: '💋', maxIndex: LIP_MAX_INDEX, needsClan: false },
+  lip_light: { emoji: '💋', maxIndex: LIP_MAX_INDEX, needsClan: false },
+  tattoo: { emoji: '🎭', maxIndex: STANDARD_MAX_INDEX, needsClan: false },
+  facepaint_dark: { emoji: '🎨', maxIndex: LIP_MAX_INDEX, needsClan: false },
+  facepaint_light: { emoji: '🎨', maxIndex: LIP_MAX_INDEX, needsClan: false },
 };
+
+/**
+ * Maps ColorType code values to locale key paths
+ * (handles mismatches: eye→eyes, lip_dark→lips_dark, lip_light→lips_light)
+ */
+const COLOR_TYPE_LOCALE_KEYS: Record<ColorType, string> = {
+  skin: 'swatch.colorTypes.skin',
+  hair: 'swatch.colorTypes.hair',
+  eye: 'swatch.colorTypes.eyes',
+  highlight: 'swatch.colorTypes.highlight',
+  lip_dark: 'swatch.colorTypes.lips_dark',
+  lip_light: 'swatch.colorTypes.lips_light',
+  tattoo: 'swatch.colorTypes.tattoo',
+  facepaint_dark: 'swatch.colorTypes.facepaint_dark',
+  facepaint_light: 'swatch.colorTypes.facepaint_light',
+};
+
+/** Get the localized display name for a color type */
+function getLocalizedColorTypeName(type: ColorType, t: Translator): string {
+  return t.t(COLOR_TYPE_LOCALE_KEYS[type]);
+}
 
 /**
  * Map from preference clan names to CharacterColorService SubRace names
@@ -148,7 +168,7 @@ export async function handleSwatchCommand(
 
   if (!subcommandOption) {
     return messageResponse({
-      embeds: [errorEmbed(t.t('common.error'), 'No subcommand provided')],
+      embeds: [errorEmbed(t.t('common.error'), t.t('errors.missingSubcommand'))],
       flags: 64,
     });
   }
@@ -165,7 +185,7 @@ export async function handleSwatchCommand(
 
     default:
       return messageResponse({
-        embeds: [errorEmbed(t.t('common.error'), `Unknown subcommand: ${subcommand}`)],
+        embeds: [errorEmbed(t.t('common.error'), t.t('errors.unknownSubcommand', { name: subcommand }))],
         flags: 64,
       });
   }
@@ -205,7 +225,7 @@ async function handleColorSubcommand(
   // Validate required parameters
   if (!colorType || colorIndex === undefined) {
     return messageResponse({
-      embeds: [errorEmbed(t.t('common.error'), 'Both `type` and `index` are required.')],
+      embeds: [errorEmbed(t.t('common.error'), t.t('swatch.errors.missingTypeAndIndex'))],
       flags: 64,
     });
   }
@@ -214,7 +234,7 @@ async function handleColorSubcommand(
   if (!COLOR_TYPES[colorType]) {
     const validTypes = Object.keys(COLOR_TYPES).map((k) => `\`${k}\``).join(', ');
     return messageResponse({
-      embeds: [errorEmbed(t.t('common.error'), `Invalid color type: \`${colorType}\`\n\nValid types: ${validTypes}`)],
+      embeds: [errorEmbed(t.t('common.error'), t.t('swatch.errors.invalidColorType', { type: colorType, validTypes }))],
       flags: 64,
     });
   }
@@ -226,7 +246,7 @@ async function handleColorSubcommand(
     return messageResponse({
       embeds: [errorEmbed(
         t.t('common.error'),
-        `Invalid index for ${typeInfo.name}. Must be between 0 and ${typeInfo.maxIndex}.`
+        t.t('swatch.errors.invalidIndex', { typeName: getLocalizedColorTypeName(colorType, t), min: 0, max: typeInfo.maxIndex })
       )],
       flags: 64,
     });
@@ -254,8 +274,7 @@ async function handleColorSubcommand(
       return messageResponse({
         embeds: [errorEmbed(
           t.t('common.error'),
-          `${typeInfo.name} requires ${missing.join(' and ')} to be specified.\n\n` +
-          `Either provide it as a parameter or set your default with \`/preferences set clan <clan>\` and \`/preferences set gender <gender>\`.`
+          t.t('swatch.errors.clanGenderRequired', { typeName: getLocalizedColorTypeName(colorType, t), missing: missing.join(' & ') })
         )],
         flags: 64,
       });
@@ -269,7 +288,7 @@ async function handleColorSubcommand(
       return messageResponse({
         embeds: [errorEmbed(
           t.t('common.error'),
-          `Invalid clan: \`${clan}\`\n\nValid clans:\n${clanList}`
+          t.t('swatch.errors.invalidClan', { clan, clanList })
         )],
         flags: 64,
       });
@@ -325,7 +344,7 @@ async function handleGridSubcommand(
   // Validate required parameters
   if (!colorType || row === undefined || col === undefined) {
     return messageResponse({
-      embeds: [errorEmbed(t.t('common.error'), 'Parameters `type`, `row`, and `col` are all required.')],
+      embeds: [errorEmbed(t.t('common.error'), t.t('swatch.errors.missingGridParams'))],
       flags: 64,
     });
   }
@@ -334,45 +353,45 @@ async function handleGridSubcommand(
   if (!COLOR_TYPES[colorType]) {
     const validTypes = Object.keys(COLOR_TYPES).map((k) => `\`${k}\``).join(', ');
     return messageResponse({
-      embeds: [errorEmbed(t.t('common.error'), `Invalid color type: \`${colorType}\`\n\nValid types: ${validTypes}`)],
+      embeds: [errorEmbed(t.t('common.error'), t.t('swatch.errors.invalidColorType', { type: colorType, validTypes }))],
       flags: 64,
     });
   }
 
   const typeInfo = COLOR_TYPES[colorType];
-  const maxRow = Math.floor(typeInfo.maxIndex / GRID_COLUMNS);
+  const maxRow = Math.floor(typeInfo.maxIndex / GRID_COLUMNS) + 1; // 1-based
 
-  // Validate row
-  if (row < 0 || row > maxRow) {
+  // Validate row (1-based)
+  if (row < 1 || row > maxRow) {
     return messageResponse({
       embeds: [errorEmbed(
         t.t('common.error'),
-        `Invalid row for ${typeInfo.name}. Must be between 0 and ${maxRow}.`
+        t.t('swatch.errors.invalidRow', { typeName: getLocalizedColorTypeName(colorType, t), min: 1, max: maxRow })
       )],
       flags: 64,
     });
   }
 
-  // Validate column
-  if (col < 0 || col >= GRID_COLUMNS) {
+  // Validate column (1-based)
+  if (col < 1 || col > GRID_COLUMNS) {
     return messageResponse({
       embeds: [errorEmbed(
         t.t('common.error'),
-        `Invalid column. Must be between 0 and ${GRID_COLUMNS - 1}.`
+        t.t('swatch.errors.invalidColumn', { min: 1, max: GRID_COLUMNS })
       )],
       flags: 64,
     });
   }
 
-  // Convert grid position to index
-  const colorIndex = row * GRID_COLUMNS + col;
+  // Convert 1-based grid position to 0-based index
+  const colorIndex = (row - 1) * GRID_COLUMNS + (col - 1);
 
   // Validate calculated index
   if (colorIndex > typeInfo.maxIndex) {
     return messageResponse({
       embeds: [errorEmbed(
         t.t('common.error'),
-        `Grid position (${row}, ${col}) is out of range for ${typeInfo.name}.`
+        t.t('swatch.errors.gridOutOfRange', { row, col, typeName: getLocalizedColorTypeName(colorType, t) })
       )],
       flags: 64,
     });
@@ -400,8 +419,7 @@ async function handleGridSubcommand(
       return messageResponse({
         embeds: [errorEmbed(
           t.t('common.error'),
-          `${typeInfo.name} requires ${missing.join(' and ')} to be specified.\n\n` +
-          `Either provide it as a parameter or set your default with \`/preferences set clan <clan>\` and \`/preferences set gender <gender>\`.`
+          t.t('swatch.errors.clanGenderRequired', { typeName: getLocalizedColorTypeName(colorType, t), missing: missing.join(' & ') })
         )],
         flags: 64,
       });
@@ -415,7 +433,7 @@ async function handleGridSubcommand(
       return messageResponse({
         embeds: [errorEmbed(
           t.t('common.error'),
-          `Invalid clan: \`${clan}\`\n\nValid clans:\n${clanList}`
+          t.t('swatch.errors.invalidClan', { clan, clanList })
         )],
         flags: 64,
       });
@@ -461,7 +479,7 @@ async function processSwatchMatch(
 
     if (!characterColor) {
       return messageResponse({
-        embeds: [errorEmbed(t.t('common.error'), 'Could not find the specified character color.')],
+        embeds: [errorEmbed(t.t('common.error'), t.t('swatch.errors.colorNotFound'))],
         flags: 64,
       });
     }
@@ -587,8 +605,9 @@ function buildSwatchResponse(
   t: Translator
 ): Response {
   const typeInfo = COLOR_TYPES[colorType];
-  const row = Math.floor(characterColor.index / GRID_COLUMNS);
-  const col = characterColor.index % GRID_COLUMNS;
+  const colorTypeName = getLocalizedColorTypeName(colorType, t);
+  const row = Math.floor(characterColor.index / GRID_COLUMNS) + 1; // 1-based
+  const col = (characterColor.index % GRID_COLUMNS) + 1; // 1-based
 
   // Format match quality labels
   const matchLines = matches.map((match, i) => {
@@ -603,23 +622,27 @@ function buildSwatchResponse(
 
   // Build description
   const description: string[] = [
-    `**${typeInfo.emoji} ${typeInfo.name}**`,
-    `Index: \`${characterColor.index}\` (Row ${row}, Col ${col})`,
-    `Color: \`${characterColor.hex.toUpperCase()}\``,
+    `**${typeInfo.emoji} ${colorTypeName}**`,
+    `${t.t('swatch.index')}: \`${characterColor.index}\` (${t.t('swatch.row')} ${row}, ${t.t('swatch.column')} ${col})`,
+    `${t.t('common.color')}: \`${characterColor.hex.toUpperCase()}\``,
   ];
 
   // Add clan/gender for race-specific colors
   if (typeInfo.needsClan && clan && gender) {
-    description.push(`Clan: **${clan}** • Gender: **${gender}**`);
+    const genderDisplay = gender === 'Male' ? t.t('swatch.genders.male') : t.t('swatch.genders.female');
+    description.push(`${t.t('swatch.clan')}: **${clan}** • ${t.t('swatch.gender')}: **${genderDisplay}**`);
   }
 
-  // Add matching method
-  const methodInfo = MATCHING_METHODS.find((m) => m.value === matchingMethod);
-  const methodDisplay = methodInfo ? methodInfo.name : matchingMethod;
-  description.push(`Matching: **${methodDisplay}**`);
+  // Add matching method (localized)
+  const methodDisplay = t.t(`matching.methods.${matchingMethod}`) || matchingMethod;
+  description.push(`${t.t('swatch.matching')}: **${methodDisplay}**`);
 
   description.push('');
-  description.push(`**Closest Dye Match${matches.length > 1 ? 'es' : ''}:**`);
+  description.push(
+    matches.length > 1
+      ? `**${t.t('swatch.topMatches', { count: matches.length })}:**`
+      : `**${t.t('swatch.closestDye')}:**`
+  );
   description.push(matchLines);
 
   // Get top match for footer suggestion
@@ -629,11 +652,11 @@ function buildSwatchResponse(
   return messageResponse({
     embeds: [
       {
-        title: `🎨 Character Color Match`,
+        title: `🎨 ${t.t('swatch.title')}`,
         description: description.join('\n'),
         color: hexToDiscordColor(characterColor.hex),
         footer: {
-          text: `Use /preferences set clan/gender to set defaults • /dye info ${topMatchName}`,
+          text: t.t('swatch.footer', { dyeName: topMatchName }),
         },
       },
     ],

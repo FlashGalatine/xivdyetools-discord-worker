@@ -192,6 +192,8 @@
     "closestMatch": "Correspondance la plus proche",
     "topMatches": "Top {count} correspondances",
     "blendingMode": "Mode de mélange",
+    "bothRequired": "Les deux teintures (dye1 et dye2) sont requises.",
+    "footer": "Utilisez /preferences set blending <mode> pour changer votre défaut • /dye info {dyeName}",
     "modes": {
       "rgb": "Moyenne RGB",
       "lab": "LAB (Perceptuel)",
@@ -466,7 +468,22 @@
     "closestDye": "Teinture la plus proche",
     "topMatches": "Top {count} correspondances",
     "raceSpecific": "Palette de couleurs spécifique à la race",
-    "sharedPalette": "Palette de couleurs partagée (toutes races)"
+    "sharedPalette": "Palette de couleurs partagée (toutes races)",
+    "index": "Index",
+    "matching": "Correspondance",
+    "footer": "Utilisez /preferences set clan/gender pour définir les défauts • /dye info {dyeName}",
+    "errors": {
+      "missingTypeAndIndex": "Les paramètres `type` et `index` sont tous deux requis.",
+      "missingGridParams": "Les paramètres `type`, `row` et `col` sont tous requis.",
+      "invalidColorType": "Type de couleur invalide : `{type}`\n\nTypes valides : {validTypes}",
+      "invalidIndex": "Index invalide pour {typeName}. Doit être entre {min} et {max}.",
+      "invalidRow": "Ligne invalide pour {typeName}. Doit être entre {min} et {max}.",
+      "invalidColumn": "Colonne invalide. Doit être entre {min} et {max}.",
+      "gridOutOfRange": "Position de grille ({row}, {col}) hors de portée pour {typeName}.",
+      "clanGenderRequired": "{typeName} nécessite que {missing} soit spécifié.\n\nFournissez-le en paramètre ou définissez votre défaut avec `/preferences set clan <clan>` et `/preferences set gender <genre>`.",
+      "invalidClan": "Clan invalide : `{clan}`\n\nClans valides :\n{clanList}",
+      "colorNotFound": "La couleur de personnage spécifiée n'a pas été trouvée."
+    }
   },
   "preferences": {
     "title": "Vos préférences",

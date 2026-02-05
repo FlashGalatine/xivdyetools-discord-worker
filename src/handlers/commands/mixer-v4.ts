@@ -37,7 +37,6 @@ import {
   resolveCount,
 } from '../../services/preferences.js';
 import {
-  BLENDING_MODES,
   type BlendingMode,
 } from '../../types/preferences.js';
 import {
@@ -95,7 +94,7 @@ export async function handleMixerV4Command(
   // Validate required inputs
   if (!dye1Input || !dye2Input) {
     return messageResponse({
-      embeds: [errorEmbed(t.t('common.error'), 'Both dye1 and dye2 are required')],
+      embeds: [errorEmbed(t.t('common.error'), t.t('mixer.bothRequired'))],
       flags: 64,
     });
   }
@@ -236,9 +235,8 @@ function buildMixerResponse(
     ? `${dye2Emoji ? `${dye2Emoji} ` : ''}**${dye2Name}** (\`${dye2.hex.toUpperCase()}\`)`
     : `\`${dye2.hex.toUpperCase()}\``;
 
-  // Format blending mode
-  const modeInfo = BLENDING_MODES.find((m) => m.value === mode);
-  const modeDisplay = modeInfo ? modeInfo.name : mode;
+  // Format blending mode (localized)
+  const modeDisplay = t.t(`mixer.modes.${mode}`) || mode;
 
   // Format matches
   const matchLines = matches.map((match, i) => {
@@ -258,21 +256,23 @@ function buildMixerResponse(
   return messageResponse({
     embeds: [
       {
-        title: `🎨 Dye Blend Result`,
+        title: `🎨 ${t.t('mixer.blendResult')}`,
         description: [
-          `**Input Dyes:**`,
+          `**${t.t('mixer.inputDyes')}:**`,
           `• ${dye1Display}`,
           `• ${dye2Display}`,
           '',
-          `**Blending Mode:** ${modeDisplay}`,
-          `**Blended Color:** \`${blendedHex.toUpperCase()}\``,
+          `**${t.t('mixer.blendingMode')}:** ${modeDisplay}`,
+          `**${t.t('mixer.blendedColor')}:** \`${blendedHex.toUpperCase()}\``,
           '',
-          `**Closest Match${matches.length > 1 ? 'es' : ''}:**`,
+          matches.length > 1
+            ? `**${t.t('mixer.topMatches', { count: matches.length })}:**`
+            : `**${t.t('mixer.closestMatch')}:**`,
           matchLines,
         ].join('\n'),
         color: hexToDiscordColor(blendedHex),
         footer: {
-          text: `Use /preferences set blending <mode> to change your default • /dye info ${topMatchName}`,
+          text: t.t('mixer.footer', { dyeName: topMatchName }),
         },
       },
     ],

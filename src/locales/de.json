@@ -192,6 +192,8 @@
     "closestMatch": "Nächste Übereinstimmung",
     "topMatches": "Top {count} Übereinstimmungen",
     "blendingMode": "Mischmodus",
+    "bothRequired": "Beide Farbstoffe (dye1 und dye2) sind erforderlich.",
+    "footer": "Verwende /preferences set blending <Modus> um den Standard zu ändern • /dye info {dyeName}",
     "modes": {
       "rgb": "RGB-Durchschnitt",
       "lab": "LAB (Perzeptuell)",
@@ -466,7 +468,22 @@
     "closestDye": "Nächster Farbstoff",
     "topMatches": "Top {count} Übereinstimmungen",
     "raceSpecific": "Rassenspezifische Farbpalette",
-    "sharedPalette": "Gemeinsame Farbpalette (alle Rassen)"
+    "sharedPalette": "Gemeinsame Farbpalette (alle Rassen)",
+    "index": "Index",
+    "matching": "Abgleich",
+    "footer": "Verwende /preferences set clan/gender um Standards zu setzen • /dye info {dyeName}",
+    "errors": {
+      "missingTypeAndIndex": "Beide Parameter `type` und `index` sind erforderlich.",
+      "missingGridParams": "Die Parameter `type`, `row` und `col` sind alle erforderlich.",
+      "invalidColorType": "Ungültiger Farbtyp: `{type}`\n\nGültige Typen: {validTypes}",
+      "invalidIndex": "Ungültiger Index für {typeName}. Muss zwischen {min} und {max} liegen.",
+      "invalidRow": "Ungültige Zeile für {typeName}. Muss zwischen {min} und {max} liegen.",
+      "invalidColumn": "Ungültige Spalte. Muss zwischen {min} und {max} liegen.",
+      "gridOutOfRange": "Gitterposition ({row}, {col}) ist außerhalb des Bereichs für {typeName}.",
+      "clanGenderRequired": "{typeName} erfordert die Angabe von {missing}.\n\nGib es als Parameter an oder setze deinen Standard mit `/preferences set clan <Stamm>` und `/preferences set gender <Geschlecht>`.",
+      "invalidClan": "Ungültiger Stamm: `{clan}`\n\nGültige Stämme:\n{clanList}",
+      "colorNotFound": "Die angegebene Charakterfarbe konnte nicht gefunden werden."
+    }
   },
   "preferences": {
     "title": "Deine Einstellungen",

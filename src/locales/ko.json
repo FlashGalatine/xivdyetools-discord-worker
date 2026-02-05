@@ -192,6 +192,8 @@
     "closestMatch": "가장 가까운 매치",
     "topMatches": "상위 {count}개 매치",
     "blendingMode": "블렌딩 모드",
+    "bothRequired": "염료1과 염료2 모두 필요합니다.",
+    "footer": "/preferences set blending <모드>로 기본값 변경 • /dye info {dyeName}",
     "modes": {
       "rgb": "RGB 평균",
       "lab": "LAB (지각적)",
@@ -466,7 +468,22 @@
     "closestDye": "가장 가까운 염료",
     "topMatches": "상위 {count}개 매치",
     "raceSpecific": "종족별 색상 팔레트",
-    "sharedPalette": "공유 색상 팔레트 (모든 종족)"
+    "sharedPalette": "공유 색상 팔레트 (모든 종족)",
+    "index": "인덱스",
+    "matching": "매칭",
+    "footer": "/preferences set clan/gender로 기본값 설정 • /dye info {dyeName}",
+    "errors": {
+      "missingTypeAndIndex": "`type`과 `index` 모두 필요합니다.",
+      "missingGridParams": "`type`, `row`, `col` 매개변수가 모두 필요합니다.",
+      "invalidColorType": "잘못된 색상 유형: `{type}`\n\n유효한 유형: {validTypes}",
+      "invalidIndex": "{typeName}의 인덱스가 잘못되었습니다. {min}에서 {max} 사이여야 합니다.",
+      "invalidRow": "{typeName}의 행이 잘못되었습니다. {min}에서 {max} 사이여야 합니다.",
+      "invalidColumn": "열이 잘못되었습니다. {min}에서 {max} 사이여야 합니다.",
+      "gridOutOfRange": "그리드 위치 ({row}, {col})는 {typeName}의 범위를 벗어납니다.",
+      "clanGenderRequired": "{typeName}에는 {missing} 지정이 필요합니다.\n\n매개변수로 제공하거나 `/preferences set clan <부족>` 및 `/preferences set gender <성별>`로 기본값을 설정하세요.",
+      "invalidClan": "잘못된 부족: `{clan}`\n\n유효한 부족:\n{clanList}",
+      "colorNotFound": "지정된 캐릭터 색상을 찾을 수 없습니다."
+    }
   },
   "preferences": {
     "title": "설정",

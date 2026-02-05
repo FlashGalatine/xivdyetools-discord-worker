@@ -192,6 +192,8 @@
     "closestMatch": "最も近いマッチ",
     "topMatches": "上位{count}件のマッチ",
     "blendingMode": "ブレンドモード",
+    "bothRequired": "カララント1とカララント2の両方が必要です。",
+    "footer": "/preferences set blending <モード> でデフォルトを変更 • /dye info {dyeName}",
     "modes": {
       "rgb": "RGB平均",
       "lab": "LAB（知覚的）",
@@ -466,7 +468,22 @@
     "closestDye": "最も近いカララント",
     "topMatches": "上位{count}件のマッチ",
     "raceSpecific": "種族固有のカラーパレット",
-    "sharedPalette": "共有カラーパレット（全種族）"
+    "sharedPalette": "共有カラーパレット（全種族）",
+    "index": "インデックス",
+    "matching": "マッチング",
+    "footer": "/preferences set clan/gender でデフォルトを設定 • /dye info {dyeName}",
+    "errors": {
+      "missingTypeAndIndex": "`type`と`index`の両方が必要です。",
+      "missingGridParams": "`type`、`row`、`col`のすべてが必要です。",
+      "invalidColorType": "無効なカラータイプ: `{type}`\n\n有効なタイプ: {validTypes}",
+      "invalidIndex": "{typeName}のインデックスが無効です。{min}から{max}の間で指定してください。",
+      "invalidRow": "{typeName}の行が無効です。{min}から{max}の間で指定してください。",
+      "invalidColumn": "列が無効です。{min}から{max}の間で指定してください。",
+      "gridOutOfRange": "グリッド位置 ({row}, {col}) は{typeName}の範囲外です。",
+      "clanGenderRequired": "{typeName}には{missing}の指定が必要です。\n\nパラメータとして指定するか、`/preferences set clan <部族>` と `/preferences set gender <性別>` でデフォルトを設定してください。",
+      "invalidClan": "無効な部族: `{clan}`\n\n有効な部族:\n{clanList}",
+      "colorNotFound": "指定されたキャラクターカラーが見つかりませんでした。"
+    }
   },
   "preferences": {
     "title": "設定",

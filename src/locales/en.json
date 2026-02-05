@@ -192,6 +192,8 @@
     "closestMatch": "Closest Match",
     "topMatches": "Top {count} Matches",
     "blendingMode": "Blending Mode",
+    "bothRequired": "Both dye1 and dye2 are required.",
+    "footer": "Use /preferences set blending <mode> to change your default • /dye info {dyeName}",
     "modes": {
       "rgb": "RGB Average",
       "lab": "LAB (Perceptual)",
@@ -466,7 +468,22 @@
     "closestDye": "Closest Dye",
     "topMatches": "Top {count} Matches",
     "raceSpecific": "Race-specific color palette",
-    "sharedPalette": "Shared color palette (all races)"
+    "sharedPalette": "Shared color palette (all races)",
+    "index": "Index",
+    "matching": "Matching",
+    "footer": "Use /preferences set clan/gender to set defaults • /dye info {dyeName}",
+    "errors": {
+      "missingTypeAndIndex": "Both `type` and `index` are required.",
+      "missingGridParams": "Parameters `type`, `row`, and `col` are all required.",
+      "invalidColorType": "Invalid color type: `{type}`\n\nValid types: {validTypes}",
+      "invalidIndex": "Invalid index for {typeName}. Must be between {min} and {max}.",
+      "invalidRow": "Invalid row for {typeName}. Must be between {min} and {max}.",
+      "invalidColumn": "Invalid column. Must be between {min} and {max}.",
+      "gridOutOfRange": "Grid position ({row}, {col}) is out of range for {typeName}.",
+      "clanGenderRequired": "{typeName} requires {missing} to be specified.\n\nEither provide it as a parameter or set your default with `/preferences set clan <clan>` and `/preferences set gender <gender>`.",
+      "invalidClan": "Invalid clan: `{clan}`\n\nValid clans:\n{clanList}",
+      "colorNotFound": "Could not find the specified character color."
+    }
   },
   "preferences": {
     "title": "Your Preferences",

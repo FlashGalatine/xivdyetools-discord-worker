@@ -192,6 +192,8 @@
     "closestMatch": "最接近的匹配",
     "topMatches": "前 {count} 个匹配",
     "blendingMode": "混合模式",
+    "bothRequired": "染剂1和染剂2都是必需的。",
+    "footer": "使用 /preferences set blending <模式> 更改默认值 • /dye info {dyeName}",
     "modes": {
       "rgb": "RGB平均",
       "lab": "LAB（感知型）",
@@ -466,7 +468,22 @@
     "closestDye": "最接近的染剂",
     "topMatches": "前 {count} 个匹配",
     "raceSpecific": "种族特定颜色面板",
-    "sharedPalette": "共享颜色面板（所有种族）"
+    "sharedPalette": "共享颜色面板（所有种族）",
+    "index": "索引",
+    "matching": "匹配",
+    "footer": "使用 /preferences set clan/gender 设置默认值 • /dye info {dyeName}",
+    "errors": {
+      "missingTypeAndIndex": "`type`和`index`参数都是必需的。",
+      "missingGridParams": "`type`、`row`和`col`参数都是必需的。",
+      "invalidColorType": "无效的颜色类型：`{type}`\n\n有效类型：{validTypes}",
+      "invalidIndex": "{typeName}的索引无效。必须在{min}和{max}之间。",
+      "invalidRow": "{typeName}的行无效。必须在{min}和{max}之间。",
+      "invalidColumn": "列无效。必须在{min}和{max}之间。",
+      "gridOutOfRange": "网格位置 ({row}, {col}) 超出{typeName}的范围。",
+      "clanGenderRequired": "{typeName}需要指定{missing}。\n\n请作为参数提供，或使用`/preferences set clan <部族>`和`/preferences set gender <性别>`设置默认值。",
+      "invalidClan": "无效的部族：`{clan}`\n\n有效部族：\n{clanList}",
+      "colorNotFound": "未找到指定的角色颜色。"
+    }
   },
   "preferences": {
     "title": "您的偏好设置",
