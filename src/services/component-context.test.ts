@@ -19,29 +19,23 @@ import {
 } from './component-context.js';
 import type { ComponentContext } from './component-context.js';
 
-// Mock KV namespace
-function createMockKV() {
-  const store = new Map<string, { value: string; expiresAt?: number }>();
+// Mock Cache API (caches.default)
+function createMockCache() {
+  const store = new Map<string, Response>();
 
   return {
-    get: vi.fn(async (key: string) => {
-      const entry = store.get(key);
-      if (!entry) return null;
-      if (entry.expiresAt && entry.expiresAt < Date.now()) {
-        store.delete(key);
-        return null;
-      }
-      return entry.value;
+    match: vi.fn(async (url: string) => {
+      const r = store.get(url);
+      return r ? r.clone() : undefined;
     }),
-    put: vi.fn(async (key: string, value: string, options?: { expirationTtl?: number }) => {
-      const expiresAt = options?.expirationTtl ? Date.now() + options.expirationTtl * 1000 : undefined;
-      store.set(key, { value, expiresAt });
+    put: vi.fn(async (url: string, response: Response) => {
+      store.set(url, response.clone());
     }),
-    delete: vi.fn(async (key: string) => {
-      store.delete(key);
+    delete: vi.fn(async (url: string) => {
+      return store.delete(url);
     }),
     _store: store,
-  } as unknown as KVNamespace & { _store: Map<string, { value: string; expiresAt?: number }> };
+  };
 }
 
 // Mock logger
@@ -53,10 +47,11 @@ const mockLogger = {
 } as never;
 
 describe('Component Context Service', () => {
-  let mockKV: ReturnType<typeof createMockKV>;
+  let mockCache: ReturnType<typeof createMockCache>;
 
   beforeEach(() => {
-    mockKV = createMockKV();
+    mockCache = createMockCache();
+    vi.stubGlobal('caches', { default: mockCache });
     vi.clearAllMocks();
   });
 
@@ -141,14 +136,14 @@ describe('Component Context Service', () => {
         data: { color1: '#FF0000' },
       };
 
-      const hash = await storeContext(mockKV, context, CONTEXT_TTL.STANDARD, mockLogger);
+      const hash = await storeContext(context, CONTEXT_TTL.STANDARD, mockLogger);
 
       expect(hash).toBeDefined();
       expect(hash.length).toBe(8); // 4 bytes = 8 hex chars
-      expect(mockKV.put).toHaveBeenCalled();
+      expect(mockCache.put).toHaveBeenCalled();
     });
 
-    it('stores with correct TTL', async () => {
+    it('stores with correct TTL in Cache-Control header', async () => {
       const context = {
         command: 'test',
         userId: 'user',
@@ -157,19 +152,23 @@ describe('Component Context Service', () => {
         data: {},
       };
 
-      await storeContext(mockKV, context, CONTEXT_TTL.PAGINATION, mockLogger);
+      await storeContext(context, CONTEXT_TTL.PAGINATION, mockLogger);
 
-      expect(mockKV.put).toHaveBeenCalledWith(
-        expect.stringMatching(/^ctx:v1:/),
-        expect.any(String),
-        { expirationTtl: CONTEXT_TTL.PAGINATION }
+      expect(mockCache.put).toHaveBeenCalledWith(
+        expect.stringContaining('cache.xivdyetools.internal/ctx/v1/'),
+        expect.any(Response)
       );
+
+      // Verify the Response had the correct Cache-Control header
+      const putCall = mockCache.put.mock.calls[0];
+      const storedResponse = putCall[1] as Response;
+      expect(storedResponse.headers.get('Cache-Control')).toBe(`s-maxage=${CONTEXT_TTL.PAGINATION}`);
     });
   });
 
   describe('getContext', () => {
     it('returns null when context not found', async () => {
-      const result = await getContext(mockKV, 'nonexistent', mockLogger);
+      const result = await getContext('nonexistent', mockLogger);
       expect(result).toBeNull();
     });
 
@@ -182,8 +181,8 @@ describe('Component Context Service', () => {
         data: { test: true },
       };
 
-      const hash = await storeContext(mockKV, context, CONTEXT_TTL.STANDARD, mockLogger);
-      const result = await getContext(mockKV, hash, mockLogger);
+      const hash = await storeContext(context, CONTEXT_TTL.STANDARD, mockLogger);
+      const result = await getContext(hash, mockLogger);
 
       expect(result).toBeDefined();
       expect(result?.command).toBe('mixer');
@@ -202,15 +201,18 @@ describe('Component Context Service', () => {
         expiresAt: Date.now() - 1000, // Expired 1 second ago
       };
 
-      mockKV._store.set('ctx:v1:expired', { value: JSON.stringify(expiredContext) });
+      const url = 'https://cache.xivdyetools.internal/ctx/v1/expired';
+      mockCache._store.set(url, new Response(JSON.stringify(expiredContext), {
+        headers: { 'Content-Type': 'application/json' },
+      }));
 
-      const result = await getContext(mockKV, 'expired', mockLogger);
+      const result = await getContext('expired', mockLogger);
       expect(result).toBeNull();
     });
   });
 
   describe('deleteContext', () => {
-    it('deletes context from KV', async () => {
+    it('deletes context from cache', async () => {
       const context = {
         command: 'test',
         userId: 'user',
@@ -219,10 +221,10 @@ describe('Component Context Service', () => {
         data: {},
       };
 
-      const hash = await storeContext(mockKV, context, CONTEXT_TTL.STANDARD, mockLogger);
-      await deleteContext(mockKV, hash, mockLogger);
+      const hash = await storeContext(context, CONTEXT_TTL.STANDARD, mockLogger);
+      await deleteContext(hash, mockLogger);
 
-      const result = await getContext(mockKV, hash, mockLogger);
+      const result = await getContext(hash, mockLogger);
       expect(result).toBeNull();
     });
   });
@@ -237,10 +239,9 @@ describe('Component Context Service', () => {
         data: { mode: 'rgb' },
       };
 
-      const hash = await storeContext(mockKV, context, CONTEXT_TTL.STANDARD, mockLogger);
+      const hash = await storeContext(context, CONTEXT_TTL.STANDARD, mockLogger);
 
       const updated = await updateContext(
-        mockKV,
         hash,
         { data: { mode: 'spectral' } },
         CONTEXT_TTL.STANDARD,
@@ -253,7 +254,6 @@ describe('Component Context Service', () => {
 
     it('returns null for non-existent context', async () => {
       const result = await updateContext(
-        mockKV,
         'nonexistent',
         { data: { test: true } },
         CONTEXT_TTL.STANDARD,

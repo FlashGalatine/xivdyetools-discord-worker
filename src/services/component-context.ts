@@ -1,14 +1,14 @@
 /**
  * Component Context Storage (V4)
  *
- * Stores interaction context in KV for Discord message components.
+ * Stores interaction context via the Cache API for Discord message components.
  * Since Discord custom_id is limited to 100 characters, we store
- * full context data in KV and reference it via a short hash.
+ * full context data in the Cache API and reference it via a short hash.
  *
  * Custom ID Format: {action}_{command}_{shortHash}
  * Example: algo_mixer_a1b2c3d4
  *
- * KV Key: ctx:v1:{hash}
+ * Cache Key: https://cache.xivdyetools.internal/ctx/v1/{hash}
  * TTL: 1 hour (15 minutes for pagination)
  *
  * @module services/component-context
@@ -20,8 +20,11 @@ import type { ExtendedLogger } from '@xivdyetools/logger';
 // Constants
 // ============================================================================
 
-/** KV key prefix */
-const CTX_KEY_PREFIX = 'ctx:v1:';
+/** Base URL for synthetic cache keys (not actually fetched) */
+const CACHE_BASE_URL = 'https://cache.xivdyetools.internal/ctx';
+
+/** Cache schema version - bump to invalidate all cached contexts */
+const CACHE_SCHEMA_VERSION = 'v1';
 
 /** TTL in seconds */
 export const CONTEXT_TTL = {
@@ -51,7 +54,7 @@ export type ComponentAction =
   | 'moderate'; // Moderation action
 
 /**
- * Context data stored in KV
+ * Context data stored in cache
  */
 export interface ComponentContext {
   /** Original command name */
@@ -76,10 +79,21 @@ export interface ParsedCustomId {
   action: ComponentAction;
   /** Command name */
   command: string;
-  /** Context hash (for KV lookup) */
+  /** Context hash (for cache lookup) */
   hash: string;
   /** Additional value (e.g., selected option) */
   value?: string;
+}
+
+// ============================================================================
+// Cache Key Utilities
+// ============================================================================
+
+/**
+ * Build a synthetic URL cache key for a context entry
+ */
+function buildContextCacheUrl(hash: string): string {
+  return `${CACHE_BASE_URL}/${CACHE_SCHEMA_VERSION}/${hash}`;
 }
 
 // ============================================================================
@@ -163,16 +177,14 @@ export function parseCustomId(customId: string): ParsedCustomId | null {
 // ============================================================================
 
 /**
- * Store context data in KV and return the hash
+ * Store context data in the Cache API and return the hash
  *
- * @param kv - KV namespace binding
  * @param context - Context data to store
  * @param ttlSeconds - TTL in seconds (default: STANDARD)
  * @param logger - Optional logger
  * @returns Short hash for the stored context
  */
 export async function storeContext(
-  kv: KVNamespace,
   context: Omit<ComponentContext, 'expiresAt'>,
   ttlSeconds: number = CONTEXT_TTL.STANDARD,
   logger?: ExtendedLogger
@@ -188,9 +200,17 @@ export async function storeContext(
       expiresAt: Date.now() + ttlSeconds * 1000,
     };
 
-    // Store in KV with TTL
-    const key = `${CTX_KEY_PREFIX}${hash}`;
-    await kv.put(key, JSON.stringify(fullContext), { expirationTtl: ttlSeconds });
+    // Store in Cache API with TTL
+    const url = buildContextCacheUrl(hash);
+    const cache = caches.default;
+    const response = new Response(JSON.stringify(fullContext), {
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': `s-maxage=${ttlSeconds}`,
+      },
+    });
+
+    await cache.put(url, response);
 
     if (logger) {
       logger.debug('Stored component context', { hash, command: context.command, ttl: ttlSeconds });
@@ -206,32 +226,31 @@ export async function storeContext(
 }
 
 /**
- * Retrieve context data from KV
+ * Retrieve context data from the Cache API
  *
- * @param kv - KV namespace binding
  * @param hash - Context hash
  * @param logger - Optional logger
  * @returns Context data or null if not found/expired
  */
 export async function getContext(
-  kv: KVNamespace,
   hash: string,
   logger?: ExtendedLogger
 ): Promise<ComponentContext | null> {
   try {
-    const key = `${CTX_KEY_PREFIX}${hash}`;
-    const data = await kv.get(key);
+    const url = buildContextCacheUrl(hash);
+    const cache = caches.default;
+    const response = await cache.match(url);
 
-    if (!data) {
+    if (!response) {
       if (logger) {
         logger.debug('Component context not found', { hash });
       }
       return null;
     }
 
-    const context = JSON.parse(data) as ComponentContext;
+    const context = (await response.json()) as ComponentContext;
 
-    // Double-check expiration (KV TTL should handle this, but be safe)
+    // Double-check expiration (Cache-Control should handle this, but be safe)
     if (context.expiresAt < Date.now()) {
       if (logger) {
         logger.debug('Component context expired', { hash });
@@ -249,20 +268,19 @@ export async function getContext(
 }
 
 /**
- * Delete context data from KV
+ * Delete context data from the Cache API
  *
- * @param kv - KV namespace binding
  * @param hash - Context hash
  * @param logger - Optional logger
  */
 export async function deleteContext(
-  kv: KVNamespace,
   hash: string,
   logger?: ExtendedLogger
 ): Promise<void> {
   try {
-    const key = `${CTX_KEY_PREFIX}${hash}`;
-    await kv.delete(key);
+    const url = buildContextCacheUrl(hash);
+    const cache = caches.default;
+    await cache.delete(url);
 
     if (logger) {
       logger.debug('Deleted component context', { hash });
@@ -275,9 +293,8 @@ export async function deleteContext(
 }
 
 /**
- * Update context data in KV (extends TTL)
+ * Update context data in the Cache API (extends TTL)
  *
- * @param kv - KV namespace binding
  * @param hash - Context hash
  * @param updates - Partial updates to apply
  * @param ttlSeconds - New TTL in seconds
@@ -285,14 +302,13 @@ export async function deleteContext(
  * @returns Updated context or null if not found
  */
 export async function updateContext(
-  kv: KVNamespace,
   hash: string,
   updates: Partial<Pick<ComponentContext, 'data'>>,
   ttlSeconds: number = CONTEXT_TTL.STANDARD,
   logger?: ExtendedLogger
 ): Promise<ComponentContext | null> {
   try {
-    const existing = await getContext(kv, hash, logger);
+    const existing = await getContext(hash, logger);
 
     if (!existing) {
       return null;
@@ -304,8 +320,16 @@ export async function updateContext(
       expiresAt: Date.now() + ttlSeconds * 1000,
     };
 
-    const key = `${CTX_KEY_PREFIX}${hash}`;
-    await kv.put(key, JSON.stringify(updated), { expirationTtl: ttlSeconds });
+    const url = buildContextCacheUrl(hash);
+    const cache = caches.default;
+    const response = new Response(JSON.stringify(updated), {
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': `s-maxage=${ttlSeconds}`,
+      },
+    });
+
+    await cache.put(url, response);
 
     if (logger) {
       logger.debug('Updated component context', { hash });

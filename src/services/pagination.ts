@@ -144,7 +144,6 @@ export function needsPagination(totalItems: number, pageSize: number = DEFAULT_P
 /**
  * Create and store pagination context
  *
- * @param kv - KV namespace
  * @param userId - User ID
  * @param interactionToken - Interaction token
  * @param applicationId - Application ID
@@ -155,7 +154,6 @@ export function needsPagination(totalItems: number, pageSize: number = DEFAULT_P
  * @returns Context hash
  */
 export async function createPaginationContext(
-  kv: KVNamespace,
   userId: string,
   interactionToken: string,
   applicationId: string,
@@ -174,23 +172,21 @@ export async function createPaginationContext(
     },
   };
 
-  return storeContext(kv, context, CONTEXT_TTL.PAGINATION, logger);
+  return storeContext(context, CONTEXT_TTL.PAGINATION, logger);
 }
 
 /**
  * Get pagination state from context
  *
- * @param kv - KV namespace
  * @param hash - Context hash
  * @param logger - Optional logger
  * @returns Pagination state or null
  */
 export async function getPaginationState(
-  kv: KVNamespace,
   hash: string,
   logger?: ExtendedLogger
 ): Promise<{ context: ComponentContext; pagination: PaginationState } | null> {
-  const context = await getContext(kv, hash, logger);
+  const context = await getContext(hash, logger);
 
   if (!context || !context.data.pagination) {
     return null;
@@ -205,19 +201,17 @@ export async function getPaginationState(
 /**
  * Update pagination to a new page
  *
- * @param kv - KV namespace
  * @param hash - Context hash
  * @param newPage - New page number
  * @param logger - Optional logger
  * @returns Updated pagination state or null
  */
 export async function updatePaginationPage(
-  kv: KVNamespace,
   hash: string,
   newPage: number,
   logger?: ExtendedLogger
 ): Promise<PaginationState | null> {
-  const result = await getPaginationState(kv, hash, logger);
+  const result = await getPaginationState(hash, logger);
 
   if (!result) {
     return null;
@@ -230,7 +224,6 @@ export async function updatePaginationPage(
   };
 
   const updated = await updateContext(
-    kv,
     hash,
     { data: { pagination: updatedPagination } },
     CONTEXT_TTL.PAGINATION,
@@ -364,13 +357,11 @@ export function buildCompactPaginationButtons(
  * Handle a pagination navigation action
  *
  * @param customId - The custom_id from the button click
- * @param kv - KV namespace
  * @param logger - Optional logger
  * @returns New page number or null if invalid
  */
 export async function handlePaginationNavigation(
   customId: string,
-  kv: KVNamespace,
   logger?: ExtendedLogger
 ): Promise<{ newPage: number; pagination: PaginationState; context: ComponentContext } | null> {
   const parsed = parseCustomId(customId);
@@ -380,7 +371,7 @@ export async function handlePaginationNavigation(
   }
 
   const { hash, value } = parsed;
-  const result = await getPaginationState(kv, hash, logger);
+  const result = await getPaginationState(hash, logger);
 
   if (!result) {
     return null;
@@ -411,7 +402,7 @@ export async function handlePaginationNavigation(
   }
 
   // Update pagination in context
-  const updatedPagination = await updatePaginationPage(kv, hash, newPage, logger);
+  const updatedPagination = await updatePaginationPage(hash, newPage, logger);
 
   if (!updatedPagination) {
     return null;

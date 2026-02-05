@@ -126,13 +126,11 @@ describe('Pagination Service', () => {
 
   describe('createPaginationContext', () => {
     it('stores context with pagination data', async () => {
-      const mockKV = {} as KVNamespace;
       const pagination = calculatePagination(100, 10, 0);
 
       vi.mocked(storeContext).mockResolvedValue('testhash');
 
       const hash = await createPaginationContext(
-        mockKV,
         'user123',
         'token',
         'app',
@@ -143,7 +141,6 @@ describe('Pagination Service', () => {
 
       expect(hash).toBe('testhash');
       expect(storeContext).toHaveBeenCalledWith(
-        mockKV,
         expect.objectContaining({
           command: 'dye_list',
           userId: 'user123',
@@ -163,7 +160,6 @@ describe('Pagination Service', () => {
 
   describe('getPaginationState', () => {
     it('returns pagination state from context', async () => {
-      const mockKV = {} as KVNamespace;
       const pagination = calculatePagination(50, 10, 2);
 
       vi.mocked(getContext).mockResolvedValue({
@@ -175,7 +171,7 @@ describe('Pagination Service', () => {
         expiresAt: Date.now() + 1000000,
       });
 
-      const result = await getPaginationState(mockKV, 'hash');
+      const result = await getPaginationState('hash');
 
       expect(result).toBeDefined();
       expect(result?.pagination.currentPage).toBe(2);
@@ -183,11 +179,9 @@ describe('Pagination Service', () => {
     });
 
     it('returns null when context not found', async () => {
-      const mockKV = {} as KVNamespace;
-
       vi.mocked(getContext).mockResolvedValue(null);
 
-      const result = await getPaginationState(mockKV, 'invalid');
+      const result = await getPaginationState('invalid');
 
       expect(result).toBeNull();
     });
@@ -195,7 +189,6 @@ describe('Pagination Service', () => {
 
   describe('updatePaginationPage', () => {
     it('updates page and returns new state', async () => {
-      const mockKV = {} as KVNamespace;
       const pagination = calculatePagination(50, 10, 0);
 
       vi.mocked(getContext).mockResolvedValue({
@@ -216,13 +209,12 @@ describe('Pagination Service', () => {
         expiresAt: Date.now() + 1000000,
       });
 
-      const result = await updatePaginationPage(mockKV, 'hash', 3);
+      const result = await updatePaginationPage('hash', 3);
 
       expect(result?.currentPage).toBe(3);
     });
 
     it('clamps page to valid range', async () => {
-      const mockKV = {} as KVNamespace;
       const pagination = calculatePagination(30, 10, 0);
 
       vi.mocked(getContext).mockResolvedValue({
@@ -234,7 +226,7 @@ describe('Pagination Service', () => {
         expiresAt: Date.now() + 1000000,
       });
 
-      vi.mocked(updateContext).mockImplementation(async (kv, hash, updates) => {
+      vi.mocked(updateContext).mockImplementation(async (hash, updates) => {
         return {
           command: 'test',
           userId: 'user',
@@ -245,7 +237,7 @@ describe('Pagination Service', () => {
         };
       });
 
-      const result = await updatePaginationPage(mockKV, 'hash', 10); // Page 10 doesn't exist
+      const result = await updatePaginationPage('hash', 10); // Page 10 doesn't exist
 
       expect(result?.currentPage).toBe(2); // Last page
     });
@@ -308,7 +300,6 @@ describe('Pagination Service', () => {
 
   describe('handlePaginationNavigation', () => {
     it('handles "first" navigation', async () => {
-      const mockKV = {} as KVNamespace;
       const pagination = calculatePagination(50, 10, 3);
 
       vi.mocked(getContext).mockResolvedValue({
@@ -329,13 +320,12 @@ describe('Pagination Service', () => {
         expiresAt: Date.now() + 1000000,
       });
 
-      const result = await handlePaginationNavigation('page_nav_hash_first', mockKV);
+      const result = await handlePaginationNavigation('page_nav_hash_first');
 
       expect(result?.newPage).toBe(0);
     });
 
     it('handles "prev" navigation', async () => {
-      const mockKV = {} as KVNamespace;
       const pagination = calculatePagination(50, 10, 3);
 
       vi.mocked(getContext).mockResolvedValue({
@@ -356,13 +346,12 @@ describe('Pagination Service', () => {
         expiresAt: Date.now() + 1000000,
       });
 
-      const result = await handlePaginationNavigation('page_nav_hash_prev', mockKV);
+      const result = await handlePaginationNavigation('page_nav_hash_prev');
 
       expect(result?.newPage).toBe(2);
     });
 
     it('handles "next" navigation', async () => {
-      const mockKV = {} as KVNamespace;
       const pagination = calculatePagination(50, 10, 2);
 
       vi.mocked(getContext).mockResolvedValue({
@@ -383,13 +372,12 @@ describe('Pagination Service', () => {
         expiresAt: Date.now() + 1000000,
       });
 
-      const result = await handlePaginationNavigation('page_nav_hash_next', mockKV);
+      const result = await handlePaginationNavigation('page_nav_hash_next');
 
       expect(result?.newPage).toBe(3);
     });
 
     it('handles "last" navigation', async () => {
-      const mockKV = {} as KVNamespace;
       const pagination = calculatePagination(50, 10, 0);
 
       vi.mocked(getContext).mockResolvedValue({
@@ -410,23 +398,19 @@ describe('Pagination Service', () => {
         expiresAt: Date.now() + 1000000,
       });
 
-      const result = await handlePaginationNavigation('page_nav_hash_last', mockKV);
+      const result = await handlePaginationNavigation('page_nav_hash_last');
 
       expect(result?.newPage).toBe(4);
     });
 
     it('returns null for invalid custom_id', async () => {
-      const mockKV = {} as KVNamespace;
-
-      const result = await handlePaginationNavigation('invalid_custom_id', mockKV);
+      const result = await handlePaginationNavigation('invalid_custom_id');
 
       expect(result).toBeNull();
     });
 
     it('returns null for non-page action', async () => {
-      const mockKV = {} as KVNamespace;
-
-      const result = await handlePaginationNavigation('algo_mixer_hash_value', mockKV);
+      const result = await handlePaginationNavigation('algo_mixer_hash_value');
 
       expect(result).toBeNull();
     });
