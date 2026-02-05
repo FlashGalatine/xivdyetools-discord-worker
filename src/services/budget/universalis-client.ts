@@ -19,23 +19,31 @@ import { UniversalisError, type DyePriceData } from '../../types/budget.js';
 // ============================================================================
 
 /**
- * Universalis aggregated price response
+ * Universalis v2 aggregated price response
+ *
+ * The aggregated endpoint returns an array of items (not a keyed object).
+ * Each item contains summary statistics at datacenter (dc) and region levels.
  */
 interface UniversalisAggregatedResponse {
-  /** Map of item ID to price data */
-  results: Record<
-    string,
-    {
-      /** Number of active listings */
-      nq: {
-        minPrice: number;
-        maxPrice: number;
-        listings: Array<{ pricePerUnit: number; quantity: number }>;
-      };
-      /** Last upload time (unix timestamp) */
-      lastUploadTime: number;
-    }
-  >;
+  results: UniversalisAggregatedItem[];
+  failedItems: number[];
+}
+
+interface UniversalisAggregatedItem {
+  itemId: number;
+  nq: {
+    minListing: { dc?: { price: number; worldId: number }; region?: { price: number; worldId: number } };
+    recentPurchase: { dc?: { price: number; timestamp: number; worldId: number }; region?: { price: number; timestamp: number; worldId: number } };
+    averageSalePrice: { dc?: { price: number }; region?: { price: number } };
+    dailySaleVelocity: { dc?: { quantity: number }; region?: { quantity: number } };
+  };
+  hq: {
+    minListing: { dc?: { price: number; worldId: number }; region?: { price: number; worldId: number } };
+    recentPurchase: { dc?: { price: number; timestamp: number; worldId: number }; region?: { price: number; timestamp: number; worldId: number } };
+    averageSalePrice: { dc?: { price: number }; region?: { price: number } };
+    dailySaleVelocity: { dc?: { quantity: number }; region?: { quantity: number } };
+  };
+  worldUploadTimes: Array<{ worldId: number; timestamp: number }>;
 }
 
 /**
@@ -199,32 +207,31 @@ export async function fetchPrices(
 
   const response = await request<UniversalisAggregatedResponse>(env, path, { logger });
 
-  // Convert response to our DyePriceData format
+  // Convert aggregated response to our DyePriceData format
   const priceMap = new Map<number, DyePriceData>();
   const now = new Date().toISOString();
 
-  for (const [itemIdStr, data] of Object.entries(response.results)) {
-    const itemId = parseInt(itemIdStr, 10);
+  for (const item of response.results) {
+    const itemId = item.itemId;
 
-    // Skip if no listings
-    if (!data.nq || data.nq.listings.length === 0) {
+    // Skip items with no NQ listing data (empty dc object = no listings)
+    const minListingPrice = item.nq?.minListing?.dc?.price;
+    if (minListingPrice == null) {
       continue;
     }
 
-    // Calculate average from listings
-    const listings = data.nq.listings;
-    const totalValue = listings.reduce((sum, l) => sum + l.pricePerUnit * l.quantity, 0);
-    const totalQuantity = listings.reduce((sum, l) => sum + l.quantity, 0);
-    const averagePrice = totalQuantity > 0 ? Math.round(totalValue / totalQuantity) : data.nq.minPrice;
+    const averagePrice = item.nq.averageSalePrice?.dc?.price ?? minListingPrice;
+    const lastUpload = item.worldUploadTimes?.[0]?.timestamp ?? Date.now();
+    const velocity = item.nq.dailySaleVelocity?.dc?.quantity ?? 0;
 
     priceMap.set(itemId, {
       itemID: itemId,
-      currentAverage: averagePrice,
-      currentMinPrice: data.nq.minPrice,
-      currentMaxPrice: data.nq.maxPrice,
-      lastUpdate: data.lastUploadTime,
+      currentAverage: Math.round(averagePrice),
+      currentMinPrice: minListingPrice,
+      currentMaxPrice: minListingPrice, // aggregated endpoint doesn't provide max listing price
+      lastUpdate: lastUpload,
       world,
-      listingCount: listings.length,
+      listingCount: Math.max(1, Math.round(velocity)), // use daily velocity as activity proxy
       fetchedAt: now,
     });
   }

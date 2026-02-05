@@ -14,9 +14,10 @@ import type { ExtendedLogger } from '@xivdyetools/logger';
 import { deferredResponse, errorEmbed, ephemeralResponse } from '../../utils/response.js';
 import { editOriginalResponse } from '../../utils/discord-api.js';
 import { renderSvgToPng } from '../../services/svg/renderer.js';
-import { generateBudgetComparison, generateNoWorldSetSvg, generateErrorSvg } from '../../services/svg/budget-comparison.js';
+import { generateBudgetComparison, generateNoWorldSetSvg, generateErrorSvg, type BudgetSvgLabels } from '../../services/svg/budget-comparison.js';
 import { createUserTranslator, createTranslator, type Translator } from '../../services/bot-i18n.js';
-import { getUserWorld, setUserWorld } from '../../services/user-preferences.js';
+import { initializeLocale, getLocalizedDyeName, getLocalizedCategory } from '../../services/i18n.js';
+import { getUserPreferences, setPreference } from '../../services/preferences.js';
 import {
   findCheaperAlternatives,
   getDyeById,
@@ -29,7 +30,7 @@ import {
   getQuickPickChoices,
 } from '../../services/budget/index.js';
 import type { BudgetSearchOptions, BudgetSortOption } from '../../types/budget.js';
-import { UniversalisError, SORT_DISPLAY, formatGil } from '../../types/budget.js';
+import { UniversalisError, formatGil } from '../../types/budget.js';
 import type { Env, DiscordInteraction, InteractionResponseType } from '../../types/env.js';
 import { getDyeEmoji } from '../../services/emoji.js';
 
@@ -122,11 +123,11 @@ async function handleFindSubcommand(
     return ephemeralResponse(t.t('budget.errors.dyeNotFound', { name: targetDyeInput }));
   }
 
-  // Get world preference
+  // Get world preference from unified preferences system
   let world = worldOverride;
   if (!world) {
-    const pref = await getUserWorld(env.KV, userId, logger);
-    world = pref?.world;
+    const prefs = await getUserPreferences(env.KV, userId, logger);
+    world = prefs.world;
   }
 
   if (!world) {
@@ -183,7 +184,44 @@ async function processFindCommand(
 ): Promise<void> {
   try {
     // Find alternatives
+    if (logger) logger.info('Budget: fetching alternatives', { targetDyeId, world });
     const result = await findCheaperAlternatives(env, targetDyeId, world, searchOptions, logger);
+    if (logger) logger.info('Budget: found alternatives', { count: result.alternatives.length, hasTargetPrice: !!result.targetPrice });
+
+    // Initialize core library localization for dye names
+    await initializeLocale(t.getLocale(), logger);
+
+    // Build localized dye name and category maps
+    const dyeNames: Record<number, string> = {};
+    const categoryNames: Record<string, string> = {};
+    dyeNames[result.targetDye.itemID] = getLocalizedDyeName(result.targetDye.itemID, result.targetDye.name);
+    categoryNames[result.targetDye.category] = getLocalizedCategory(result.targetDye.category);
+    for (const alt of result.alternatives) {
+      dyeNames[alt.dye.itemID] = getLocalizedDyeName(alt.dye.itemID, alt.dye.name);
+    }
+
+    // Build translated SVG labels
+    const sortBy = searchOptions.sortBy || 'value_score';
+    const svgLabels: BudgetSvgLabels = {
+      headerLabel: t.t('budget.headerLabel'),
+      targetPriceLabel: t.t('budget.targetPrice'),
+      noListings: t.t('budget.noListings'),
+      noAlternatives: t.t('budget.noAlternativesShort'),
+      sortedBy: t.t('budget.sortedBy', { method: t.t(`budget.sortMethods.${sortBy}`) }),
+      onWorld: t.t('budget.onWorld', { world: result.world }),
+      gilAmountTemplate: t.t('budget.gilAmount'),
+      saveAmountTemplate: t.t('budget.saveAmount'),
+      listingCountTemplate: t.t('budget.listingCount'),
+      distanceQuality: {
+        perfect: t.t('budget.distanceQuality.perfect'),
+        excellent: t.t('budget.distanceQuality.excellent'),
+        good: t.t('budget.distanceQuality.good'),
+        fair: t.t('budget.distanceQuality.fair'),
+        approximate: t.t('budget.distanceQuality.approximate'),
+      },
+      dyeNames,
+      categoryNames,
+    };
 
     // Generate SVG
     const svg = generateBudgetComparison({
@@ -191,12 +229,15 @@ async function processFindCommand(
       targetPrice: result.targetPrice,
       alternatives: result.alternatives,
       world: result.world,
-      sortBy: searchOptions.sortBy || 'value_score',
+      sortBy,
+      labels: svgLabels,
       width: IMAGE_WIDTH,
     });
+    if (logger) logger.info('Budget: SVG generated', { svgLength: svg.length });
 
     // Render to PNG
-    const pngBuffer = await renderSvgToPng(svg, { scale: 2 });
+    const pngBuffer = await renderSvgToPng(svg, { scale: 2 }, logger);
+    if (logger) logger.info('Budget: PNG rendered', { pngSize: pngBuffer.length });
 
     // Build description
     let description = '';
@@ -207,8 +248,8 @@ async function processFindCommand(
       description += `**${t.t('budget.targetPrice')}:** ${t.t('budget.noListings')}\n`;
     }
 
-    description += `**${t.t('budget.world')}:** ${result.world}\n`;
-    description += `**${t.t('budget.sortedBy')}:** ${SORT_DISPLAY[searchOptions.sortBy || 'value_score'].label}\n\n`;
+    description += `${t.t('budget.worldUsed', { world: result.world })}\n`;
+    description += `${t.t('budget.sortedBy', { method: t.t(`budget.sortMethods.${sortBy}`) })}\n\n`;
 
     if (result.alternatives.length > 0) {
       description += `${t.t('budget.foundAlternatives', { count: result.alternatives.length })}`;
@@ -216,16 +257,18 @@ async function processFindCommand(
       description += t.t('budget.noAlternatives');
     }
 
-    // Get dye emoji for target
+    // Get dye emoji and localized name for target
     const targetDye = result.targetDye;
-    const emoji = getDyeEmoji(targetDye.id);
+    const localizedTargetName = dyeNames[targetDye.itemID] ?? targetDye.name;
+    const emoji = getDyeEmoji(targetDye.itemID);
     const emojiPrefix = emoji ? `${emoji} ` : '';
 
     // Send response
+    if (logger) logger.info('Budget: sending Discord response');
     await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [
         {
-          title: `${emojiPrefix}${t.t('budget.findTitle', { name: targetDye.name })}`,
+          title: `${emojiPrefix}${t.t('budget.findTitle', { dyeName: localizedTargetName })}`,
           description,
           color: parseInt(targetDye.hex.replace('#', ''), 16),
           image: { url: 'attachment://budget.png' },
@@ -238,9 +281,13 @@ async function processFindCommand(
         contentType: 'image/png',
       },
     });
+    if (logger) logger.info('Budget: response sent successfully');
   } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    const errorStack = error instanceof Error ? error.stack : undefined;
     if (logger) {
       logger.error('Budget find error', error instanceof Error ? error : undefined);
+      logger.error(`Budget error details: ${errorMsg}`, errorStack ? { stack: errorStack } : undefined);
     }
 
     // Handle specific errors
@@ -287,10 +334,10 @@ async function handleSetWorldSubcommand(
     return ephemeralResponse(t.t('budget.errors.worldNotFound', { name: worldInput }));
   }
 
-  // Save preference
-  const success = await setUserWorld(env.KV, userId, validatedWorld, logger);
+  // Save preference via unified preferences system
+  const result = await setPreference(env.KV, userId, 'world', validatedWorld, logger);
 
-  if (!success) {
+  if (!result.success) {
     return ephemeralResponse(t.t('budget.errors.saveFailed'));
   }
 
@@ -326,11 +373,11 @@ async function handleQuickSubcommand(
     return ephemeralResponse(t.t('budget.errors.presetNotFound'));
   }
 
-  // Get world preference
+  // Get world preference from unified preferences system
   let world = worldOverride;
   if (!world) {
-    const pref = await getUserWorld(env.KV, userId, logger);
-    world = pref?.world;
+    const prefs = await getUserPreferences(env.KV, userId, logger);
+    world = prefs.world;
   }
 
   if (!world) {

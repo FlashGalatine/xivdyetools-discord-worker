@@ -31,11 +31,50 @@ import {
   getContrastTextColor,
 } from './base.js';
 import type { BudgetSuggestion, DyePriceData, BudgetSortOption } from '../../types/budget.js';
-import { getDistanceQuality, formatGil, SORT_DISPLAY } from '../../types/budget.js';
+import { formatGil } from '../../types/budget.js';
 
 // ============================================================================
 // Types
 // ============================================================================
+
+/**
+ * Translated labels for the budget comparison SVG
+ *
+ * Pre-resolved strings are ready to render as-is.
+ * Template strings use {var} placeholders for per-row interpolation.
+ */
+export interface BudgetSvgLabels {
+  /** Header title (e.g., "BUDGET ALTERNATIVES FOR") */
+  headerLabel: string;
+  /** Label above target price (e.g., "Target Price") */
+  targetPriceLabel: string;
+  /** No listings available (e.g., "No listings") */
+  noListings: string;
+  /** No alternatives found (e.g., "No cheaper alternatives found") */
+  noAlternatives: string;
+  /** Pre-resolved sort indicator (e.g., "Sorted by: Best Value") */
+  sortedBy: string;
+  /** Pre-resolved world subtitle (e.g., "on Aether") */
+  onWorld: string;
+  /** Template: "{amount} Gil" */
+  gilAmountTemplate: string;
+  /** Template: "Save {amount} ({percent}%)" */
+  saveAmountTemplate: string;
+  /** Template: "{count} listings" */
+  listingCountTemplate: string;
+  /** Translated distance quality labels */
+  distanceQuality: {
+    perfect: string;
+    excellent: string;
+    good: string;
+    fair: string;
+    approximate: string;
+  };
+  /** Localized dye names keyed by itemID (falls back to Dye.name if missing) */
+  dyeNames: Record<number, string>;
+  /** Localized category names keyed by English category (falls back to raw category if missing) */
+  categoryNames: Record<string, string>;
+}
 
 /**
  * Options for generating the budget comparison SVG
@@ -51,6 +90,8 @@ export interface BudgetComparisonOptions {
   world: string;
   /** How results are sorted */
   sortBy: BudgetSortOption;
+  /** Translated labels for all text in the SVG */
+  labels: BudgetSvgLabels;
   /** Canvas width in pixels (default: 800) */
   width?: number;
 }
@@ -67,6 +108,30 @@ const SWATCH_SIZE = 56;
 const TARGET_SWATCH_SIZE = 72;
 
 // ============================================================================
+// Helpers
+// ============================================================================
+
+/**
+ * Fill a template string with variable values
+ *
+ * @example fillTemplate("{amount} Gil", { amount: "5,000" }) → "5,000 Gil"
+ */
+function fillTemplate(template: string, vars: Record<string, string | number>): string {
+  return template.replace(/\{(\w+)\}/g, (_, key) => String(vars[key] ?? ''));
+}
+
+/**
+ * Map a color distance value to a quality tier key
+ */
+function getDistanceQualityKey(distance: number): keyof BudgetSvgLabels['distanceQuality'] {
+  if (distance === 0) return 'perfect';
+  if (distance < 10) return 'excellent';
+  if (distance < 25) return 'good';
+  if (distance < 50) return 'fair';
+  return 'approximate';
+}
+
+// ============================================================================
 // SVG Generation
 // ============================================================================
 
@@ -78,8 +143,7 @@ export function generateBudgetComparison(options: BudgetComparisonOptions): stri
     targetDye,
     targetPrice,
     alternatives,
-    world,
-    sortBy,
+    labels,
     width = DEFAULT_WIDTH,
   } = options;
 
@@ -94,7 +158,7 @@ export function generateBudgetComparison(options: BudgetComparisonOptions): stri
   elements.push(rect(0, 0, width, height, THEME.background, { rx: 12, ry: 12 }));
 
   // Header section
-  elements.push(generateHeader(targetDye, targetPrice, world, sortBy, width));
+  elements.push(generateHeader(targetDye, targetPrice, labels, width));
 
   // Separator after header
   elements.push(
@@ -105,7 +169,7 @@ export function generateBudgetComparison(options: BudgetComparisonOptions): stri
   if (hasAlternatives) {
     alternatives.forEach((alt, index) => {
       const rowY = HEADER_HEIGHT + index * ROW_HEIGHT;
-      elements.push(generateAlternativeRow(alt, PADDING, rowY, width - PADDING * 2, targetPrice));
+      elements.push(generateAlternativeRow(alt, PADDING, rowY, width - PADDING * 2, targetPrice, labels));
 
       // Separator line (except after last row)
       if (index < alternatives.length - 1) {
@@ -124,10 +188,10 @@ export function generateBudgetComparison(options: BudgetComparisonOptions): stri
   } else {
     // No alternatives found message
     elements.push(
-      text(width / 2, HEADER_HEIGHT + 30, 'No cheaper alternatives found', {
+      text(width / 2, HEADER_HEIGHT + 30, labels.noAlternatives, {
         fill: THEME.textMuted,
         fontSize: 16,
-        fontFamily: FONTS.primary,
+        fontFamily: FONTS.primaryCjk,
         textAnchor: 'middle',
       })
     );
@@ -142,18 +206,17 @@ export function generateBudgetComparison(options: BudgetComparisonOptions): stri
 function generateHeader(
   targetDye: Dye,
   targetPrice: DyePriceData | null,
-  world: string,
-  sortBy: BudgetSortOption,
+  labels: BudgetSvgLabels,
   width: number
 ): string {
   const elements: string[] = [];
 
   // Title
   elements.push(
-    text(PADDING, 35, 'BUDGET ALTERNATIVES FOR', {
+    text(PADDING, 35, labels.headerLabel, {
       fill: THEME.textMuted,
       fontSize: 12,
-      fontFamily: FONTS.primary,
+      fontFamily: FONTS.primaryCjk,
       fontWeight: 500,
     })
   );
@@ -180,10 +243,11 @@ function generateHeader(
     })
   );
 
-  // Target dye name
+  // Target dye name (localized)
   const infoX = PADDING + TARGET_SWATCH_SIZE + 16;
+  const targetName = labels.dyeNames[targetDye.itemID] ?? targetDye.name;
   elements.push(
-    text(infoX, 70, escapeXml(targetDye.name), {
+    text(infoX, 70, escapeXml(targetName), {
       fill: THEME.text,
       fontSize: 24,
       fontFamily: FONTS.headerCjk,
@@ -191,9 +255,10 @@ function generateHeader(
     })
   );
 
-  // Category
+  // Category (localized)
+  const targetCategory = labels.categoryNames[targetDye.category] ?? targetDye.category;
   elements.push(
-    text(infoX, 92, escapeXml(targetDye.category), {
+    text(infoX, 92, escapeXml(targetCategory), {
       fill: THEME.textMuted,
       fontSize: 14,
       fontFamily: FONTS.primaryCjk,
@@ -205,16 +270,16 @@ function generateHeader(
 
   if (targetPrice) {
     elements.push(
-      text(priceX, 55, 'TARGET PRICE', {
+      text(priceX, 55, labels.targetPriceLabel, {
         fill: THEME.textMuted,
         fontSize: 10,
-        fontFamily: FONTS.primary,
+        fontFamily: FONTS.primaryCjk,
         fontWeight: 500,
         textAnchor: 'end',
       })
     );
     elements.push(
-      text(priceX, 80, `${formatGil(targetPrice.currentMinPrice)} Gil`, {
+      text(priceX, 80, fillTemplate(labels.gilAmountTemplate, { amount: formatGil(targetPrice.currentMinPrice) }), {
         fill: THEME.warning,
         fontSize: 22,
         fontFamily: FONTS.header,
@@ -223,39 +288,38 @@ function generateHeader(
       })
     );
     elements.push(
-      text(priceX, 100, `on ${world}`, {
+      text(priceX, 100, labels.onWorld, {
         fill: THEME.textDim,
         fontSize: 12,
-        fontFamily: FONTS.primary,
+        fontFamily: FONTS.primaryCjk,
         textAnchor: 'end',
       })
     );
   } else {
     elements.push(
-      text(priceX, 70, 'No listings', {
+      text(priceX, 70, labels.noListings, {
         fill: THEME.textMuted,
         fontSize: 16,
-        fontFamily: FONTS.primary,
+        fontFamily: FONTS.primaryCjk,
         textAnchor: 'end',
       })
     );
     elements.push(
-      text(priceX, 92, `on ${world}`, {
+      text(priceX, 92, labels.onWorld, {
         fill: THEME.textDim,
         fontSize: 12,
-        fontFamily: FONTS.primary,
+        fontFamily: FONTS.primaryCjk,
         textAnchor: 'end',
       })
     );
   }
 
   // Sort indicator
-  const sortLabel = SORT_DISPLAY[sortBy].label;
   elements.push(
-    text(width / 2, HEADER_HEIGHT - 8, `Sorted by: ${sortLabel}`, {
+    text(width / 2, HEADER_HEIGHT - 8, labels.sortedBy, {
       fill: THEME.textDim,
       fontSize: 11,
-      fontFamily: FONTS.primary,
+      fontFamily: FONTS.primaryCjk,
       textAnchor: 'middle',
     })
   );
@@ -271,7 +335,8 @@ function generateAlternativeRow(
   x: number,
   y: number,
   width: number,
-  targetPrice: DyePriceData | null
+  targetPrice: DyePriceData | null,
+  labels: BudgetSvgLabels
 ): string {
   const elements: string[] = [];
   const rowPadding = 12;
@@ -297,10 +362,11 @@ function generateAlternativeRow(
     })
   );
 
-  // Dye name and hex
+  // Dye name (localized) and hex
   const infoX = swatchX + SWATCH_SIZE + 14;
+  const altName = labels.dyeNames[alt.dye.itemID] ?? alt.dye.name;
   elements.push(
-    text(infoX, y + 35, escapeXml(alt.dye.name), {
+    text(infoX, y + 35, escapeXml(altName), {
       fill: THEME.text,
       fontSize: 16,
       fontFamily: FONTS.primaryCjk,
@@ -315,14 +381,15 @@ function generateAlternativeRow(
     })
   );
 
-  // Color distance badge
-  const quality = getDistanceQuality(alt.colorDistance);
-  const distanceText = `${quality.emoji} ${quality.label} (Δ${alt.colorDistance.toFixed(1)})`;
+  // Color distance badge (no emoji/Δ — fonts lack those glyphs in resvg)
+  const qualityKey = getDistanceQualityKey(alt.colorDistance);
+  const qualityLabel = labels.distanceQuality[qualityKey];
+  const distanceText = `${qualityLabel} (dE ${alt.colorDistance.toFixed(1)})`;
   elements.push(
     text(infoX, y + 75, distanceText, {
       fill: THEME.textMuted,
       fontSize: 11,
-      fontFamily: FONTS.primary,
+      fontFamily: FONTS.primaryCjk,
     })
   );
 
@@ -332,7 +399,7 @@ function generateAlternativeRow(
   if (alt.price) {
     // Price
     elements.push(
-      text(priceX, y + 35, `${formatGil(alt.price.currentMinPrice)} Gil`, {
+      text(priceX, y + 35, fillTemplate(labels.gilAmountTemplate, { amount: formatGil(alt.price.currentMinPrice) }), {
         fill: THEME.success,
         fontSize: 18,
         fontFamily: FONTS.header,
@@ -343,12 +410,15 @@ function generateAlternativeRow(
 
     // Savings
     if (targetPrice && alt.savings > 0) {
-      const savingsText = `Save ${formatGil(alt.savings)} (${alt.savingsPercent.toFixed(0)}%)`;
+      const savingsText = fillTemplate(labels.saveAmountTemplate, {
+        amount: formatGil(alt.savings),
+        percent: alt.savingsPercent.toFixed(0),
+      });
       elements.push(
         text(priceX, y + 55, savingsText, {
           fill: THEME.accent,
           fontSize: 13,
-          fontFamily: FONTS.primary,
+          fontFamily: FONTS.primaryCjk,
           fontWeight: 500,
           textAnchor: 'end',
         })
@@ -357,19 +427,19 @@ function generateAlternativeRow(
 
     // Listings count
     elements.push(
-      text(priceX, y + 75, `${alt.price.listingCount} listings`, {
+      text(priceX, y + 75, fillTemplate(labels.listingCountTemplate, { count: alt.price.listingCount }), {
         fill: THEME.textDim,
         fontSize: 11,
-        fontFamily: FONTS.primary,
+        fontFamily: FONTS.primaryCjk,
         textAnchor: 'end',
       })
     );
   } else {
     elements.push(
-      text(priceX, y + 50, 'No listings', {
+      text(priceX, y + 50, labels.noListings, {
         fill: THEME.textMuted,
         fontSize: 14,
-        fontFamily: FONTS.primary,
+        fontFamily: FONTS.primaryCjk,
         textAnchor: 'end',
       })
     );
@@ -388,7 +458,7 @@ export function generateNoWorldSetSvg(width: number = DEFAULT_WIDTH): string {
   elements.push(rect(0, 0, width, height, THEME.background, { rx: 12, ry: 12 }));
 
   elements.push(
-    text(width / 2, 60, '⚠️ No World Set', {
+    text(width / 2, 60, 'No World Set', {
       fill: THEME.warning,
       fontSize: 24,
       fontFamily: FONTS.header,
@@ -428,7 +498,7 @@ export function generateErrorSvg(message: string, width: number = DEFAULT_WIDTH)
   elements.push(rect(0, 0, width, height, THEME.background, { rx: 12, ry: 12 }));
 
   elements.push(
-    text(width / 2, 50, '❌ Error', {
+    text(width / 2, 50, 'Error', {
       fill: THEME.error,
       fontSize: 20,
       fontFamily: FONTS.header,

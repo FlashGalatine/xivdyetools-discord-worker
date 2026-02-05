@@ -17,7 +17,7 @@ import type {
   BudgetSearchOptions,
   BudgetFindResult,
 } from '../../types/budget.js';
-import { fetchPrices } from './universalis-client.js';
+import { fetchPricesBatched } from './universalis-client.js';
 import { fetchWithCache } from './price-cache.js';
 
 // ============================================================================
@@ -94,7 +94,8 @@ export async function findCheaperAlternatives(
   }
 
   // 2. Get all dyes and their item IDs for price fetch
-  const allDyes = dyeService.getAllDyes();
+  // Filter out Facewear dyes which have synthetic negative itemIDs (not tradeable on market board)
+  const allDyes = dyeService.getAllDyes().filter((dye) => dye.itemID > 0);
   const itemIds = allDyes.map((dye) => dye.itemID);
 
   // 3. Fetch prices with caching
@@ -102,7 +103,7 @@ export async function findCheaperAlternatives(
     env.KV,
     world,
     itemIds,
-    (ids) => fetchPrices(env, world, ids, logger),
+    (ids) => fetchPricesBatched(env, world, ids, logger),
     logger
   );
 
@@ -245,7 +246,8 @@ export function getDyeAutocomplete(
   query: string,
   limit: number = 25
 ): Array<{ name: string; value: string }> {
-  const matches = dyeService.searchByName(query);
+  const matches = dyeService.searchByName(query)
+    .filter((dye) => dye.itemID > 0);
 
   return matches.slice(0, limit).map((dye) => ({
     name: `${dye.name} (${dye.category})`,
