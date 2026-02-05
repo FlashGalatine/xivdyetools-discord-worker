@@ -13,6 +13,13 @@ vi.mock('../fonts/Onest-VariableFont_wght.ttf', () => ({
 vi.mock('../fonts/Habibi-Regular.ttf', () => ({
     default: new ArrayBuffer(150),
 }));
+// CJK font mocks
+vi.mock('../fonts/NotoSansSC-Subset.ttf', () => ({
+    default: new ArrayBuffer(222),
+}));
+vi.mock('../fonts/NotoSansKR-Subset.ttf', () => ({
+    default: new ArrayBuffer(155),
+}));
 
 // Now import the module with mocked dependencies
 import { getFontBuffers, FONT_FAMILIES } from './fonts.js';
@@ -31,7 +38,7 @@ describe('fonts.ts', () => {
             const buffers = getFontBuffers();
 
             expect(Array.isArray(buffers)).toBe(true);
-            expect(buffers).toHaveLength(3);
+            expect(buffers).toHaveLength(5);
 
             for (const buffer of buffers) {
                 expect(buffer).toBeInstanceOf(Uint8Array);

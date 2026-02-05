@@ -19,6 +19,13 @@ vi.mock('./handlers/commands/index.js', () => ({
   handleAboutCommand: vi.fn(),
   handleHarmonyCommand: vi.fn(),
   handleDyeCommand: vi.fn(),
+  // V4 Commands
+  handleExtractorCommand: vi.fn(),
+  handleGradientCommand: vi.fn(),
+  handlePreferencesCommand: vi.fn(),
+  handleMixerV4Command: vi.fn(),
+  handleSwatchCommand: vi.fn(),
+  // Legacy commands
   handleMixerCommand: vi.fn(),
   handleMatchCommand: vi.fn(),
   handleMatchImageCommand: vi.fn(),
@@ -30,6 +37,8 @@ vi.mock('./handlers/commands/index.js', () => ({
   handleCollectionCommand: vi.fn(),
   handlePresetCommand: vi.fn(),
   handleStatsCommand: vi.fn(),
+  handleBudgetCommand: vi.fn(),
+  handleBudgetAutocomplete: vi.fn(),
 }));
 
 vi.mock('./handlers/buttons/index.js', () => ({
@@ -90,7 +99,7 @@ vi.mock('@xivdyetools/core', () => {
       ];
     }
   }
-  
+
   return {
     DyeService: MockDyeService,
     dyeDatabase: {},
@@ -116,7 +125,7 @@ describe('index.ts', () => {
       DISCORD_TOKEN: 'test-token',
       DISCORD_APPLICATION_ID: 'test-app-id',
       PRESET_API_URL: 'https://test-api.example.com',
-      INTERNAL_WEBHOOK_SECRET: 'test-webhook-secret',
+      INTERNAL_WEBHOOK_SECRET: 'test-webhook-secret', // pragma: allowlist secret
       KV: mockKV,
       MODERATION_CHANNEL_ID: 'test-moderation-channel',
       SUBMISSION_LOG_CHANNEL_ID: 'test-submission-log-channel',
@@ -221,7 +230,7 @@ describe('index.ts', () => {
         expect.objectContaining({
           embeds: expect.arrayContaining([
             expect.objectContaining({
-              title: '🟡 Preset Awaiting Moderation',
+              title: '🟡 New Preset Awaiting Review',
             }),
           ]),
           components: expect.any(Array),
@@ -1305,8 +1314,16 @@ describe('index.ts', () => {
         const commands = await import('./handlers/commands/index.js');
 
         const commandHandlers = [
+          { name: 'about', handler: commands.handleAboutCommand },
+          { name: 'harmony', handler: commands.handleHarmonyCommand },
           { name: 'dye', handler: commands.handleDyeCommand },
-          { name: 'mixer', handler: commands.handleMixerCommand },
+          // V4 Commands
+          { name: 'extractor', handler: commands.handleExtractorCommand },
+          { name: 'gradient', handler: commands.handleGradientCommand },
+          { name: 'preferences', handler: commands.handlePreferencesCommand },
+          { name: 'mixer', handler: commands.handleMixerV4Command },
+          { name: 'swatch', handler: commands.handleSwatchCommand },
+          // Legacy commands
           { name: 'match', handler: commands.handleMatchCommand },
           { name: 'match_image', handler: commands.handleMatchImageCommand },
           { name: 'accessibility', handler: commands.handleAccessibilityCommand },
@@ -1316,6 +1333,8 @@ describe('index.ts', () => {
           { name: 'favorites', handler: commands.handleFavoritesCommand },
           { name: 'collection', handler: commands.handleCollectionCommand },
           { name: 'preset', handler: commands.handlePresetCommand },
+          { name: 'stats', handler: commands.handleStatsCommand },
+          { name: 'budget', handler: commands.handleBudgetCommand },
         ];
 
         for (const { name, handler } of commandHandlers) {

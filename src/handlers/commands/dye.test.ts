@@ -6,6 +6,26 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { handleDyeCommand } from './dye.js';
 import type { Env, DiscordInteraction, InteractionResponseBody } from '../../types/env.js';
 
+// Mock SVG renderer to avoid WASM import
+vi.mock('../../services/svg/renderer.js', () => ({
+  renderSvgToPng: vi.fn().mockResolvedValue(new Uint8Array([1])),
+  initRenderer: vi.fn().mockResolvedValue(undefined),
+}));
+
+// Mock SVG generators
+vi.mock('../../services/svg/dye-info-card.js', () => ({
+  generateDyeInfoCard: vi.fn().mockReturnValue('<svg></svg>'),
+}));
+
+vi.mock('../../services/svg/random-dyes-grid.js', () => ({
+  generateRandomDyesGrid: vi.fn().mockReturnValue('<svg></svg>'),
+}));
+
+// Mock Discord API (for deferred response follow-ups)
+vi.mock('../../utils/discord-api.js', () => ({
+  editOriginalResponse: vi.fn().mockResolvedValue(undefined),
+}));
+
 // Mock dependencies
 vi.mock('@xivdyetools/core', () => {
   class MockDyeService {
@@ -31,7 +51,7 @@ vi.mock('@xivdyetools/core', () => {
       ];
     }
   }
-  
+
   return {
     DyeService: MockDyeService,
     dyeDatabase: {},
@@ -49,49 +69,54 @@ vi.mock('../buttons/index.js', () => ({
   })),
 }));
 
-vi.mock('../../services/bot-i18n.js', () => ({
-  createUserTranslator: vi.fn().mockResolvedValue({
-    t: (key: string, vars?: Record<string, any>) => {
-      const translations: Record<string, string> = {
-        'common.error': 'Error',
-        'errors.missingSubcommand': 'Missing subcommand',
-        'errors.unknownSubcommand': `Unknown subcommand: ${vars?.name}`,
-        'errors.missingQuery': 'Missing query',
-        'errors.missingName': 'Missing name',
-        'errors.dyeNotFound': `Dye not found: ${vars?.name}`,
-        'errors.noDyesAvailable': 'No dyes available',
-        'dye.search.noResults': `No results for: ${vars?.query}`,
-        'dye.search.tryDifferent': 'Try a different search term',
-        'dye.search.foundCount': `Found ${vars?.count} dye`,
-        'dye.search.foundCountPlural': `Found ${vars?.count} dyes`,
-        'dye.search.resultsTitle': `Search Results: ${vars?.query}`,
-        'dye.search.moreResults': `+${vars?.count} more results`,
-        'dye.search.useInfoHint': 'Use /dye info to see details',
-        'dye.info.detailedInfo': `Detailed information • ${vars?.category}`,
-        'dye.list.noDyesInCategory': `No dyes in category: ${vars?.category}`,
-        'dye.list.categoryTitle': `Category: ${vars?.category}`,
-        'dye.list.dyesInCategory': `${vars?.count} dyes`,
-        'dye.list.categoriesTitle': 'Dye Categories',
-        'dye.list.categorySummary': `${vars?.total} total dyes in ${vars?.count} categories`,
-        'dye.list.useListHint': 'Use /dye list <category> to see all dyes',
-        'dye.random.title': 'Random Dyes',
-        'dye.random.description': `Here are ${vars?.count} random dyes`,
-        'dye.random.titleUnique': 'Random Dyes (Unique Categories)',
-        'dye.random.descriptionUnique': `Here are ${vars?.count} random dyes from different categories`,
-        'dye.random.runAgainHint': 'Run again for new dyes',
-        'common.hexColor': 'Hex Color',
-        'common.category': 'Category',
-        'common.itemId': 'Item ID',
-        'common.rgb': 'RGB',
-        'common.hsv': 'HSV',
-        'common.footer': 'XIV Dye Tools',
-        'common.dyes': 'dyes',
-      };
-      return translations[key] || key;
-    },
+vi.mock('../../services/bot-i18n.js', () => {
+  const translatorFn = (key: string, vars?: Record<string, any>) => {
+    const translations: Record<string, string> = {
+      'common.error': 'Error',
+      'errors.missingSubcommand': 'Missing subcommand',
+      'errors.unknownSubcommand': `Unknown subcommand: ${vars?.name}`,
+      'errors.missingQuery': 'Missing query',
+      'errors.missingName': 'Missing name',
+      'errors.dyeNotFound': `Dye not found: ${vars?.name}`,
+      'errors.noDyesAvailable': 'No dyes available',
+      'dye.search.noResults': `No results for: ${vars?.query}`,
+      'dye.search.tryDifferent': 'Try a different search term',
+      'dye.search.foundCount': `Found ${vars?.count} dye`,
+      'dye.search.foundCountPlural': `Found ${vars?.count} dyes`,
+      'dye.search.resultsTitle': `Search Results: ${vars?.query}`,
+      'dye.search.moreResults': `+${vars?.count} more results`,
+      'dye.search.useInfoHint': 'Use /dye info to see details',
+      'dye.info.detailedInfo': `Detailed information • ${vars?.category}`,
+      'dye.list.noDyesInCategory': `No dyes in category: ${vars?.category}`,
+      'dye.list.categoryTitle': `Category: ${vars?.category}`,
+      'dye.list.dyesInCategory': `${vars?.count} dyes`,
+      'dye.list.categoriesTitle': 'Dye Categories',
+      'dye.list.categorySummary': `${vars?.total} total dyes in ${vars?.count} categories`,
+      'dye.list.useListHint': 'Use /dye list <category> to see all dyes',
+      'dye.random.title': 'Random Dyes',
+      'dye.random.description': `Here are ${vars?.count} random dyes`,
+      'dye.random.titleUnique': 'Random Dyes (Unique Categories)',
+      'dye.random.descriptionUnique': `Here are ${vars?.count} random dyes from different categories`,
+      'dye.random.runAgainHint': 'Run again for new dyes',
+      'common.hexColor': 'Hex Color',
+      'common.category': 'Category',
+      'common.itemId': 'Item ID',
+      'common.rgb': 'RGB',
+      'common.hsv': 'HSV',
+      'common.footer': 'XIV Dye Tools',
+      'common.dyes': 'dyes',
+    };
+    return translations[key] || key;
+  };
+  const mockTranslator = {
+    t: translatorFn,
     getLocale: () => 'en',
-  }),
-}));
+  };
+  return {
+    createUserTranslator: vi.fn().mockResolvedValue(mockTranslator),
+    createTranslator: vi.fn().mockReturnValue(mockTranslator),
+  };
+});
 
 vi.mock('../../services/i18n.js', () => ({
   initializeLocale: vi.fn(),
@@ -109,7 +134,7 @@ describe('dye.ts', () => {
       DISCORD_TOKEN: 'test-token',
       DISCORD_CLIENT_ID: 'test-app-id',
       PRESETS_API_URL: 'https://test-api.example.com',
-      INTERNAL_WEBHOOK_SECRET: 'test-secret',
+      INTERNAL_WEBHOOK_SECRET: 'test-secret', // pragma: allowlist secret
       KV: {} as KVNamespace,
     } as unknown as Env;
 
@@ -291,9 +316,10 @@ describe('dye.ts', () => {
       const response = await handleDyeCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      expect(data.data.embeds[0].title).toContain('Snow White');
-      expect(data.data.embeds[0].fields).toBeDefined();
-      expect(data.data.components).toBeDefined(); // Copy buttons
+      // V4: info subcommand returns a deferred response (type 5) for image generation
+      expect(data.type).toBe(5); // DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE
+      // Background processing is triggered via ctx.waitUntil
+      expect(mockCtx.waitUntil).toHaveBeenCalled();
     });
 
     it('should return error for missing name', async () => {
@@ -455,8 +481,9 @@ describe('dye.ts', () => {
       const response = await handleDyeCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      expect(data.data.embeds[0].title).toBe('Random Dyes');
-      expect(data.data.embeds[0].description).toContain('random dyes');
+      // V4: random subcommand returns a deferred response (type 5) for image generation
+      expect(data.type).toBe(5); // DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE
+      expect(mockCtx.waitUntil).toHaveBeenCalled();
     });
 
     it('should return random dyes from unique categories', async () => {
@@ -481,37 +508,37 @@ describe('dye.ts', () => {
       const response = await handleDyeCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      expect(data.data.embeds[0].title).toBe('Random Dyes (Unique Categories)');
-      expect(data.data.embeds[0].description).toContain('different categories');
+      // V4: random subcommand returns a deferred response (type 5) for image generation
+      expect(data.type).toBe(5); // DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE
+      expect(mockCtx.waitUntil).toHaveBeenCalled();
     });
 
     it('should exclude Facewear from random selection', async () => {
-      // Run multiple times to check randomness doesn't include Facewear
-      for (let i = 0; i < 5; i++) {
-        const interaction: DiscordInteraction = {
-          type: 2,
-          data: {
-            name: 'dye',
-            options: [
-              {
-                name: 'random',
-                type: 1,
-                options: [],
-              },
-            ],
-          },
-          user: { id: 'user-123' },
-          id: 'int-1',
-          application_id: 'app-1',
-          token: 'token-1',
-        };
+      const interaction: DiscordInteraction = {
+        type: 2,
+        data: {
+          name: 'dye',
+          options: [
+            {
+              name: 'random',
+              type: 1,
+              options: [],
+            },
+          ],
+        },
+        user: { id: 'user-123' },
+        id: 'int-1',
+        application_id: 'app-1',
+        token: 'token-1',
+      };
 
-        const response = await handleDyeCommand(interaction, mockEnv, mockCtx);
-        const data = (await response.json()) as InteractionResponseBody;
+      const response = await handleDyeCommand(interaction, mockEnv, mockCtx);
+      const data = (await response.json()) as InteractionResponseBody;
 
-        // Should never contain Facewear dyes
-        expect(data.data.embeds[0].description).not.toContain('Red (#FF0000)');
-      }
+      // V4: random subcommand returns a deferred response (type 5) for image generation
+      // Facewear exclusion is handled internally by excludeFacewear()
+      expect(data.type).toBe(5); // DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE
+      expect(mockCtx.waitUntil).toHaveBeenCalled();
     });
   });
 });

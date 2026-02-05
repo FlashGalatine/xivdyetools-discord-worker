@@ -5,9 +5,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { handleLanguageCommand } from './language.js';
 
 // Mock i18n service with overridable functions
-let mockGetUserLanguagePreference = vi.fn(() => Promise.resolve(null));
-let mockSetUserLanguagePreference = vi.fn(() => Promise.resolve(true));
-let mockClearUserLanguagePreference = vi.fn(() => Promise.resolve(true));
 let mockGetLocaleInfo = vi.fn((locale: string) => {
     if (locale === 'en') return { code: 'en', name: 'English', nativeName: 'English', flag: '🇺🇸' };
     if (locale === 'ja') return { code: 'ja', name: 'Japanese', nativeName: '日本語', flag: '🇯🇵' };
@@ -26,10 +23,18 @@ vi.mock('../../services/i18n.js', () => ({
     ],
     isValidLocale: vi.fn((locale: string) => ['en', 'ja'].includes(locale)),
     getLocaleInfo: (locale: string) => mockGetLocaleInfo(locale),
-    getUserLanguagePreference: (...args: any[]) => mockGetUserLanguagePreference(...args),
-    setUserLanguagePreference: (...args: any[]) => mockSetUserLanguagePreference(...args),
-    clearUserLanguagePreference: (...args: any[]) => mockClearUserLanguagePreference(...args),
     discordLocaleToLocaleCode: (locale: string) => mockDiscordLocaleToLocaleCode(locale),
+}));
+
+// Mock preferences service with overridable functions
+let mockGetUserPreferences = vi.fn(() => Promise.resolve({}));
+let mockSetPreference = vi.fn(() => Promise.resolve({ success: true }));
+let mockResetPreference = vi.fn(() => Promise.resolve(true));
+
+vi.mock('../../services/preferences.js', () => ({
+    getUserPreferences: (...args: any[]) => mockGetUserPreferences(...args),
+    setPreference: (...args: any[]) => mockSetPreference(...args),
+    resetPreference: (...args: any[]) => mockResetPreference(...args),
 }));
 
 // Mock bot-i18n service
@@ -58,9 +63,9 @@ describe('handlers/commands/language.ts', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         // Reset mock implementations to default
-        mockGetUserLanguagePreference = vi.fn(() => Promise.resolve(null));
-        mockSetUserLanguagePreference = vi.fn(() => Promise.resolve(true));
-        mockClearUserLanguagePreference = vi.fn(() => Promise.resolve(true));
+        mockGetUserPreferences = vi.fn(() => Promise.resolve({}));
+        mockSetPreference = vi.fn(() => Promise.resolve({ success: true }));
+        mockResetPreference = vi.fn(() => Promise.resolve(true));
         mockGetLocaleInfo = vi.fn((locale: string) => {
             if (locale === 'en') return { code: 'en', name: 'English', nativeName: 'English', flag: '🇺🇸' };
             if (locale === 'ja') return { code: 'ja', name: 'Japanese', nativeName: '日本語', flag: '🇯🇵' };
@@ -85,7 +90,7 @@ describe('handlers/commands/language.ts', () => {
             const response = await handleLanguageCommand(interaction, mockEnv, mockCtx);
             const body = (await response.json()) as any;
 
-            expect(body.data.content).toContain('Could not identify user');
+            expect(body.data.embeds[0].description).toContain('Could not identify user');
         });
 
         it('should return error for missing subcommand', async () => {
@@ -100,7 +105,7 @@ describe('handlers/commands/language.ts', () => {
             const response = await handleLanguageCommand(interaction, mockEnv, mockCtx);
             const body = (await response.json()) as any;
 
-            expect(body.data.content).toContain('subcommand');
+            expect(body.data.embeds[0].description).toContain('subcommand');
         });
 
         it('should return error for unknown subcommand', async () => {
@@ -115,7 +120,7 @@ describe('handlers/commands/language.ts', () => {
             const response = await handleLanguageCommand(interaction, mockEnv, mockCtx);
             const body = (await response.json()) as any;
 
-            expect(body.data.content).toContain('Unknown subcommand');
+            expect(body.data.embeds[0].description).toContain('Unknown subcommand');
         });
 
         describe('set subcommand', () => {
@@ -186,8 +191,8 @@ describe('handlers/commands/language.ts', () => {
             });
 
             it('should return error when KV save fails', async () => {
-                // Override mock to return false (KV failure)
-                mockSetUserLanguagePreference = vi.fn(() => Promise.resolve(false));
+                // Override mock to return failure (KV failure)
+                mockSetPreference = vi.fn(() => Promise.resolve({ success: false }));
 
                 const interaction = {
                     id: '123',
@@ -264,7 +269,7 @@ describe('handlers/commands/language.ts', () => {
 
             it('should show existing user preference', async () => {
                 // User has an existing preference
-                mockGetUserLanguagePreference = vi.fn(() => Promise.resolve('ja'));
+                mockGetUserPreferences = vi.fn(() => Promise.resolve({ language: 'ja' }));
 
                 const interaction = {
                     id: '123',
@@ -329,7 +334,7 @@ describe('handlers/commands/language.ts', () => {
 
             it('should handle unknown preference locale info (getLocaleInfo returns null for preference)', async () => {
                 // User has preference but getLocaleInfo returns null
-                mockGetUserLanguagePreference = vi.fn(() => Promise.resolve('unknown-locale'));
+                mockGetUserPreferences = vi.fn(() => Promise.resolve({ language: 'unknown-locale' }));
                 mockGetLocaleInfo = vi.fn(() => null);
 
                 const interaction = {
@@ -374,7 +379,7 @@ describe('handlers/commands/language.ts', () => {
 
             it('should return error when KV clear fails', async () => {
                 // Override mock to return false (KV failure)
-                mockClearUserLanguagePreference = vi.fn(() => Promise.resolve(false));
+                mockResetPreference = vi.fn(() => Promise.resolve(false));
 
                 const interaction = {
                     id: '123',

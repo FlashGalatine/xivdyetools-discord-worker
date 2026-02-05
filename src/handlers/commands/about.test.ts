@@ -9,13 +9,39 @@ import type { Env, DiscordInteraction, InteractionResponseBody } from '../../typ
 // Mock dependencies
 vi.mock('../../services/bot-i18n.js', () => ({
   createUserTranslator: vi.fn().mockResolvedValue({
-    t: (key: string) => {
+    t: (key: string, vars?: Record<string, any>) => {
       const translations: Record<string, string> = {
         'about.title': 'XIV Dye Tools',
         'about.description': 'Your ultimate FFXIV dye companion',
         'about.commands': 'Commands',
+        'about.totalCount': `${vars?.count} total`,
         'about.links': 'Links',
         'about.poweredBy': 'Powered by xivdyetools-core',
+        // Category names
+        'about.categories.colorTools': 'Color Tools',
+        'about.categories.dyeDatabase': 'Dye Database',
+        'about.categories.analysis': 'Analysis',
+        'about.categories.userData': 'Your Data',
+        'about.categories.community': 'Community',
+        'about.categories.utility': 'Utility',
+        // Command descriptions
+        'about.cmd.harmony': 'Generate color harmonies',
+        'about.cmd.match': 'Find closest FFXIV dye',
+        'about.cmd.matchImage': 'Extract colors from an image',
+        'about.cmd.mixer': 'Create color gradients between two colors',
+        'about.cmd.dyeSearch': 'Search dyes by name',
+        'about.cmd.dyeInfo': 'Get detailed dye information',
+        'about.cmd.dyeList': 'List dyes by category',
+        'about.cmd.dyeRandom': 'Get random dye suggestions',
+        'about.cmd.comparison': 'Compare 2-4 dyes side by side',
+        'about.cmd.accessibility': 'Colorblindness simulation & contrast',
+        'about.cmd.favorites': 'Manage your favorite dyes',
+        'about.cmd.collection': 'Create custom dye collections',
+        'about.cmd.preset': 'Browse, submit & vote on community presets',
+        'about.cmd.language': 'Set your preferred language',
+        'about.cmd.manual': 'Show help guide',
+        'about.cmd.about': 'Bot information (this command)',
+        'about.cmd.stats': 'Usage statistics (authorized only)',
       };
       return translations[key] || key;
     },

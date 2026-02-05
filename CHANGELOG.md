@@ -5,6 +5,96 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.0.0] - 2026-02-05
+
+### Added
+
+#### V4 Infrastructure (Phase 1)
+- **Unified Preferences System**: Centralized user settings management with KV storage and migration from legacy keys (`i18n:user:*`, `budget:world:v1:*`)
+  - 8 configurable preferences: language, blending, matching, count, clan, gender, world, market
+- **Image Caching Service**: Cloudflare Cache API wrapper for SVG→PNG render results with TTL strategy (24h standard, 2h with market data)
+- **Error UX Standard**: 6 error categories (validation, notFound, rateLimit, external, internal, permission) with consistent styling and error codes
+- **Component Context Storage**: KV-backed context storage for Discord message components with short hash keys and TTL
+- **Pagination System**: Button-based navigation for large result sets with 5-button (full) and 3-button (compact) layouts
+- **Progress Feedback Service**: Status updates for long-running operations via deferred Discord responses
+
+#### New Commands (Phases 2-3)
+- `/extractor` - Merges `/match` and `/match_image` into one command
+  - `color` subcommand: find closest dye(s) to a hex color or dye name
+  - `image` subcommand: extract colors from image and match to dyes
+- `/gradient` - Renamed from `/mixer`, generates color gradients between two colors with dye matches
+  - Added color space interpolation: HSV (default), OKLCH, LAB, LCH, RGB
+  - Added matching algorithm selection: OKLAB, CIEDE2000, CIE76, HyAB, RGB
+- `/preferences` - Unified settings management (show/set/reset) for all 8 user preferences
+  - Enhanced `set` subcommand to accept multiple options in a single invocation
+- `/mixer` (NEW) - Dye blending with 6 color algorithms: RGB, LAB, OKLAB, RYB, HSL, Spectral (Kubelka-Munk)
+- `/swatch` - Character color matching for skin, hair, eyes, highlights, lips, tattoos, facepaint across all 16 FFXIV clans
+- `/stats` - Expanded from single embed to 5 subcommands: summary (public), overview, commands, preferences, health (admin)
+
+#### Command Enhancements (Phase 5)
+- `/comparison`: Added LAB color values (perceptual color space) with increased section height
+- `/dye info`: New visual result card showing large color swatch, dye name, category, HEX/RGB/HSV/LAB values, and internal IDs
+- `/dye random`: New visual infographic grid with 5-dye card layout, 3-column grid with centered last row
+- `/harmony`: Added `color_space` parameter for hue rotation (HSV, OKLCH, LCH, HSL)
+
+#### CJK Font Rendering
+- Bundled subsetted Noto Sans SC (Chinese/Japanese, ~222 KiB) and Noto Sans KR (Korean, ~155 KiB) for proper glyph rendering
+- Updated 7 SVG templates with CJK font fallback chains
+- Added `scripts/subset-cjk-fonts.py` for re-subsetting when locales change
+
+#### Changelog Announcement System (Phase 7)
+- GitHub webhook endpoint listening for pushes to main branch
+- Detects CHANGELOG-laymans.md changes, parses latest version entry
+- Posts rich Discord embed to announcement channel
+- New files: `github.ts` types, `github-verify.ts`, `changelog-parser.ts`, `announcements.ts`
+
+#### CI/CD
+- GitHub Actions workflow for automated Cloudflare deployment with CJK font support
+
+### Changed
+
+#### Localization (Phase 6)
+- Added locale sections for all v4 commands (swatch, preferences, stats, gradient, extractor, mixer blending modes, pagination, components, matching methods) across all 6 languages
+- Localized `/about` command categories and descriptions
+- Localized `/mixer` and `/swatch` commands with full i18n support
+- Migrated `extractor.ts` from `match.*` to `extractor.*` locale keys
+- Migrated `gradient.ts` from `mixer.*` to `gradient.*` locale keys
+- Added multilingual support for webhook notifications and admin message formatting
+
+#### Command Deprecations (Phase 4)
+- `/language` → Soft deprecated, delegates to `/preferences set language` with yellow deprecation notice
+- `/favorites` → Soft deprecated, points to `/preset` with deprecation warnings
+- `/collection` → Soft deprecated, points to `/preset` with deprecation warnings
+- Command registration updated with `[DEPRECATED]` prefixes
+
+#### Command Registration (Phase 8)
+- Removed deprecated commands from registration: `/match`, `/match_image`, `/favorites`, `/collection`
+- Final command set: 15 commands (about, harmony, dye, extractor, gradient, mixer, accessibility, manual, stats, preferences, swatch, comparison, language, preset, budget)
+
+#### Dependencies
+- Bumped `@xivdyetools/core` to ^1.16.0 (color space support, Korean/Chinese dye names)
+- Bumped `@cloudflare/workers-types` to 4.20260131.0
+- Bumped `hono` to 4.11.7
+- Bumped `wrangler` to 4.61.1
+
+### Fixed
+
+- `/swatch` grid command registration now advertises 1-based row/col ranges matching handler validation
+- `/budget` command failures resolved:
+  - Use `fetchPricesBatched` for >100 dyes on cold cache
+  - Rewrite Universalis aggregated API response parsing to match actual array-based format
+  - Filter Facewear dyes with synthetic negative itemIDs (`itemID > 0`)
+  - Migrate from legacy user-preferences to unified preferences system
+  - Added full i18n support with CJK font fallbacks for SVG graphic
+
+### Performance
+
+- Migrated component context storage from KV to Cache API (eliminates ~1 KV write per interactive command)
+- Migrated price cache from KV to Cache API (eliminates ~136 KV writes per `/budget` command)
+- Both migrations keep the worker within free-tier KV limit of 1,000 writes/day
+
+---
+
 ## [2.3.9] - 2026-01-26
 
 ### Security

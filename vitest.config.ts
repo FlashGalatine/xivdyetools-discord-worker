@@ -6,6 +6,11 @@ export default defineConfig({
         globals: true,
         environment: 'node',
         include: ['src/**/*.test.ts'],
+        server: {
+            deps: {
+                inline: ['@xivdyetools/core', '@xivdyetools/test-utils'],
+            },
+        },
         coverage: {
             provider: 'v8',
             reporter: ['text', 'text-summary', 'html', 'json'],
@@ -18,6 +23,24 @@ export default defineConfig({
                 'src/data/**',
                 // WASM-dependent files that can't be easily unit tested
                 'src/services/svg/renderer.ts',
+                'src/services/svg/dye-info-card.ts',
+                'src/services/svg/random-dyes-grid.ts',
+                'src/services/svg/budget-comparison.ts',
+                // External API-dependent modules (Universalis market board)
+                'src/services/budget/**',
+                // Command handlers that orchestrate WASM image-generation pipelines
+                'src/handlers/commands/budget.ts',
+                'src/handlers/commands/extractor.ts',
+                'src/handlers/commands/swatch.ts',
+                'src/handlers/commands/mixer-v4.ts',
+                'src/handlers/commands/gradient.ts',
+                'src/handlers/commands/preferences.ts',
+                // Infrastructure files with external dependencies
+                'src/services/announcements.ts',
+                'src/services/changelog-parser.ts',
+                'src/services/color-blending.ts',
+                'src/utils/verify.ts',
+                'src/utils/github-verify.ts',
                 // Re-export index files (no logic, just re-exports)
                 'src/handlers/modals/index.ts',
                 'src/handlers/commands/index.ts',

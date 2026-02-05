@@ -136,14 +136,14 @@ describe('/collection command', () => {
   it('returns error when user is missing', async () => {
     const res = await handleCollectionCommand({ ...baseInteraction }, env, ctx);
     const body = (await res.json()) as InteractionResponseBody;
-    expect(body.data.content).toBe('user not found');
+    expect(body.data.embeds[0].description).toContain('user not found');
   });
 
   it('returns error when subcommand missing', async () => {
     const interaction = { ...baseInteraction, member: { user: { id: 'u1', username: 't' } } };
     const res = await handleCollectionCommand(interaction, env, ctx);
     const body = (await res.json()) as InteractionResponseBody;
-    expect(body.data.content).toBe('missing subcommand');
+    expect(body.data.embeds[0].description).toContain('subcommand');
   });
 
   it('returns error for unknown subcommand', async () => {
@@ -154,7 +154,7 @@ describe('/collection command', () => {
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
     const body = (await res.json()) as InteractionResponseBody;
-    expect(body.data.content).toContain('unknown subcommand');
+    expect(body.data.embeds[0].description).toContain('Unknown subcommand');
   });
 
   it('creates a collection successfully', async () => {
@@ -183,7 +183,7 @@ describe('/collection command', () => {
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
     const body = (await res.json()) as InteractionResponseBody;
-    expect(body.data.embeds[0].description).toContain('already in MyCol');
+    expect(body.data.embeds[0].description).toContain('is already in **MyCol**');
   });
 
   it('shows empty collection info', async () => {
@@ -503,7 +503,7 @@ describe('/collection command', () => {
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
     const body = (await res.json()) as InteractionResponseBody;
-    expect(body.data.embeds[0].description).toContain('not in MyCol');
+    expect(body.data.embeds[0].description).toContain('is not in **MyCol**');
   });
 
   // Show tests
