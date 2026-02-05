@@ -296,8 +296,36 @@
     "version": "バージョン",
     "description": "FFXIVのカララント色の探索とマッチングのためのDiscordボットです。",
     "commands": "コマンド",
+    "totalCount": "合計{count}個",
     "links": "リンク",
-    "poweredBy": "Cloudflare Workersで動作中"
+    "poweredBy": "Cloudflare Workersで動作中",
+    "categories": {
+      "colorTools": "カラーツール",
+      "dyeDatabase": "カララントデータベース",
+      "analysis": "分析",
+      "userData": "ユーザーデータ",
+      "community": "コミュニティ",
+      "utility": "ユーティリティ"
+    },
+    "cmd": {
+      "harmony": "カラーハーモニーを生成（補色、トライアドなど）",
+      "match": "16進数カラーに最も近いFFXIVカララントを検索",
+      "matchImage": "画像から色を抽出してカララントにマッチング",
+      "mixer": "2色間のカラーグラデーションを作成",
+      "dyeSearch": "名前でカララントを検索",
+      "dyeInfo": "カララントの詳細情報を取得",
+      "dyeList": "カテゴリ別にカララントを一覧表示",
+      "dyeRandom": "ランダムなカララントを提案",
+      "comparison": "2〜4つのカララントを並べて比較",
+      "accessibility": "色覚シミュレーションとコントラスト",
+      "favorites": "お気に入りカララントを管理",
+      "collection": "カスタムカララントコレクションを作成",
+      "preset": "コミュニティプリセットの閲覧・投稿・投票",
+      "language": "言語設定を変更",
+      "manual": "ヘルプガイドを表示",
+      "about": "ボット情報（このコマンド）",
+      "stats": "使用統計（権限者のみ）"
+    }
   },
   "matchImage": {
     "missingImage": "分析する画像を添付してください。",

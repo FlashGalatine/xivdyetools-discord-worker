@@ -296,8 +296,36 @@
     "version": "Version",
     "description": "Un bot Discord pour l'exploration et la correspondance des couleurs de teinture FFXIV.",
     "commands": "Commandes",
+    "totalCount": "{count} au total",
     "links": "Liens",
-    "poweredBy": "Propulsé par Cloudflare Workers"
+    "poweredBy": "Propulsé par Cloudflare Workers",
+    "categories": {
+      "colorTools": "Outils de couleur",
+      "dyeDatabase": "Base de teintures",
+      "analysis": "Analyse",
+      "userData": "Vos données",
+      "community": "Communauté",
+      "utility": "Utilitaires"
+    },
+    "cmd": {
+      "harmony": "Générer des harmonies de couleurs (complémentaire, triadique, etc.)",
+      "match": "Trouver la teinture FFXIV la plus proche d'un code hex",
+      "matchImage": "Extraire les couleurs d'une image et les associer aux teintures",
+      "mixer": "Créer des dégradés entre deux couleurs",
+      "dyeSearch": "Rechercher des teintures par nom",
+      "dyeInfo": "Obtenir des informations détaillées sur une teinture",
+      "dyeList": "Lister les teintures par catégorie",
+      "dyeRandom": "Obtenir des suggestions de teintures aléatoires",
+      "comparison": "Comparer 2 à 4 teintures côte à côte",
+      "accessibility": "Simulation de daltonisme et contraste",
+      "favorites": "Gérer vos teintures favorites",
+      "collection": "Créer des collections de teintures personnalisées",
+      "preset": "Parcourir, soumettre et voter pour les préréglages",
+      "language": "Définir votre langue préférée",
+      "manual": "Afficher le guide d'aide",
+      "about": "Informations du bot (cette commande)",
+      "stats": "Statistiques d'utilisation (autorisé uniquement)"
+    }
   },
   "matchImage": {
     "missingImage": "Veuillez joindre une image à analyser.",

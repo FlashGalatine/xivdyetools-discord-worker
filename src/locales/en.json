@@ -296,8 +296,36 @@
     "version": "Version",
     "description": "A Discord bot for FFXIV dye color exploration and matching.",
     "commands": "Commands",
+    "totalCount": "{count} total",
     "links": "Links",
-    "poweredBy": "Powered by Cloudflare Workers"
+    "poweredBy": "Powered by Cloudflare Workers",
+    "categories": {
+      "colorTools": "Color Tools",
+      "dyeDatabase": "Dye Database",
+      "analysis": "Analysis",
+      "userData": "Your Data",
+      "community": "Community",
+      "utility": "Utility"
+    },
+    "cmd": {
+      "harmony": "Generate color harmonies (complementary, triadic, etc.)",
+      "match": "Find closest FFXIV dye to a hex color",
+      "matchImage": "Extract colors from an image and match to dyes",
+      "mixer": "Create color gradients between two colors",
+      "dyeSearch": "Search dyes by name",
+      "dyeInfo": "Get detailed dye information",
+      "dyeList": "List dyes by category",
+      "dyeRandom": "Get random dye suggestions",
+      "comparison": "Compare 2-4 dyes side by side",
+      "accessibility": "Colorblindness simulation & contrast",
+      "favorites": "Manage your favorite dyes",
+      "collection": "Create custom dye collections",
+      "preset": "Browse, submit & vote on community presets",
+      "language": "Set your preferred language",
+      "manual": "Show help guide",
+      "about": "Bot information (this command)",
+      "stats": "Usage statistics (authorized only)"
+    }
   },
   "matchImage": {
     "missingImage": "Please attach an image to analyze.",

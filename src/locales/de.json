@@ -296,8 +296,36 @@
     "version": "Version",
     "description": "Ein Discord-Bot zum Erkunden und Abgleichen von FFXIV-Farbstofffarben.",
     "commands": "Befehle",
+    "totalCount": "{count} insgesamt",
     "links": "Links",
-    "poweredBy": "Powered by Cloudflare Workers"
+    "poweredBy": "Powered by Cloudflare Workers",
+    "categories": {
+      "colorTools": "Farbwerkzeuge",
+      "dyeDatabase": "Farbstoff-Datenbank",
+      "analysis": "Analyse",
+      "userData": "Deine Daten",
+      "community": "Community",
+      "utility": "Dienstprogramme"
+    },
+    "cmd": {
+      "harmony": "Farbharmonien generieren (Komplementär, Triadisch usw.)",
+      "match": "Nächsten FFXIV-Farbstoff zu einem Hex-Code finden",
+      "matchImage": "Farben aus einem Bild extrahieren und zuordnen",
+      "mixer": "Farbverläufe zwischen zwei Farben erstellen",
+      "dyeSearch": "Farbstoffe nach Namen suchen",
+      "dyeInfo": "Detaillierte Farbstoff-Informationen abrufen",
+      "dyeList": "Farbstoffe nach Kategorie auflisten",
+      "dyeRandom": "Zufällige Farbstoffvorschläge erhalten",
+      "comparison": "2-4 Farbstoffe nebeneinander vergleichen",
+      "accessibility": "Farbblind-Simulation & Kontrast",
+      "favorites": "Lieblingsfarbstoffe verwalten",
+      "collection": "Eigene Farbstoff-Sammlungen erstellen",
+      "preset": "Community-Vorlagen durchsuchen, einreichen & bewerten",
+      "language": "Bevorzugte Sprache einstellen",
+      "manual": "Hilfe-Handbuch anzeigen",
+      "about": "Bot-Informationen (dieser Befehl)",
+      "stats": "Nutzungsstatistiken (nur autorisiert)"
+    }
   },
   "matchImage": {
     "missingImage": "Bitte hänge ein Bild zur Analyse an.",

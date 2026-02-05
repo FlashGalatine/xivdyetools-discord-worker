@@ -296,8 +296,36 @@
     "version": "版本",
     "description": "用于探索和匹配FFXIV染剂颜色的Discord机器人。",
     "commands": "命令",
+    "totalCount": "共{count}个",
     "links": "链接",
-    "poweredBy": "由 Cloudflare Workers 提供支持"
+    "poweredBy": "由 Cloudflare Workers 提供支持",
+    "categories": {
+      "colorTools": "颜色工具",
+      "dyeDatabase": "染剂数据库",
+      "analysis": "分析",
+      "userData": "用户数据",
+      "community": "社区",
+      "utility": "实用工具"
+    },
+    "cmd": {
+      "harmony": "生成颜色和谐方案（互补色、三色等）",
+      "match": "查找与十六进制颜色最接近的FFXIV染剂",
+      "matchImage": "从图像中提取颜色并匹配到染剂",
+      "mixer": "在两种颜色之间创建渐变",
+      "dyeSearch": "按名称搜索染剂",
+      "dyeInfo": "获取染剂详细信息",
+      "dyeList": "按分类列出染剂",
+      "dyeRandom": "获取随机染剂推荐",
+      "comparison": "并排比较2-4种染剂",
+      "accessibility": "色盲模拟与对比度",
+      "favorites": "管理您的收藏染剂",
+      "collection": "创建自定义染剂合集",
+      "preset": "浏览、提交和投票社区预设",
+      "language": "设置首选语言",
+      "manual": "显示帮助指南",
+      "about": "机器人信息（此命令）",
+      "stats": "使用统计（仅限授权）"
+    }
   },
   "matchImage": {
     "missingImage": "请附加一张图片进行分析。",

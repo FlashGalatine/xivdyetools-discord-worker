@@ -8,7 +8,7 @@
  */
 
 import type { Env, DiscordInteraction } from '../../types/env.js';
-import { createUserTranslator } from '../../services/bot-i18n.js';
+import { createUserTranslator, Translator } from '../../services/bot-i18n.js';
 import packageJson from '../../../package.json' with { type: 'json' };
 
 // Discord embed color constants
@@ -21,48 +21,48 @@ const COMMAND_CATEGORIES = {
   colorTools: {
     emoji: '🎨',
     commands: [
-      { name: '/harmony', desc: 'Generate color harmonies (complementary, triadic, etc.)' },
-      { name: '/match', desc: 'Find closest FFXIV dye to a hex color' },
-      { name: '/match_image', desc: 'Extract colors from an image and match to dyes' },
-      { name: '/mixer', desc: 'Create color gradients between two colors' },
+      { name: '/harmony', descKey: 'about.cmd.harmony' },
+      { name: '/match', descKey: 'about.cmd.match' },
+      { name: '/match_image', descKey: 'about.cmd.matchImage' },
+      { name: '/mixer', descKey: 'about.cmd.mixer' },
     ],
   },
   dyeDatabase: {
     emoji: '📚',
     commands: [
-      { name: '/dye search', desc: 'Search dyes by name' },
-      { name: '/dye info', desc: 'Get detailed dye information' },
-      { name: '/dye list', desc: 'List dyes by category' },
-      { name: '/dye random', desc: 'Get random dye suggestions' },
+      { name: '/dye search', descKey: 'about.cmd.dyeSearch' },
+      { name: '/dye info', descKey: 'about.cmd.dyeInfo' },
+      { name: '/dye list', descKey: 'about.cmd.dyeList' },
+      { name: '/dye random', descKey: 'about.cmd.dyeRandom' },
     ],
   },
   analysis: {
     emoji: '🔍',
     commands: [
-      { name: '/comparison', desc: 'Compare 2-4 dyes side by side' },
-      { name: '/accessibility', desc: 'Colorblindness simulation & contrast' },
+      { name: '/comparison', descKey: 'about.cmd.comparison' },
+      { name: '/accessibility', descKey: 'about.cmd.accessibility' },
     ],
   },
   userData: {
     emoji: '💾',
     commands: [
-      { name: '/favorites', desc: 'Manage your favorite dyes' },
-      { name: '/collection', desc: 'Create custom dye collections' },
+      { name: '/favorites', descKey: 'about.cmd.favorites' },
+      { name: '/collection', descKey: 'about.cmd.collection' },
     ],
   },
   community: {
     emoji: '🌐',
     commands: [
-      { name: '/preset', desc: 'Browse, submit & vote on community presets' },
+      { name: '/preset', descKey: 'about.cmd.preset' },
     ],
   },
   utility: {
     emoji: '⚙️',
     commands: [
-      { name: '/language', desc: 'Set your preferred language' },
-      { name: '/manual', desc: 'Show help guide' },
-      { name: '/about', desc: 'Bot information (this command)' },
-      { name: '/stats', desc: 'Usage statistics (authorized only)' },
+      { name: '/language', descKey: 'about.cmd.language' },
+      { name: '/manual', descKey: 'about.cmd.manual' },
+      { name: '/about', descKey: 'about.cmd.about' },
+      { name: '/stats', descKey: 'about.cmd.stats' },
     ],
   },
 } as const;
@@ -70,32 +70,17 @@ const COMMAND_CATEGORIES = {
 /**
  * Build the command list as a formatted string
  */
-function buildCommandList(): string {
+function buildCommandList(t: Translator): string {
   const sections: string[] = [];
 
-  for (const [_categoryKey, category] of Object.entries(COMMAND_CATEGORIES)) {
+  for (const [categoryKey, category] of Object.entries(COMMAND_CATEGORIES)) {
     const categoryCommands = category.commands
-      .map(cmd => `\`${cmd.name}\` - ${cmd.desc}`)
+      .map(cmd => `\`${cmd.name}\` - ${t.t(cmd.descKey)}`)
       .join('\n');
-    sections.push(`${category.emoji} **${getCategoryTitle(_categoryKey)}**\n${categoryCommands}`);
+    sections.push(`${category.emoji} **${t.t(`about.categories.${categoryKey}`)}**\n${categoryCommands}`);
   }
 
   return sections.join('\n\n');
-}
-
-/**
- * Get human-readable category title
- */
-function getCategoryTitle(key: string): string {
-  const titles: Record<string, string> = {
-    colorTools: 'Color Tools',
-    dyeDatabase: 'Dye Database',
-    analysis: 'Analysis',
-    userData: 'Your Data',
-    community: 'Community',
-    utility: 'Utility',
-  };
-  return titles[key] || key;
 }
 
 /**
@@ -112,7 +97,7 @@ export async function handleAboutCommand(
   // Get version from package.json (bundled at build time)
   const version = packageJson.version || '2.0.0';
 
-  const commandList = buildCommandList();
+  const commandList = buildCommandList(t);
 
   return Response.json({
     type: 4, // CHANNEL_MESSAGE_WITH_SOURCE
@@ -123,7 +108,7 @@ export async function handleAboutCommand(
           description: [
             t.t('about.description'),
             '',
-            `**${t.t('about.commands')}** (${getTotalCommandCount()} total)`,
+            `**${t.t('about.commands')}** (${t.t('about.totalCount', { count: getTotalCommandCount() })})`,
           ].join('\n'),
           color: COLORS.blurple,
           fields: [

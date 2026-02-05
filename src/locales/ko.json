@@ -296,8 +296,36 @@
     "version": "버전",
     "description": "FFXIV 염료 색상 탐색 및 매칭을 위한 Discord 봇입니다.",
     "commands": "명령어",
+    "totalCount": "총 {count}개",
     "links": "링크",
-    "poweredBy": "Cloudflare Workers 기반"
+    "poweredBy": "Cloudflare Workers 기반",
+    "categories": {
+      "colorTools": "색상 도구",
+      "dyeDatabase": "염료 데이터베이스",
+      "analysis": "분석",
+      "userData": "사용자 데이터",
+      "community": "커뮤니티",
+      "utility": "유틸리티"
+    },
+    "cmd": {
+      "harmony": "색상 하모니 생성 (보색, 삼원색 등)",
+      "match": "16진수 색상에 가장 가까운 FFXIV 염료 찾기",
+      "matchImage": "이미지에서 색상을 추출하여 염료에 매칭",
+      "mixer": "두 색상 사이의 그라데이션 생성",
+      "dyeSearch": "이름으로 염료 검색",
+      "dyeInfo": "염료 상세 정보 확인",
+      "dyeList": "카테고리별 염료 목록",
+      "dyeRandom": "무작위 염료 추천",
+      "comparison": "2-4개의 염료를 나란히 비교",
+      "accessibility": "색맹 시뮬레이션 및 대비",
+      "favorites": "즐겨찾기 염료 관리",
+      "collection": "사용자 염료 컬렉션 생성",
+      "preset": "커뮤니티 프리셋 탐색, 제출 및 투표",
+      "language": "선호 언어 설정",
+      "manual": "도움말 가이드 표시",
+      "about": "봇 정보 (이 명령어)",
+      "stats": "사용 통계 (권한자 전용)"
+    }
   },
   "matchImage": {
     "missingImage": "분석할 이미지를 첨부해 주세요.",
