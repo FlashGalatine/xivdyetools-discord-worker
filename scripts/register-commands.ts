@@ -80,6 +80,18 @@ const commands = [
           { name: 'Monochromatic (shades)', value: 'monochromatic' },
         ],
       },
+      {
+        name: 'color_space',
+        description: 'Color space for hue rotation',
+        type: OptionType.STRING,
+        required: false,
+        choices: [
+          { name: 'HSV - Classic hue wheel (default)', value: 'hsv' },
+          { name: 'OKLCH - Modern perceptual', value: 'oklch' },
+          { name: 'LCH - Cylindrical perceptual', value: 'lch' },
+          { name: 'HSL - Hue-Saturation-Lightness', value: 'hsl' },
+        ],
+      },
     ],
   },
 

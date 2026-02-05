@@ -6,7 +6,7 @@
  * creates a visual wheel showing harmonious dye combinations.
  */
 
-import type { Dye } from '@xivdyetools/core';
+import type { Dye, HarmonyOptions, HarmonyColorSpace } from '@xivdyetools/core';
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import { deferredResponse, errorEmbed } from '../../utils/response.js';
 // DISCORD-REF-001 FIX: Import from centralized color utilities
@@ -36,26 +36,26 @@ type HarmonyType = (typeof HARMONY_TYPES)[number];
  * Gets harmony dyes based on the harmony type
  * Note: xivdyetools-core v1.3.6+ natively excludes Facewear dyes from all harmony functions
  */
-function getHarmonyDyes(hex: string, type: HarmonyType): Dye[] {
+function getHarmonyDyes(hex: string, type: HarmonyType, options?: HarmonyOptions): Dye[] {
   switch (type) {
     case 'triadic':
-      return dyeService.findTriadicDyes(hex);
+      return dyeService.findTriadicDyes(hex, options);
     case 'complementary': {
-      const comp = dyeService.findComplementaryPair(hex);
+      const comp = dyeService.findComplementaryPair(hex, options);
       return comp ? [comp] : [];
     }
     case 'analogous':
-      return dyeService.findAnalogousDyes(hex, 30);
+      return dyeService.findAnalogousDyes(hex, 30, options);
     case 'split-complementary':
-      return dyeService.findSplitComplementaryDyes(hex);
+      return dyeService.findSplitComplementaryDyes(hex, options);
     case 'tetradic':
-      return dyeService.findTetradicDyes(hex);
+      return dyeService.findTetradicDyes(hex, options);
     case 'square':
-      return dyeService.findSquareDyes(hex);
+      return dyeService.findSquareDyes(hex, options);
     case 'monochromatic':
-      return dyeService.findMonochromaticDyes(hex, 5);
+      return dyeService.findMonochromaticDyes(hex, 5, options);
     default:
-      return dyeService.findTriadicDyes(hex);
+      return dyeService.findTriadicDyes(hex, options);
   }
 }
 
@@ -75,9 +75,11 @@ export async function handleHarmonyCommand(
   const options = interaction.data?.options || [];
   const colorOption = options.find((opt) => opt.name === 'color');
   const typeOption = options.find((opt) => opt.name === 'type');
+  const colorSpaceOption = options.find((opt) => opt.name === 'color_space');
 
   const colorInput = colorOption?.value as string | undefined;
   const harmonyType = (typeOption?.value as HarmonyType) || 'triadic';
+  const colorSpace = (colorSpaceOption?.value as HarmonyColorSpace) || undefined;
 
   // Validate required color input
   if (!colorInput) {
@@ -111,9 +113,12 @@ export async function handleHarmonyCommand(
   // Use translator's resolved locale instead of calling resolveUserLocale again
   const locale = t.getLocale();
 
+  // Build harmony options if color space was specified
+  const harmonyOptions: HarmonyOptions | undefined = colorSpace ? { colorSpace } : undefined;
+
   // Process in background
   ctx.waitUntil(
-    processHarmonyCommand(interaction, env, resolved.hex, resolved.name, resolved.id, resolved.itemID, harmonyType, locale, logger)
+    processHarmonyCommand(interaction, env, resolved.hex, resolved.name, resolved.id, resolved.itemID, harmonyType, locale, logger, harmonyOptions)
   );
 
   return deferResponse;
@@ -131,7 +136,8 @@ async function processHarmonyCommand(
   baseItemID: number | undefined,
   harmonyType: HarmonyType,
   locale: LocaleCode,
-  logger?: ExtendedLogger
+  logger?: ExtendedLogger,
+  harmonyOptions?: HarmonyOptions
 ): Promise<void> {
   // Create translator for background processing
   const t = createTranslator(locale);
@@ -141,7 +147,7 @@ async function processHarmonyCommand(
 
   try {
     // Get harmony dyes
-    const harmonyDyes = getHarmonyDyes(baseHex, harmonyType);
+    const harmonyDyes = getHarmonyDyes(baseHex, harmonyType, harmonyOptions);
 
     if (harmonyDyes.length === 0) {
       await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
