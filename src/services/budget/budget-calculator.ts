@@ -98,9 +98,8 @@ export async function findCheaperAlternatives(
   const allDyes = dyeService.getAllDyes().filter((dye) => dye.itemID > 0);
   const itemIds = allDyes.map((dye) => dye.itemID);
 
-  // 3. Fetch prices with caching
+  // 3. Fetch prices with caching (uses Cache API, not KV)
   const { prices, fromCache, fromApi } = await fetchWithCache(
-    env.KV,
     world,
     itemIds,
     (ids) => fetchPricesBatched(env, world, ids, logger),

@@ -1,8 +1,11 @@
 /**
  * Price Cache Service
  *
- * KV-backed caching for Universalis market prices.
- * Uses a 5-minute TTL to balance freshness with API rate limits.
+ * Cache API-backed caching for Universalis market prices.
+ * Uses a 5-minute freshness window with 15-minute stale fallback.
+ *
+ * Migrated from KV to Cache API to avoid the 1,000 writes/day
+ * free-tier limit. The Cache API has no write limits.
  *
  * @module services/budget/price-cache
  */
@@ -14,30 +17,34 @@ import type { DyePriceData, CachedPriceEntry } from '../../types/budget.js';
 // Constants
 // ============================================================================
 
-/**
- * KV schema version for data format evolution
- * Increment when changing the cache data structure
- */
+/** Cache schema version - bump to invalidate all cached prices */
 const CACHE_SCHEMA_VERSION = 'v1';
 
-/** KV key prefix for individual price entries */
-const PRICE_KEY_PREFIX = `budget:prices:${CACHE_SCHEMA_VERSION}:`;
+/** Base URL for synthetic cache keys (not actually fetched) */
+const CACHE_BASE_URL = 'https://cache.xivdyetools.internal/prices';
 
-/** Cache TTL in seconds (5 minutes) */
+/** Cache TTL in seconds (5 minutes) - freshness window */
 export const CACHE_TTL_SECONDS = 300;
 
 /** Stale threshold - allow stale data up to 15 minutes old */
 const STALE_THRESHOLD_MS = 15 * 60 * 1000;
+
+/**
+ * Cache-Control max-age in seconds.
+ * Set to 15 minutes (the stale threshold) so the Cache API retains data
+ * for the full stale window. We check `cachedAt` in code for fresh vs stale.
+ */
+const CACHE_MAX_AGE_SECONDS = 900;
 
 // ============================================================================
 // Cache Key Utilities
 // ============================================================================
 
 /**
- * Build a cache key for a single price entry
+ * Build a synthetic URL cache key for a single price entry
  */
-function buildPriceKey(world: string, itemId: number): string {
-  return `${PRICE_KEY_PREFIX}${world.toLowerCase()}:${itemId}`;
+function buildPriceCacheUrl(world: string, itemId: number): string {
+  return `${CACHE_BASE_URL}/${CACHE_SCHEMA_VERSION}/${world.toLowerCase()}/${itemId}`;
 }
 
 // ============================================================================
@@ -47,32 +54,31 @@ function buildPriceKey(world: string, itemId: number): string {
 /**
  * Get a cached price entry
  *
- * @param kv - KV namespace binding
  * @param world - World/datacenter name
  * @param itemId - FFXIV item ID
  * @param logger - Optional logger
  * @returns Price data if cached and fresh, null otherwise
  */
 export async function getCachedPrice(
-  kv: KVNamespace,
   world: string,
   itemId: number,
   logger?: ExtendedLogger
 ): Promise<DyePriceData | null> {
   try {
-    const key = buildPriceKey(world, itemId);
-    const data = await kv.get(key);
+    const url = buildPriceCacheUrl(world, itemId);
+    const cache = caches.default;
+    const response = await cache.match(url);
 
-    if (!data) {
+    if (!response) {
       return null;
     }
 
-    const entry = JSON.parse(data) as CachedPriceEntry;
+    const entry = (await response.json()) as CachedPriceEntry;
 
     // Check if cache is still fresh
     const age = Date.now() - entry.cachedAt;
     if (age > CACHE_TTL_SECONDS * 1000) {
-      return null; // Expired
+      return null; // Expired (stale) — caller should use getCachedPriceWithStale for fallback
     }
 
     return entry.data;
@@ -93,20 +99,20 @@ export async function getCachedPrice(
  * @returns Object with data and isStale flag
  */
 export async function getCachedPriceWithStale(
-  kv: KVNamespace,
   world: string,
   itemId: number,
   logger?: ExtendedLogger
 ): Promise<{ data: DyePriceData | null; isStale: boolean }> {
   try {
-    const key = buildPriceKey(world, itemId);
-    const data = await kv.get(key);
+    const url = buildPriceCacheUrl(world, itemId);
+    const cache = caches.default;
+    const response = await cache.match(url);
 
-    if (!data) {
+    if (!response) {
       return { data: null, isStale: false };
     }
 
-    const entry = JSON.parse(data) as CachedPriceEntry;
+    const entry = (await response.json()) as CachedPriceEntry;
     const age = Date.now() - entry.cachedAt;
 
     // Check if too old even for stale
@@ -127,29 +133,33 @@ export async function getCachedPriceWithStale(
 /**
  * Store a price entry in cache
  *
- * @param kv - KV namespace binding
  * @param world - World/datacenter name
  * @param itemId - FFXIV item ID
  * @param data - Price data to cache
  * @param logger - Optional logger
  */
 export async function setCachedPrice(
-  kv: KVNamespace,
   world: string,
   itemId: number,
   data: DyePriceData,
   logger?: ExtendedLogger
 ): Promise<void> {
   try {
-    const key = buildPriceKey(world, itemId);
+    const url = buildPriceCacheUrl(world, itemId);
     const entry: CachedPriceEntry = {
       data,
       cachedAt: Date.now(),
     };
 
-    await kv.put(key, JSON.stringify(entry), {
-      expirationTtl: CACHE_TTL_SECONDS + 60, // Add buffer for stale reads
+    const cache = caches.default;
+    const response = new Response(JSON.stringify(entry), {
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': `s-maxage=${CACHE_MAX_AGE_SECONDS}`,
+      },
     });
+
+    await cache.put(url, response);
   } catch (error) {
     // Cache write failures are non-fatal
     if (logger) {
@@ -165,13 +175,11 @@ export async function setCachedPrice(
 /**
  * Get multiple cached prices at once
  *
- * Note: KV doesn't support native batch get, so this issues
- * parallel requests. Still faster than sequential.
+ * Issues parallel cache lookups for all item IDs.
  *
  * @returns Map of item ID to price data (only cached items)
  */
 export async function getCachedPrices(
-  kv: KVNamespace,
   world: string,
   itemIds: number[],
   logger?: ExtendedLogger
@@ -180,7 +188,7 @@ export async function getCachedPrices(
 
   // Fetch all in parallel
   const promises = itemIds.map(async (itemId) => {
-    const data = await getCachedPrice(kv, world, itemId, logger);
+    const data = await getCachedPrice(world, itemId, logger);
     if (data) {
       results.set(itemId, data);
     }
@@ -193,20 +201,18 @@ export async function getCachedPrices(
 /**
  * Store multiple price entries at once
  *
- * @param kv - KV namespace binding
  * @param world - World/datacenter name
  * @param prices - Map of item ID to price data
  * @param logger - Optional logger
  */
 export async function setCachedPrices(
-  kv: KVNamespace,
   world: string,
   prices: Map<number, DyePriceData>,
   logger?: ExtendedLogger
 ): Promise<void> {
   // Write all in parallel
   const promises = Array.from(prices.entries()).map(([itemId, data]) =>
-    setCachedPrice(kv, world, itemId, data, logger)
+    setCachedPrice(world, itemId, data, logger)
   );
 
   await Promise.all(promises);
@@ -222,7 +228,6 @@ export async function setCachedPrices(
  * Checks cache first, fetches missing items from API,
  * and caches the results.
  *
- * @param kv - KV namespace binding
  * @param world - World/datacenter name
  * @param itemIds - Item IDs to fetch
  * @param fetchFn - Function to fetch prices from API
@@ -230,14 +235,13 @@ export async function setCachedPrices(
  * @returns Map of item ID to price data
  */
 export async function fetchWithCache(
-  kv: KVNamespace,
   world: string,
   itemIds: number[],
   fetchFn: (ids: number[]) => Promise<Map<number, DyePriceData>>,
   logger?: ExtendedLogger
 ): Promise<{ prices: Map<number, DyePriceData>; fromCache: number; fromApi: number }> {
   // Check cache first
-  const cached = await getCachedPrices(kv, world, itemIds, logger);
+  const cached = await getCachedPrices(world, itemIds, logger);
 
   // Find which items need to be fetched
   const uncachedIds = itemIds.filter((id) => !cached.has(id));
@@ -251,7 +255,7 @@ export async function fetchWithCache(
   const fetched = await fetchFn(uncachedIds);
 
   // Cache the new results
-  await setCachedPrices(kv, world, fetched, logger);
+  await setCachedPrices(world, fetched, logger);
 
   // Merge results
   const combined = new Map<number, DyePriceData>();
@@ -279,14 +283,14 @@ export async function fetchWithCache(
  * Use sparingly - cache expiry is the primary mechanism.
  */
 export async function invalidateCachedPrice(
-  kv: KVNamespace,
   world: string,
   itemId: number,
   logger?: ExtendedLogger
 ): Promise<void> {
   try {
-    const key = buildPriceKey(world, itemId);
-    await kv.delete(key);
+    const url = buildPriceCacheUrl(world, itemId);
+    const cache = caches.default;
+    await cache.delete(url);
   } catch (error) {
     if (logger) {
       logger.error('Failed to invalidate cache', error instanceof Error ? error : undefined);
