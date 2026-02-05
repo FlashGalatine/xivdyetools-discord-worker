@@ -200,7 +200,7 @@ export function generateContrastMatrix(options: ContrastMatrixOptions): string {
       text(x, y + 16, escapeXml(displayName), {
         fill: THEME.text,
         fontSize: 11,
-        fontFamily: FONTS.primary,
+        fontFamily: FONTS.primaryCjk,
         fontWeight: 500,
         textAnchor: 'middle',
       })
@@ -231,7 +231,7 @@ export function generateContrastMatrix(options: ContrastMatrixOptions): string {
       text(headerX + 10, headerY + 4, escapeXml(displayName), {
         fill: THEME.text,
         fontSize: 11,
-        fontFamily: FONTS.primary,
+        fontFamily: FONTS.primaryCjk,
         fontWeight: 500,
         textAnchor: 'start',
       })

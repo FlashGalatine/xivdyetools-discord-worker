@@ -309,7 +309,7 @@ function generateDyeColumn(
     text(centerX, swatchY + SWATCH_SIZE / 2 + 4, displayName, {
       fill: textColor,
       fontSize: 11,
-      fontFamily: FONTS.primary,
+      fontFamily: FONTS.primaryCjk,
       fontWeight: 600,
       textAnchor: 'middle',
     })
@@ -321,7 +321,7 @@ function generateDyeColumn(
     text(centerX, infoY, escapeXml(dye.name), {
       fill: THEME.text,
       fontSize: 13,
-      fontFamily: FONTS.primary,
+      fontFamily: FONTS.primaryCjk,
       fontWeight: 600,
       textAnchor: 'middle',
     })
@@ -333,7 +333,7 @@ function generateDyeColumn(
     text(centerX, infoY, dye.category, {
       fill: THEME.textMuted,
       fontSize: 11,
-      fontFamily: FONTS.primary,
+      fontFamily: FONTS.primaryCjk,
       textAnchor: 'middle',
     })
   );

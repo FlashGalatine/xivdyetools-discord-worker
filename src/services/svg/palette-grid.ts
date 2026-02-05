@@ -254,7 +254,7 @@ function generatePaletteRow(
     text(matchedInfoX, y + 55, escapeXml(entry.matchedDye.name), {
       fill: THEME.text,
       fontSize: 14,
-      fontFamily: FONTS.primary,
+      fontFamily: FONTS.primaryCjk,
       fontWeight: 600,
     })
   );

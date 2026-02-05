@@ -124,7 +124,7 @@ export function generatePresetSwatch(options: PresetSwatchOptions): string {
     text(width / 2, PADDING + 24, `${categoryDisplay.icon} ${escapeXml(name)}`, {
       fill: THEME.text,
       fontSize: 22,
-      fontFamily: FONTS.header,
+      fontFamily: FONTS.headerCjk,
       fontWeight: 600,
       textAnchor: 'middle',
     })
@@ -208,7 +208,7 @@ function generateDyeSwatch(dye: Dye, x: number, y: number, width: number): strin
     text(x + width / 2, labelY, escapeXml(truncatedName), {
       fill: THEME.text,
       fontSize: 11,
-      fontFamily: FONTS.primary,
+      fontFamily: FONTS.primaryCjk,
       fontWeight: 600,
       textAnchor: 'middle',
     })

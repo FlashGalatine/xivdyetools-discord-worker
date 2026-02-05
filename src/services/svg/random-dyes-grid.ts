@@ -97,7 +97,7 @@ export function generateRandomDyesGrid(options: RandomDyesGridOptions): string {
     text(width / 2, PADDING + 24, title, {
       fill: THEME.text,
       fontSize: 22,
-      fontFamily: FONTS.header,
+      fontFamily: FONTS.headerCjk,
       fontWeight: 600,
       textAnchor: 'middle',
     })
@@ -203,7 +203,7 @@ function generateDyeCard(dyeInfo: RandomDyeInfo, x: number, y: number): string {
     text(x + CARD_WIDTH / 2, infoY, escapeXml(displayName), {
       fill: THEME.text,
       fontSize: 13,
-      fontFamily: FONTS.primary,
+      fontFamily: FONTS.primaryCjk,
       fontWeight: 600,
       textAnchor: 'middle',
     })
@@ -214,7 +214,7 @@ function generateDyeCard(dyeInfo: RandomDyeInfo, x: number, y: number): string {
     text(x + CARD_WIDTH / 2, infoY + 18, localizedCategory, {
       fill: THEME.textMuted,
       fontSize: 11,
-      fontFamily: FONTS.primary,
+      fontFamily: FONTS.primaryCjk,
       textAnchor: 'middle',
     })
   );

@@ -186,7 +186,7 @@ function generateHeader(
     text(infoX, 70, escapeXml(targetDye.name), {
       fill: THEME.text,
       fontSize: 24,
-      fontFamily: FONTS.header,
+      fontFamily: FONTS.headerCjk,
       fontWeight: 600,
     })
   );
@@ -196,7 +196,7 @@ function generateHeader(
     text(infoX, 92, escapeXml(targetDye.category), {
       fill: THEME.textMuted,
       fontSize: 14,
-      fontFamily: FONTS.primary,
+      fontFamily: FONTS.primaryCjk,
     })
   );
 
@@ -303,7 +303,7 @@ function generateAlternativeRow(
     text(infoX, y + 35, escapeXml(alt.dye.name), {
       fill: THEME.text,
       fontSize: 16,
-      fontFamily: FONTS.primary,
+      fontFamily: FONTS.primaryCjk,
       fontWeight: 600,
     })
   );

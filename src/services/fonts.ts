@@ -19,7 +19,7 @@
  * 3. Place it in src/fonts/NotoSansSC-Regular.ttf
  * 4. Uncomment the CJK import below and rebuild
  *
- * Note: The CJK font adds ~4-6MB to the Worker bundle size.
+ * Note: The CJK font is subsetted to only include dye name characters (~222 KiB).
  */
 
 // Static font imports - wrangler bundles these as ArrayBuffer at build time
@@ -30,10 +30,13 @@ import onestData from '../fonts/Onest-VariableFont_wght.ttf';
 // @ts-expect-error - Binary imports are handled by wrangler bundler
 import habibiData from '../fonts/Habibi-Regular.ttf';
 
-// CJK font import - uncomment after adding the font file
+// CJK font imports - subsetted to dye name glyphs only
+// Noto Sans SC: Chinese ideographs + Japanese katakana (~222 KiB)
 // @ts-expect-error - Binary imports are handled by wrangler bundler
-// import notoSansCjkData from '../fonts/NotoSansSC-Regular.ttf';
-const notoSansCjkData: ArrayBuffer | null = null; // Set to imported data when available
+import notoSansCjkData from '../fonts/NotoSansSC-Subset.ttf';
+// Noto Sans KR: Korean Hangul syllables (~155 KiB)
+// @ts-expect-error - Binary imports are handled by wrangler bundler
+import notoSansKrData from '../fonts/NotoSansKR-Subset.ttf';
 
 // Cache font buffers to avoid repeated conversions
 let fontBuffersCache: Uint8Array[] | null = null;
@@ -70,9 +73,12 @@ export function getFontBuffers(): Uint8Array[] {
     new Uint8Array(habibiData),
   ];
 
-  // Add CJK font if available
+  // Add CJK fonts if available
   if (notoSansCjkData) {
     buffers.push(new Uint8Array(notoSansCjkData));
+  }
+  if (notoSansKrData) {
+    buffers.push(new Uint8Array(notoSansKrData));
   }
 
   fontBuffersCache = buffers;
@@ -90,8 +96,10 @@ export const FONT_FAMILIES = {
   body: 'Onest',
   /** Habibi - for hex codes and monospace-like text */
   mono: 'Habibi',
-  /** Noto Sans SC - for CJK (Japanese/Korean/Chinese) text */
+  /** Noto Sans SC - for CJK (Chinese/Japanese) text */
   cjk: 'Noto Sans SC',
+  /** Noto Sans KR - for Korean text */
+  kr: 'Noto Sans KR',
 } as const;
 
 /**
@@ -105,5 +113,5 @@ export function getFontWithCjkFallback(primaryFont: string): string {
   if (!hasCjkFont()) {
     return primaryFont;
   }
-  return `${primaryFont}, ${FONT_FAMILIES.cjk}`;
+  return `${primaryFont}, ${FONT_FAMILIES.cjk}, ${FONT_FAMILIES.kr}`;
 }

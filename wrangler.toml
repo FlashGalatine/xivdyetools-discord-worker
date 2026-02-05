@@ -78,6 +78,12 @@ DISCORD_CLIENT_ID = "1447108133020369048"
 # Presets API URL (existing worker)
 PRESETS_API_URL = "https://api.xivdyetools.app"
 
+# DISCORD TEST CHANNEL
+ANNOUNCEMENT_CHANNEL_ID = "1441800851747508314"
+
+# DISCORD LIVE ANNOUNCEMENT CHANNEL
+# ANNOUNCEMENT_CHANNEL_ID = "1434357606008356874"
+
 # ============================================================================
 # Secrets (set via wrangler secret put):
 # - DISCORD_TOKEN
@@ -130,4 +136,3 @@ service = "xivdyetools-universalis-proxy"
 [[env.production.analytics_engine_datasets]]
 binding = "ANALYTICS"
 dataset = "xivdyetools_bot_analytics"
-
