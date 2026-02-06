@@ -129,8 +129,8 @@ function buildEmbeds(t: Translator) {
       color: COLORS.green,
       fields: [
         {
-          name: t.t('manual.match.name'),
-          value: t.t('manual.match.description'),
+          name: t.t('manual.extractor.name'),
+          value: t.t('manual.extractor.description'),
           inline: false,
         },
         {
@@ -141,6 +141,16 @@ function buildEmbeds(t: Translator) {
         {
           name: t.t('manual.mixer.name'),
           value: t.t('manual.mixer.description'),
+          inline: false,
+        },
+        {
+          name: t.t('manual.gradient.name'),
+          value: t.t('manual.gradient.description'),
+          inline: false,
+        },
+        {
+          name: t.t('manual.swatch.name'),
+          value: t.t('manual.swatch.description'),
           inline: false,
         },
       ],
@@ -179,6 +189,11 @@ function buildEmbeds(t: Translator) {
       title: `ℹ️ ${t.t('manual.botInformation')}`,
       color: COLORS.fuchsia,
       fields: [
+        {
+          name: t.t('manual.preferences.name'),
+          value: t.t('manual.preferences.description'),
+          inline: false,
+        },
         {
           name: t.t('manual.about.name'),
           value: t.t('manual.about.description'),
