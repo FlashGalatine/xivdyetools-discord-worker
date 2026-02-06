@@ -13,6 +13,7 @@
  */
 
 import { DyeService, dyeDatabase, type Dye } from '@xivdyetools/core';
+import { resolveCssColorName } from './css-colors.js';
 
 // Initialize DyeService singleton for color resolution
 const dyeService = new DyeService(dyeDatabase);
@@ -104,9 +105,12 @@ export interface ResolveColorOptions {
 /**
  * Resolves a color input (hex code or dye name) to a color value
  *
- * Accepts either:
+ * Accepts:
  * - Hex codes: #FF0000, FF0000, #F00, F00
  * - Dye names: "Snow White", "soot black" (case-insensitive partial match)
+ * - CSS named colors: "BlueViolet", "coral", "burlywood" (148 standard colors)
+ *
+ * Resolution order: hex → dye name → CSS color name
  *
  * @param input - Hex code or dye name to resolve
  * @param options - Resolution options
@@ -177,6 +181,24 @@ export function resolveColorInput(
         dye,
       };
     }
+  }
+
+  // Try CSS named colors as fallback (e.g., "BlueViolet" → #8A2BE2)
+  const cssHex = resolveCssColorName(input);
+  if (cssHex) {
+    if (findClosestForHex) {
+      const closest = dyeService.findClosestDye(cssHex);
+      if (closest) {
+        return {
+          hex: cssHex,
+          name: closest.name,
+          id: closest.id,
+          itemID: closest.itemID,
+          dye: closest,
+        };
+      }
+    }
+    return { hex: cssHex };
   }
 
   return null;
