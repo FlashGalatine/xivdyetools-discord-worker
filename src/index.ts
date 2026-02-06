@@ -449,7 +449,15 @@ async function handleCommand(
 
   // Check rate limit (skip for utility commands)
   if (commandName && !['about', 'manual', 'stats'].includes(commandName)) {
-    const rateLimitResult = await checkRateLimit(env.KV, userId, commandName);
+    const rateLimitResult = await checkRateLimit(
+      {
+        upstashUrl: env.UPSTASH_REDIS_REST_URL,
+        upstashToken: env.UPSTASH_REDIS_REST_TOKEN,
+        kv: env.KV, // fallback if Upstash not configured
+      },
+      userId,
+      commandName
+    );
     if (!rateLimitResult.allowed) {
       logger.info('User rate limited', { userId, command: commandName });
       return ephemeralResponse(formatRateLimitMessage(rateLimitResult));

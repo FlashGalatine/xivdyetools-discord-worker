@@ -91,7 +91,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Migrated component context storage from KV to Cache API (eliminates ~1 KV write per interactive command)
 - Migrated price cache from KV to Cache API (eliminates ~136 KV writes per `/budget` command)
-- Both migrations keep the worker within free-tier KV limit of 1,000 writes/day
+- Migrated rate limiting from KV to Upstash Redis (atomic operations, eliminates race conditions from DISCORD-BUG-001)
+  - Upstash preferred when configured, automatic fallback to KV if not
+  - Uses Redis `INCR` for truly atomic counter increments
+  - 10,000 free commands/day vs KV's 1,000 writes/day
+- All migrations combined keep the worker well within free-tier limits
 
 ---
 

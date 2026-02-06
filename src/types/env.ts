@@ -32,6 +32,16 @@ export interface Env {
   ANNOUNCEMENT_CHANNEL_ID?: string;
 
   // =========================================================================
+  // Upstash Redis (set via wrangler secret put)
+  // =========================================================================
+
+  /** Upstash Redis REST URL - for rate limiting */
+  UPSTASH_REDIS_REST_URL?: string;
+
+  /** Upstash Redis REST token - for rate limiting */
+  UPSTASH_REDIS_REST_TOKEN?: string;
+
+  // =========================================================================
   // Moderation Configuration (set via wrangler secret put)
   // =========================================================================
 
@@ -58,7 +68,7 @@ export interface Env {
   // Bindings (configured in wrangler.toml)
   // =========================================================================
 
-  /** KV Namespace for rate limiting and user preferences */
+  /** KV Namespace for analytics, user preferences, favorites, and collections */
   KV: KVNamespace;
 
   /** R2 Bucket for generated images */

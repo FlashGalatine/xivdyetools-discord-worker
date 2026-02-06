@@ -13,7 +13,8 @@ routes = [
 ]
 
 # ============================================================================
-# KV Namespace for rate limiting and user preferences
+# KV Namespace for analytics, user preferences, favorites, and collections
+# (Rate limiting has moved to Upstash Redis - see secrets section)
 # ============================================================================
 [[kv_namespaces]]
 binding = "KV"
@@ -90,6 +91,17 @@ ANNOUNCEMENT_CHANNEL_ID = "1441800851747508314"
 # - DISCORD_PUBLIC_KEY
 # - BOT_API_SECRET (for presets API auth - must match Presets API)
 # - BOT_SIGNING_SECRET (HMAC signing key - must match Presets API)
+#
+# Rate Limiting (Upstash Redis - optional but recommended):
+# - UPSTASH_REDIS_REST_URL   (e.g., https://xxx.upstash.io)
+# - UPSTASH_REDIS_REST_TOKEN (from Upstash console)
+#
+# To set Upstash secrets:
+#   wrangler secret put UPSTASH_REDIS_REST_URL
+#   wrangler secret put UPSTASH_REDIS_REST_TOKEN
+#
+# If Upstash is not configured, rate limiting falls back to KV (with
+# eventual consistency issues - see DISCORD-BUG-001).
 # ============================================================================
 
 # ============================================================================
@@ -111,7 +123,7 @@ name = "xivdyetools-discord-worker"
 DISCORD_CLIENT_ID = "1447108133020369048"
 PRESETS_API_URL = "https://api.xivdyetools.app"
 
-# KV Namespace for rate limiting and user preferences
+# KV Namespace for analytics, user preferences, favorites, and collections
 [[env.production.kv_namespaces]]
 binding = "KV"
 id = "1fcb7e037ccd4172a47fccd97cf8e753"

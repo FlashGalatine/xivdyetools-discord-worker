@@ -1,16 +1,23 @@
 /**
  * Rate Limiting Service
  *
- * Implements sliding window rate limiting using Cloudflare KV.
+ * Implements sliding window rate limiting for Discord commands.
  * Supports per-user and per-command limits.
  *
- * REFACTOR-002: Now uses @xivdyetools/rate-limiter shared package
+ * Backends (in priority order):
+ * 1. Upstash Redis - atomic operations, no race conditions (preferred)
+ * 2. Cloudflare KV - fallback if Upstash not configured
  *
  * @module services/rate-limiter
  */
 
 import type { ExtendedLogger } from '@xivdyetools/logger';
-import { KVRateLimiter, getDiscordCommandLimit } from '@xivdyetools/rate-limiter';
+import {
+  UpstashRateLimiter,
+  KVRateLimiter,
+  getDiscordCommandLimit,
+  type RateLimiter,
+} from '@xivdyetools/rate-limiter';
 
 /**
  * Rate limit check result
@@ -24,83 +31,111 @@ export interface RateLimitResult {
   resetAt: number;
   /** Seconds until the rate limit resets (only present when rate limited) */
   retryAfter?: number;
-  /** DISCORD-BUG-002: Flag indicating KV error occurred (request was allowed due to fail-open policy) */
-  kvError?: boolean;
+  /** Flag indicating backend error occurred (request was allowed due to fail-open policy) */
+  backendError?: boolean;
 }
 
-/** KV key prefix for rate limit data */
+/** Key prefix for rate limit data */
 const KEY_PREFIX = 'ratelimit:user:';
 
 /**
- * Singleton KV rate limiter instance
- * Initialized on first use with the KV namespace from env
+ * Configuration for rate limiter initialization
  */
-let limiterInstance: KVRateLimiter | null = null;
+export interface RateLimiterConfig {
+  /** Upstash Redis REST URL (preferred backend) */
+  upstashUrl?: string;
+  /** Upstash Redis REST token */
+  upstashToken?: string;
+  /** Cloudflare KV namespace (fallback backend) */
+  kv?: KVNamespace;
+}
 
 /**
- * Get or create the KV rate limiter instance
+ * Singleton rate limiter instance
  */
-function getLimiter(kv: KVNamespace): KVRateLimiter {
-  if (!limiterInstance) {
-    limiterInstance = new KVRateLimiter({
-      kv,
+let limiterInstance: RateLimiter | null = null;
+let configuredBackend: 'upstash' | 'kv' | null = null;
+
+/**
+ * Get or create the rate limiter instance
+ *
+ * Priority: Upstash Redis > Cloudflare KV
+ */
+function getLimiter(config: RateLimiterConfig): RateLimiter {
+  if (limiterInstance && configuredBackend) {
+    return limiterInstance;
+  }
+
+  // Prefer Upstash if both URL and token are provided
+  if (config.upstashUrl && config.upstashToken) {
+    limiterInstance = new UpstashRateLimiter({
+      url: config.upstashUrl,
+      token: config.upstashToken,
       keyPrefix: KEY_PREFIX,
     });
+    configuredBackend = 'upstash';
+    return limiterInstance;
   }
-  return limiterInstance;
+
+  // Fallback to KV
+  if (config.kv) {
+    limiterInstance = new KVRateLimiter({
+      kv: config.kv,
+      keyPrefix: KEY_PREFIX,
+    });
+    configuredBackend = 'kv';
+    return limiterInstance;
+  }
+
+  throw new Error('No rate limiter backend configured. Provide either Upstash credentials or KV namespace.');
 }
 
 /**
  * Check if a user is rate limited for a specific command
  *
- * Uses a sliding window algorithm:
- * 1. Get current window data from KV
- * 2. If window has expired, start a new one
- * 3. Increment counter and check against limit
- * 4. Store updated data with TTL
+ * Uses Upstash Redis for atomic operations (no race conditions) when available,
+ * falling back to Cloudflare KV if Upstash is not configured.
  *
- * DISCORD-BUG-001: Known limitation - due to KV's eventual consistency, two
- * concurrent requests at the exact window boundary may both receive count=1.
- * This allows at most 2x burst at window boundaries, which is acceptable
- * for rate limiting purposes. A timestamp-array approach would fix this but
- * adds complexity and storage overhead.
- *
- * @param kv - KV namespace binding
+ * @param config - Rate limiter backend configuration
  * @param userId - Discord user ID
  * @param commandName - Optional command name for command-specific limits
  * @param logger - Optional logger for structured logging
- * @returns Rate limit check result (check kvError flag for KV failures)
+ * @returns Rate limit check result
  *
  * @example
  * ```typescript
- * const result = await checkRateLimit(env.KV, userId, 'harmony');
+ * const result = await checkRateLimit(
+ *   {
+ *     upstashUrl: env.UPSTASH_REDIS_REST_URL,
+ *     upstashToken: env.UPSTASH_REDIS_REST_TOKEN,
+ *     kv: env.KV, // fallback
+ *   },
+ *   userId,
+ *   'harmony'
+ * );
  * if (!result.allowed) {
  *   return ephemeralResponse(`Rate limited. Try again in ${result.retryAfter}s`);
- * }
- * if (result.kvError) {
- *   // Log for monitoring - request was allowed but KV had an issue
- *   console.warn('Rate limit KV error, request allowed via fail-open');
  * }
  * ```
  */
 export async function checkRateLimit(
-  kv: KVNamespace,
+  config: RateLimiterConfig,
   userId: string,
   commandName?: string,
   logger?: ExtendedLogger
 ): Promise<RateLimitResult> {
-  const limiter = getLimiter(kv);
-  const config = getDiscordCommandLimit(commandName);
+  const limiter = getLimiter(config);
+  const limitConfig = getDiscordCommandLimit(commandName);
 
   // Build compound key for user:command rate limiting
   const key = commandName ? `${userId}:${commandName}` : `${userId}:global`;
 
   try {
-    const result = await limiter.check(key, config);
+    const result = await limiter.check(key, limitConfig);
 
     // Log if there was a backend error (fail-open occurred)
     if (result.backendError && logger) {
-      logger.error('Rate limit check failed', new Error('KV backend error'));
+      logger.error('Rate limit check failed', new Error(`${configuredBackend} backend error`));
     }
 
     return {
@@ -108,19 +143,19 @@ export async function checkRateLimit(
       remaining: result.remaining,
       resetAt: result.resetAt.getTime(),
       retryAfter: result.retryAfter,
-      kvError: result.backendError,
+      backendError: result.backendError,
     };
   } catch (error) {
-    // This shouldn't happen since KVRateLimiter fails open by default
+    // This shouldn't happen since both backends fail open by default
     // But just in case, log and allow
     if (logger) {
       logger.error('Rate limit check failed', error instanceof Error ? error : undefined);
     }
     return {
       allowed: true,
-      remaining: config.maxRequests,
-      resetAt: Date.now() + config.windowMs,
-      kvError: true,
+      remaining: limitConfig.maxRequests,
+      resetAt: Date.now() + limitConfig.windowMs,
+      backendError: true,
     };
   }
 }
@@ -134,8 +169,17 @@ export function formatRateLimitMessage(result: RateLimitResult): string {
 }
 
 /**
+ * Get the currently configured backend type
+ * @returns 'upstash', 'kv', or null if not initialized
+ */
+export function getConfiguredBackend(): 'upstash' | 'kv' | null {
+  return configuredBackend;
+}
+
+/**
  * Reset the rate limiter for testing
  */
 export function resetRateLimiterInstance(): void {
   limiterInstance = null;
+  configuredBackend = null;
 }
