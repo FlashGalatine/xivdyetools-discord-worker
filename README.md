@@ -1,54 +1,51 @@
 # XIV Dye Tools Discord Worker
 
-**v2.3.2** | Discord bot for FFXIV dye color exploration, running on Cloudflare Workers using HTTP Interactions.
+**v4.0.0** | Discord bot for FFXIV dye color exploration, running on Cloudflare Workers using HTTP Interactions.
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3%2B-blue)](https://www.typescriptlang.org/)
 [![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers-F38020)](https://workers.cloudflare.com/)
 
 ## Features
 
-🎨 **Color Harmony Generation** - Create complementary, triadic, analogous, and more color schemes
-🎯 **Dye Matching** - Find closest FFXIV dyes to any color (hex or image upload)
+🎨 **Color Harmony Generation** - Create complementary, triadic, analogous, and more color schemes across multiple color spaces
+🎯 **Color Extraction & Matching** - Find closest FFXIV dyes to any hex color, dye name, or uploaded image
+🧪 **Dye Blending** - Blend two dyes with 6 color algorithms (RGB, LAB, OKLAB, RYB, HSL, Spectral)
+🌈 **Color Gradients** - Generate gradients between colors with 5 color space interpolations
+👤 **Character Swatch Matching** - Match dyes to skin, hair, eyes, and more across all 16 FFXIV clans
 ♿ **Accessibility** - Colorblindness simulation for protan, deutan, tritan vision types
-📊 **Dye Comparison** - Side-by-side comparison of up to 4 dyes with visualizations
-🌈 **Color Mixing** - Find intermediate dyes for smooth color gradients
-⭐ **Favorites** - Save up to 20 favorite dyes per user
-📁 **Collections** - Create up to 50 custom dye collections
-🗳️ **Community Presets** - Browse, submit, and vote on user-created color palettes
-💰 **Live Pricing** - Market board prices via Universalis API
-🌐 **Multi-Language** - Full localization for EN, JA, DE, FR, KO, ZH
+📊 **Dye Comparison** - Side-by-side comparison of up to 4 dyes with LAB color values
+💰 **Budget Planning** - Market board prices and affordable dye alternatives via Universalis API
+🗳️ **Community Presets** - Browse, submit, vote on, and moderate user-created color palettes
+🌐 **Multi-Language** - Full localization for EN, JA, DE, FR, KO, ZH with bundled CJK fonts
 ⚡ **Serverless** - Runs on Cloudflare Workers edge network with auto-scaling
 🛡️ **Text Sanitization** - Protection against zalgo text, control characters, and display issues
 
-## Commands (17 Total)
+## Commands (15 Total)
 
 ### Color Tools
 | Command | Description |
 |---------|-------------|
-| `/harmony <color>` | Generate color harmonies with color wheel visualization |
-| `/match <color>` | Find closest dye to a hex color |
-| `/match_image` | Upload an image to extract and match colors (1-5 colors) |
-| `/mixer <start> <end>` | Create color gradients between two dyes |
+| `/extractor color <color>` | Find closest dye(s) to a hex color or dye name |
+| `/extractor image` | Upload an image to extract and match colors (1-5 colors) |
+| `/harmony <color>` | Generate color harmonies with color wheel visualization (HSV, OKLCH, LCH, HSL) |
+| `/gradient <start> <end>` | Create color gradients between two colors with dye matches (5 color spaces, 5 matching algorithms) |
+| `/mixer <dye1> <dye2>` | Blend two dyes with 6 color algorithms (RGB, LAB, OKLAB, RYB, HSL, Spectral) |
 
 ### Dye Database
 | Command | Description |
 |---------|-------------|
 | `/dye search <name>` | Search the 136-dye database by name |
-| `/dye info <dye>` | Get detailed information about a specific dye |
+| `/dye info <dye>` | Visual info card with color swatch, name, category, HEX/RGB/HSV/LAB values |
 | `/dye list [category]` | List dyes by category |
-| `/dye random` | Show a random dye |
+| `/dye random` | Infographic grid of 5 random dyes |
 
 ### Analysis Tools
 | Command | Description |
 |---------|-------------|
-| `/comparison <dye1> <dye2> [dye3] [dye4]` | Compare multiple dyes side-by-side |
+| `/comparison <dye1> <dye2> [dye3] [dye4]` | Compare multiple dyes side-by-side with LAB color values |
 | `/accessibility <dye>` | Simulate colorblindness for dye colors |
-
-### User Data
-| Command | Description |
-|---------|-------------|
-| `/favorites` | View, add, or remove favorite dyes |
-| `/collection` | Create and manage custom dye collections |
+| `/swatch` | Match dyes to character colors (skin, hair, eyes, etc.) across all 16 FFXIV clans |
+| `/budget` | Find affordable dye alternatives with live market board pricing |
 
 ### Community Presets
 | Command | Description |
@@ -64,10 +61,11 @@
 ### Utility
 | Command | Description |
 |---------|-------------|
-| `/language <locale>` | Change bot UI language |
+| `/preferences` | Manage all bot settings (language, blending, matching, count, clan, gender, world, market) |
+| `/language <locale>` | Change bot UI language *(deprecated — use `/preferences set language`)* |
 | `/manual` | Help and documentation |
 | `/about` | Bot information and credits |
-| `/stats` | Usage statistics (authorized users only) |
+| `/stats` | Usage statistics with 5 views: summary (public), overview/commands/preferences/health (admin) |
 
 ## Privacy & Terms
 
@@ -76,8 +74,8 @@
 📜 **Terms of Service**: See [TERMS_OF_SERVICE.md](./TERMS_OF_SERVICE.md) for usage terms.
 
 **Summary:**
-- We collect Discord user IDs for favorites, collections, and rate limiting
-- Images uploaded via `/match_image` are processed in-memory and **not stored**
+- We collect Discord user IDs for preferences, presets, and rate limiting
+- Images uploaded via `/extractor image` are processed in-memory and **not stored**
 - We do not share or sell your data
 - Full details in the linked documents
 
@@ -85,11 +83,13 @@
 
 - **Cloudflare Workers** - Serverless edge deployment
 - **HTTP Interactions** - No WebSocket, Discord's HTTP-based interaction model
-- **xivdyetools-core** - Shared color algorithms and dye database
-- **resvg-wasm** - SVG to PNG rendering
+- **@xivdyetools/core** - Shared color algorithms, dye database, and localization
+- **resvg-wasm** - SVG to PNG rendering with bundled CJK font subsets
 - **Hono** - Lightweight web framework
-- **Cloudflare KV** - User preferences, favorites, collections
+- **Cloudflare KV** - User preferences and presets
+- **Cloudflare Cache API** - Image caching and component context storage
 - **Cloudflare D1** - Preset storage (via presets-api)
+- **Upstash Redis** - Atomic rate limiting (with KV fallback)
 - **TypeScript** - Type-safe development
 
 ## Development
@@ -128,24 +128,17 @@
 
 ### CJK Font Support (Japanese/Korean/Chinese)
 
-The bot generates PNG images for Discord responses using resvg-wasm. By default, the bundled fonts (Space Grotesk, Onest, Habibi) only support Latin characters. To display Japanese, Korean, or Chinese dye names correctly, you need to add a CJK font:
+The bot generates PNG images for Discord responses using resvg-wasm. CJK font support is **bundled by default** using subsetted versions of Noto Sans:
 
-1. **Download Noto Sans SC** from [Google Fonts](https://fonts.google.com/noto/specimen/Noto+Sans+SC)
-2. Extract `NotoSansSC-Regular.ttf` from the downloaded ZIP
-3. Copy it to `src/fonts/NotoSansSC-Regular.ttf`
-4. Edit `src/services/fonts.ts` and uncomment the CJK import:
-   ```typescript
-   // Change this:
-   // import notoSansCjkData from '../fonts/NotoSansSC-Regular.ttf';
-   const notoSansCjkData: ArrayBuffer | null = null;
+- **Noto Sans SC** (~222 KiB) - Covers Chinese and Japanese katakana
+- **Noto Sans KR** (~155 KiB) - Covers Korean Hangul
 
-   // To this:
-   import notoSansCjkData from '../fonts/NotoSansSC-Regular.ttf';
-   // const notoSansCjkData: ArrayBuffer | null = null;
-   ```
-5. Deploy with `npm run deploy`
+These subsets contain only the characters needed for FFXIV dye names, keeping the bundle small (~377 KiB total vs ~20 MiB for full fonts).
 
-**Note:** The CJK font adds ~4-6MB to the Worker bundle size. Without it, CJK characters will appear as boxes (□) in generated images.
+**Re-subsetting fonts** (only needed if new dyes are added with new CJK characters):
+```bash
+python scripts/subset-cjk-fonts.py
+```
 
 ### Registering Commands
 
@@ -218,14 +211,12 @@ Discord API
 ┌─────────────────────────────────┐
 │  Service Bindings               │
 │  • xivdyetools-presets-api      │
-│  • Cloudflare KV (favorites)    │
+│  • Cloudflare KV (preferences)  │
+│  • Cloudflare Cache API         │
+│  • Upstash Redis (rate limits)  │
 │  • Cloudflare R2 (images)       │
 └─────────────────────────────────┘
 ```
-
-## Coming Soon
-
-**Budget-Aware Dye Suggestions** - Find affordable alternatives to expensive dyes with `/match --max_price` and `/dye alternatives`. See [specification](../xivdyetools-docs/BUDGET_AWARE_SUGGESTIONS.md) for details.
 
 ## Related Projects
 
@@ -236,7 +227,7 @@ Discord API
 
 ## License
 
-MIT © 2025 Flash Galatine
+MIT © 2025-2026 Flash Galatine
 
 See [LICENSE](./LICENSE) for full details.
 
