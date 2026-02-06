@@ -38,7 +38,7 @@ export default defineConfig({
                 // Infrastructure files with external dependencies
                 'src/services/announcements.ts',
                 'src/services/changelog-parser.ts',
-                'src/services/color-blending.ts',
+
                 'src/utils/verify.ts',
                 'src/utils/github-verify.ts',
                 // Re-export index files (no logic, just re-exports)
