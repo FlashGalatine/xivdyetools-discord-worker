@@ -73,9 +73,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Dependencies
 - Bumped `@xivdyetools/core` to ^1.16.0 (color space support, Korean/Chinese dye names)
+- Bumped `@xivdyetools/auth` to ^1.0.2 (timing-safe JWT and HMAC verification)
+- Bumped `@xivdyetools/logger` to ^1.1.2 (expanded secret redaction, recursive nested redaction)
+- Bumped `@xivdyetools/rate-limiter` to ^1.3.0 (IP spoofing mitigation, IPv6 normalization, KV key safety)
 - Bumped `@cloudflare/workers-types` to 4.20260131.0
 - Bumped `hono` to 4.11.7
 - Bumped `wrangler` to 4.61.1
+
+### Security
+
+#### Dependency Security Audit (2026-02-06)
+- **FINDING-001** (auth): JWT signature verification now uses `crypto.subtle.verify()` for timing-safe comparison
+- **FINDING-002** (auth): HMAC base64url verification upgraded to timing-safe `crypto.subtle.verify()`
+- **FINDING-003** (rate-limiter): `getClientIp()` now supports `trustXForwardedFor` option to disable spoofable header fallback
+- **FINDING-005** (logger): Added 6 new secret redaction patterns (`client_secret`, `private_key`, `signing_key`, `webhook_secret`, `auth_token`, `credentials`)
+- **FINDING-006** (rate-limiter): IP addresses normalized to lowercase, preventing IPv6 case mismatches in rate-limit keys
+- **FINDING-007** (rate-limiter): KV key delimiter changed to avoid ambiguity with IPv6 colons
+- **FINDING-008** (logger): Context field redaction now recurses into nested objects (up to 3 levels)
+- Full audit report: `xivdyetools-docs/audits/2026-02-06/SECURITY_AUDIT_REPORT.md`
 
 ### Fixed
 

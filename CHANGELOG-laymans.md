@@ -102,6 +102,7 @@ These will be removed in a future update, so please start using the new commands
 
 - **Faster & cheaper**: Moved temporary data from KV storage to the Cache API, saving hundreds of write operations per command
 - **Better rate limiting**: Switched to Upstash Redis for atomic rate limit counters, fixing edge cases where rapid requests could bypass limits
+- **Security audit**: Comprehensive review of all internal libraries, hardening authentication, logging, and rate limiting
 - **Auto-announcements**: The bot can now automatically post release notes to Discord when we publish updates
 - **CI/CD pipeline**: Automated deployment to Cloudflare Workers
 
