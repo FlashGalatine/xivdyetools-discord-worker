@@ -167,10 +167,10 @@ async function processAccessibilityCommand(
   try {
     if (dyes.length === 1) {
       // Single dye mode: Colorblind simulation
-      await processSingleDyeAccessibility(interaction, env, dyes[0], visionFilter, t);
+      await processSingleDyeAccessibility(interaction, env, dyes[0], visionFilter, t, locale);
     } else {
       // Multi-dye mode: Contrast matrix
-      await processMultiDyeContrast(interaction, env, dyes, t);
+      await processMultiDyeContrast(interaction, env, dyes, t, locale);
     }
   } catch (error) {
     if (logger) {
@@ -193,14 +193,15 @@ async function processSingleDyeAccessibility(
   env: Env,
   dye: ResolvedDye,
   visionFilter: VisionType | undefined,
-  t: Translator
+  t: Translator,
+  locale: LocaleCode
 ): Promise<void> {
   // Determine which vision types to show
   const visionTypes = visionFilter ? [visionFilter] : VISION_TYPES;
 
   // Get localized dye name
   const localizedDyeName = dye.itemID
-    ? getLocalizedDyeName(dye.itemID, dye.name)
+    ? getLocalizedDyeName(dye.itemID, dye.name, locale)
     : dye.name;
 
   // Generate SVG with localized name
@@ -252,11 +253,12 @@ async function processMultiDyeContrast(
   interaction: DiscordInteraction,
   env: Env,
   dyes: ResolvedDye[],
-  t: Translator
+  t: Translator,
+  locale: LocaleCode
 ): Promise<void> {
   // Convert to ContrastDye format with localized names
   const contrastDyes: ContrastDye[] = dyes.map((d) => ({
-    name: d.itemID ? getLocalizedDyeName(d.itemID, d.name) : d.name,
+    name: d.itemID ? getLocalizedDyeName(d.itemID, d.name, locale) : d.name,
     hex: d.hex,
   }));
 
@@ -274,7 +276,7 @@ async function processMultiDyeContrast(
     .map((d) => {
       const emoji = d.id ? getDyeEmoji(d.id) : undefined;
       const emojiPrefix = emoji ? `${emoji} ` : '';
-      const localizedName = d.itemID ? getLocalizedDyeName(d.itemID, d.name) : d.name;
+      const localizedName = d.itemID ? getLocalizedDyeName(d.itemID, d.name, locale) : d.name;
       return `${emojiPrefix}**${localizedName}** (\`${d.hex.toUpperCase()}\`)`;
     })
     .join('\n');

@@ -222,10 +222,10 @@ function buildMixerResponse(
   const dye1Emoji = dye1.id ? getDyeEmoji(dye1.id) : undefined;
   const dye2Emoji = dye2.id ? getDyeEmoji(dye2.id) : undefined;
   const dye1Name = dye1.itemID && dye1.name
-    ? getLocalizedDyeName(dye1.itemID, dye1.name)
+    ? getLocalizedDyeName(dye1.itemID, dye1.name, locale)
     : dye1.name;
   const dye2Name = dye2.itemID && dye2.name
-    ? getLocalizedDyeName(dye2.itemID, dye2.name)
+    ? getLocalizedDyeName(dye2.itemID, dye2.name, locale)
     : dye2.name;
 
   const dye1Display = dye1Name
@@ -244,14 +244,14 @@ function buildMixerResponse(
     const quality = getMatchQuality(distance, t);
     const emoji = getDyeEmoji(dye.id);
     const emojiPrefix = emoji ? `${emoji} ` : '';
-    const localizedName = getLocalizedDyeName(dye.itemID, dye.name);
+    const localizedName = getLocalizedDyeName(dye.itemID, dye.name, locale);
 
     return `**${i + 1}.** ${emojiPrefix}**${localizedName}** • \`${dye.hex.toUpperCase()}\` • ${quality.emoji} ${quality.label} (Δ ${distance.toFixed(1)})`;
   }).join('\n');
 
   // Build embed
   const topMatch = matches[0];
-  const topMatchName = getLocalizedDyeName(topMatch.dye.itemID, topMatch.dye.name);
+  const topMatchName = getLocalizedDyeName(topMatch.dye.itemID, topMatch.dye.name, locale);
 
   return messageResponse({
     embeds: [

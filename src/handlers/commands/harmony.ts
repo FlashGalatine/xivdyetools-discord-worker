@@ -161,7 +161,7 @@ async function processHarmonyCommand(
     // Convert Dye[] to HarmonyDye[] with localized names
     const dyesForWheel: HarmonyDye[] = harmonyDyes.map((dye) => ({
       id: dye.id,
-      name: getLocalizedDyeName(dye.itemID, dye.name),
+      name: getLocalizedDyeName(dye.itemID, dye.name, locale),
       hex: dye.hex,
       category: dye.category,
     }));
@@ -184,7 +184,7 @@ async function processHarmonyCommand(
       .map((dye, i) => {
         const emoji = getDyeEmoji(dye.id);
         const emojiPrefix = emoji ? `${emoji} ` : '';
-        const localizedName = getLocalizedDyeName(dye.itemID, dye.name);
+        const localizedName = getLocalizedDyeName(dye.itemID, dye.name, locale);
         return `**${i + 1}.** ${emojiPrefix}${localizedName} (\`${dye.hex.toUpperCase()}\`)`;
       })
       .join('\n');
@@ -194,7 +194,7 @@ async function processHarmonyCommand(
     const baseEmojiPrefix = baseEmoji ? `${baseEmoji} ` : '';
     // Localize base name if it's a dye
     const localizedBaseName = baseItemID && baseName
-      ? getLocalizedDyeName(baseItemID, baseName)
+      ? getLocalizedDyeName(baseItemID, baseName, locale)
       : (baseName || baseHex.toUpperCase());
     const baseColorText = `${t.t('harmony.baseColor')}: ${baseEmojiPrefix}**${localizedBaseName}** (\`${baseHex.toUpperCase()}\`)`;
 

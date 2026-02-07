@@ -158,7 +158,7 @@ async function handleAddFavorite(
   const result = await addFavorite(env.KV, userId, dye.id);
 
   // Get localized dye name
-  const localizedName = getLocalizedDyeName(dye.itemID, dye.name);
+  const localizedName = getLocalizedDyeName(dye.itemID, dye.name, t.getLocale());
   const emoji = getDyeEmoji(dye.id);
   const emojiStr = emoji ? `${emoji} ` : '';
 
@@ -237,7 +237,7 @@ async function handleRemoveFavorite(
   const removed = await removeFavorite(env.KV, userId, dye.id);
 
   // Get localized dye name
-  const localizedName = getLocalizedDyeName(dye.itemID, dye.name);
+  const localizedName = getLocalizedDyeName(dye.itemID, dye.name, t.getLocale());
   const emoji = getDyeEmoji(dye.id);
   const emojiStr = emoji ? `${emoji} ` : '';
 
@@ -291,8 +291,8 @@ async function handleListFavorites(env: Env, userId: string, t: Translator): Pro
   const dyeList = dyes.map((dye, index) => {
     const emoji = getDyeEmoji(dye.id);
     const emojiStr = emoji ? `${emoji} ` : '';
-    const localizedName = getLocalizedDyeName(dye.itemID, dye.name);
-    const localizedCategory = getLocalizedCategory(dye.category);
+    const localizedName = getLocalizedDyeName(dye.itemID, dye.name, t.getLocale());
+    const localizedCategory = getLocalizedCategory(dye.category, t.getLocale());
     return `${index + 1}. ${emojiStr}**${localizedName}** (\`${dye.hex.toUpperCase()}\`) - ${localizedCategory}`;
   });
 
@@ -303,7 +303,7 @@ async function handleListFavorites(env: Env, userId: string, t: Translator): Pro
   }, {} as Record<string, number>);
 
   const categorySummary = Object.entries(categoryCount)
-    .map(([cat, count]) => `${getLocalizedCategory(cat)}: ${count}`)
+    .map(([cat, count]) => `${getLocalizedCategory(cat, t.getLocale())}: ${count}`)
     .join(' • ');
 
   return messageResponse({

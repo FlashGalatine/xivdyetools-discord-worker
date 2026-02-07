@@ -177,12 +177,12 @@ function buildSingleMatchResponse(
   if (fromDye) {
     const fromEmoji = getDyeEmoji(fromDye.id);
     const fromEmojiPrefix = fromEmoji ? `${fromEmoji} ` : '';
-    const fromDyeName = getLocalizedDyeName(fromDye.itemID, fromDye.name);
+    const fromDyeName = getLocalizedDyeName(fromDye.itemID, fromDye.name, locale);
     inputDesc = `${fromEmojiPrefix}**${fromDyeName}**\n${inputDesc}`;
   }
 
   // Build match description with localized dye name
-  const localizedDyeName = getLocalizedDyeName(dye.itemID, dye.name);
+  const localizedDyeName = getLocalizedDyeName(dye.itemID, dye.name, locale);
   let matchDesc = `${emojiPrefix}**${localizedDyeName}**\n`;
   matchDesc += `**Hex:** \`${dye.hex.toUpperCase()}\`\n`;
   matchDesc += `**${t.t('common.rgb')}:** \`${formatRgb(dye.hex)}\`\n`;
@@ -239,7 +239,7 @@ function buildMultiMatchResponse(
   fromDye?: Dye
 ): Response {
   // Build input description with localized name
-  const fromDyeName = fromDye ? getLocalizedDyeName(fromDye.itemID, fromDye.name) : null;
+  const fromDyeName = fromDye ? getLocalizedDyeName(fromDye.itemID, fromDye.name, locale) : null;
   let inputText = fromDyeName
     ? `**${fromDyeName}** (\`${targetHex.toUpperCase()}\`)`
     : `\`${targetHex.toUpperCase()}\``;
@@ -250,7 +250,7 @@ function buildMultiMatchResponse(
     const quality = getMatchQuality(distance, t);
     const emoji = getDyeEmoji(dye.id);
     const emojiPrefix = emoji ? `${emoji} ` : '';
-    const localizedName = getLocalizedDyeName(dye.itemID, dye.name);
+    const localizedName = getLocalizedDyeName(dye.itemID, dye.name, locale);
 
     return `**${i + 1}.** ${emojiPrefix}**${localizedName}** • \`${dye.hex.toUpperCase()}\` • ${quality.emoji} ${quality.label} (Δ ${distance.toFixed(1)})`;
   }).join('\n');

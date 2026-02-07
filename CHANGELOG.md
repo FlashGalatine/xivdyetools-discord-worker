@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- **BUG-001**: Fixed LocalizationService singleton race condition under concurrent requests
+  - Replaced global singleton mutation with per-locale instance cache (`Map<LocaleCode, LocalizationService>`)
+  - `getLocalizedDyeName()` and `getLocalizedCategory()` now accept explicit `locale` parameter
+  - Updated all 16 command handlers to pass locale explicitly, eliminating shared mutable state
+- **BUG-002**: Fixed budget "no world set" displaying a broken image embed
+  - JSON responses cannot carry file attachments; replaced with text-only ephemeral response
+- **BUG-003**: Fixed `renameCollection()` missing input sanitization
+  - Added `sanitizeCollectionName()` call to match `createCollection()` behavior
+  - Prevents control characters, Zalgo text, and invisible Unicode in renamed collections
+
+### Performance
+
+- **OPT-001**: Added 1-hour in-memory cache for world/datacenter autocomplete data
+  - `getWorldAutocomplete()` and `validateWorld()` now use cached results
+  - Eliminates redundant HTTP requests on every Discord autocomplete keystroke
+- **OPT-004**: Removed unnecessary SVG→PNG generation in budget "no world set" path
+  - The rendered image was never attached to the response (wasted ~50-100ms CPU per invocation)
+
+---
+
 ## [4.0.0] - 2026-02-05
 
 ### Added

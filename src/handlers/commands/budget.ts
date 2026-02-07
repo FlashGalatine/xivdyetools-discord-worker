@@ -14,7 +14,7 @@ import type { ExtendedLogger } from '@xivdyetools/logger';
 import { deferredResponse, errorEmbed, ephemeralResponse } from '../../utils/response.js';
 import { editOriginalResponse } from '../../utils/discord-api.js';
 import { renderSvgToPng } from '../../services/svg/renderer.js';
-import { generateBudgetComparison, generateNoWorldSetSvg, generateErrorSvg, type BudgetSvgLabels } from '../../services/svg/budget-comparison.js';
+import { generateBudgetComparison, generateErrorSvg, type BudgetSvgLabels } from '../../services/svg/budget-comparison.js';
 import { createUserTranslator, createTranslator, type Translator } from '../../services/bot-i18n.js';
 import { initializeLocale, getLocalizedDyeName, getLocalizedCategory } from '../../services/i18n.js';
 import { getUserPreferences, setPreference } from '../../services/preferences.js';
@@ -131,24 +131,9 @@ async function handleFindSubcommand(
   }
 
   if (!world) {
-    // No world set - show error with instruction
-    const svg = generateNoWorldSetSvg(IMAGE_WIDTH);
-    const pngBuffer = await renderSvgToPng(svg, { scale: 2 });
-
-    return Response.json({
-      type: 4, // CHANNEL_MESSAGE_WITH_SOURCE
-      data: {
-        embeds: [
-          {
-            title: t.t('budget.noWorldSet.title'),
-            description: t.t('budget.noWorldSet.description'),
-            color: 0xfee75c, // Warning yellow
-            image: { url: 'attachment://budget.png' },
-          },
-        ],
-        flags: 64, // Ephemeral
-      },
-    });
+    return ephemeralResponse(
+      `**${t.t('budget.noWorldSet.title')}**\n\n${t.t('budget.noWorldSet.description')}`
+    );
   }
 
   // Defer response (price fetching takes time)
@@ -189,15 +174,16 @@ async function processFindCommand(
     if (logger) logger.info('Budget: found alternatives', { count: result.alternatives.length, hasTargetPrice: !!result.targetPrice });
 
     // Initialize core library localization for dye names
-    await initializeLocale(t.getLocale(), logger);
+    const locale = t.getLocale();
+    await initializeLocale(locale, logger);
 
     // Build localized dye name and category maps
     const dyeNames: Record<number, string> = {};
     const categoryNames: Record<string, string> = {};
-    dyeNames[result.targetDye.itemID] = getLocalizedDyeName(result.targetDye.itemID, result.targetDye.name);
-    categoryNames[result.targetDye.category] = getLocalizedCategory(result.targetDye.category);
+    dyeNames[result.targetDye.itemID] = getLocalizedDyeName(result.targetDye.itemID, result.targetDye.name, locale);
+    categoryNames[result.targetDye.category] = getLocalizedCategory(result.targetDye.category, locale);
     for (const alt of result.alternatives) {
-      dyeNames[alt.dye.itemID] = getLocalizedDyeName(alt.dye.itemID, alt.dye.name);
+      dyeNames[alt.dye.itemID] = getLocalizedDyeName(alt.dye.itemID, alt.dye.name, locale);
     }
 
     // Build translated SVG labels

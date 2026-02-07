@@ -214,13 +214,41 @@ export async function resolveUserLocale(
   return 'en';
 }
 
+// ============================================================================
+// Per-Locale Instance Cache (BUG-001: Avoid singleton race condition)
+// ============================================================================
+
 /**
- * Initialize the LocalizationService with a locale
- * Should be called at the start of command handling if translations are needed
+ * Per-locale LocalizationService instance cache.
  *
- * Note: We clear the singleton's state before setting the locale to ensure
- * clean language switching. This prevents stale locale state from persisting
- * across requests in Cloudflare Workers isolates.
+ * Each locale gets its own instance with `currentLocale` permanently set.
+ * This eliminates the race condition where concurrent requests could
+ * overwrite the singleton's `currentLocale` during I/O yield points.
+ *
+ * Instances persist across requests within the same Cloudflare Worker isolate.
+ */
+const localeInstances = new Map<LocaleCode, LocalizationService>();
+
+/**
+ * Get or create a LocalizationService instance for a specific locale.
+ * Instances are cached so each locale is loaded at most once per isolate.
+ */
+async function getLocaleInstance(locale: LocaleCode): Promise<LocalizationService> {
+  const existing = localeInstances.get(locale);
+  if (existing) return existing;
+
+  const instance = new LocalizationService();
+  await instance.setLocale(locale);
+  localeInstances.set(locale, instance);
+  return instance;
+}
+
+/**
+ * Initialize localization for a specific locale.
+ *
+ * Pre-loads the locale instance into the cache for subsequent getter calls.
+ * Unlike the previous implementation, this does NOT mutate singleton state,
+ * so concurrent requests cannot interfere with each other.
  *
  * @param locale - Locale code to initialize
  * @param logger - Optional logger for structured logging
@@ -230,16 +258,13 @@ export async function initializeLocale(
   logger?: ExtendedLogger
 ): Promise<void> {
   try {
-    // Clear previous state to ensure clean locale switching
-    LocalizationService.clear();
-    await LocalizationService.setLocale(locale);
+    await getLocaleInstance(locale);
   } catch (error) {
     if (logger) {
       logger.error('Failed to initialize locale', error instanceof Error ? error : undefined);
     }
-    // Fall back to English
-    LocalizationService.clear();
-    await LocalizationService.setLocale('en');
+    // Ensure English fallback is loaded
+    await getLocaleInstance('en');
   }
 }
 
@@ -255,13 +280,20 @@ export function formatLocaleDisplay(locale: LocaleCode): string {
 /**
  * Get localized dye name from xivdyetools-core
  *
+ * Uses per-locale instances to avoid singleton race conditions.
+ * When locale is provided, looks up the correct per-locale instance.
+ * Defaults to 'en' for backward compatibility with callers that don't pass locale.
+ *
  * @param itemID - The dye's item ID (e.g., 5729)
  * @param fallbackName - Fallback name if localization fails
+ * @param locale - Locale code (defaults to 'en')
  * @returns Localized name or fallback
  */
-export function getLocalizedDyeName(itemID: number, fallbackName: string): string {
+export function getLocalizedDyeName(itemID: number, fallbackName: string, locale: LocaleCode = 'en'): string {
   try {
-    const localizedName = LocalizationService.getDyeName(itemID);
+    const instance = localeInstances.get(locale);
+    if (!instance) return fallbackName;
+    const localizedName = instance.getDyeName(itemID);
     return localizedName ?? fallbackName;
   } catch {
     return fallbackName;
@@ -271,12 +303,17 @@ export function getLocalizedDyeName(itemID: number, fallbackName: string): strin
 /**
  * Get localized category name from xivdyetools-core
  *
+ * Uses per-locale instances to avoid singleton race conditions.
+ *
  * @param category - The category key (e.g., "Reds", "Blues")
+ * @param locale - Locale code (defaults to 'en')
  * @returns Localized category name
  */
-export function getLocalizedCategory(category: string): string {
+export function getLocalizedCategory(category: string, locale: LocaleCode = 'en'): string {
   try {
-    return LocalizationService.getCategory(category);
+    const instance = localeInstances.get(locale);
+    if (!instance) return category;
+    return instance.getCategory(category);
   } catch {
     return category;
   }

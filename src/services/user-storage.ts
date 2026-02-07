@@ -385,8 +385,16 @@ export async function renameCollection(
   logger?: ExtendedLogger
 ): Promise<{ success: boolean; reason?: string }> {
   try {
+    // SECURITY: Sanitize name to prevent control chars, zalgo, etc.
+    const sanitizedNewName = sanitizeCollectionName(newName);
+
+    // Reject empty names after sanitization
+    if (!sanitizedNewName || sanitizedNewName.length === 0) {
+      return { success: false, reason: 'invalidName' };
+    }
+
     // Validate new name length
-    if (newName.length > MAX_COLLECTION_NAME_LENGTH) {
+    if (sanitizedNewName.length > MAX_COLLECTION_NAME_LENGTH) {
       return { success: false, reason: 'nameTooLong' };
     }
 
@@ -399,12 +407,12 @@ export async function renameCollection(
     }
 
     // Check if new name already exists
-    if (collections.some((c) => c.name.toLowerCase() === newName.toLowerCase() && c.id !== collection.id)) {
+    if (collections.some((c) => c.name.toLowerCase() === sanitizedNewName.toLowerCase() && c.id !== collection.id)) {
       return { success: false, reason: 'alreadyExists' };
     }
 
     // Update name
-    collection.name = newName;
+    collection.name = sanitizedNewName;
     collection.updatedAt = new Date().toISOString();
 
     await kv.put(`${COLLECTIONS_KEY_PREFIX}${userId}`, JSON.stringify(collections));

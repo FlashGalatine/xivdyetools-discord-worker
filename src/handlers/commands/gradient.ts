@@ -334,7 +334,7 @@ async function processGradientCommand(
 
       // Get localized name if dye exists
       const localizedDyeName = closestDye
-        ? getLocalizedDyeName(closestDye.itemID, closestDye.name)
+        ? getLocalizedDyeName(closestDye.itemID, closestDye.name, locale)
         : undefined;
 
       gradientSteps.push({
@@ -381,10 +381,10 @@ async function processGradientCommand(
     const startEmojiPrefix = startEmoji ? `${startEmoji} ` : '';
     const endEmojiPrefix = endEmoji ? `${endEmoji} ` : '';
     const localizedStartName = startColor.itemID && startColor.name
-      ? getLocalizedDyeName(startColor.itemID, startColor.name)
+      ? getLocalizedDyeName(startColor.itemID, startColor.name, locale)
       : startColor.name;
     const localizedEndName = endColor.itemID && endColor.name
-      ? getLocalizedDyeName(endColor.itemID, endColor.name)
+      ? getLocalizedDyeName(endColor.itemID, endColor.name, locale)
       : endColor.name;
     const startText = localizedStartName
       ? `${startEmojiPrefix}**${localizedStartName}** (\`${startColor.hex.toUpperCase()}\`)`

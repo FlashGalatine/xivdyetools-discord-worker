@@ -298,12 +298,12 @@ function buildSingleMatchResponse(
   if (fromDye) {
     const fromEmoji = getDyeEmoji(fromDye.id);
     const fromEmojiPrefix = fromEmoji ? `${fromEmoji} ` : '';
-    const fromDyeName = getLocalizedDyeName(fromDye.itemID, fromDye.name);
+    const fromDyeName = getLocalizedDyeName(fromDye.itemID, fromDye.name, t.getLocale());
     inputDesc = `${fromEmojiPrefix}**${fromDyeName}**\n${inputDesc}`;
   }
 
   // Build match description with localized dye name
-  const localizedDyeName = getLocalizedDyeName(dye.itemID, dye.name);
+  const localizedDyeName = getLocalizedDyeName(dye.itemID, dye.name, t.getLocale());
   let matchDesc = `${emojiPrefix}**${localizedDyeName}**\n`;
   matchDesc += `**Hex:** \`${dye.hex.toUpperCase()}\`\n`;
   matchDesc += `**${t.t('common.rgb')}:** \`${formatRgb(dye.hex)}\`\n`;
@@ -360,7 +360,7 @@ function buildMultiMatchResponse(
   fromDye?: Dye
 ): Response {
   // Build input description with localized name
-  const fromDyeName = fromDye ? getLocalizedDyeName(fromDye.itemID, fromDye.name) : null;
+  const fromDyeName = fromDye ? getLocalizedDyeName(fromDye.itemID, fromDye.name, t.getLocale()) : null;
   const inputText = fromDyeName
     ? `**${fromDyeName}** (\`${targetHex.toUpperCase()}\`)`
     : `\`${targetHex.toUpperCase()}\``;
@@ -371,7 +371,7 @@ function buildMultiMatchResponse(
     const quality = getMatchQuality(distance, t);
     const emoji = getDyeEmoji(dye.id);
     const emojiPrefix = emoji ? `${emoji} ` : '';
-    const localizedName = getLocalizedDyeName(dye.itemID, dye.name);
+    const localizedName = getLocalizedDyeName(dye.itemID, dye.name, t.getLocale());
 
     return `**${i + 1}.** ${emojiPrefix}**${localizedName}** • \`${dye.hex.toUpperCase()}\` • ${quality.emoji} ${quality.label} (Δ ${distance.toFixed(1)})`;
   }).join('\n');
@@ -522,7 +522,7 @@ async function processImageExtraction(
       extracted: match.extracted,
       matchedDye: {
         ...match.matchedDye,
-        name: getLocalizedDyeName(match.matchedDye.itemID, match.matchedDye.name),
+        name: getLocalizedDyeName(match.matchedDye.itemID, match.matchedDye.name, locale),
       },
       distance: match.distance,
       dominance: match.dominance,
@@ -614,7 +614,7 @@ function buildImageMatchDescription(matches: PaletteMatch[], t: Translator): str
     const quality = getImageMatchQuality(match.distance);
     const qualityLabel = t.t(`quality.${quality.shortLabel.toLowerCase()}`);
     const qualityBadge = `[${qualityLabel.toUpperCase()}]`;
-    const localizedName = getLocalizedDyeName(match.matchedDye.itemID, match.matchedDye.name);
+    const localizedName = getLocalizedDyeName(match.matchedDye.itemID, match.matchedDye.name, t.getLocale());
 
     return (
       `**${i + 1}.** ${emojiPrefix}**${localizedName}** ` +

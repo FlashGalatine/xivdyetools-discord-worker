@@ -73,6 +73,14 @@ const REQUEST_TIMEOUT = 10000;
 /** Maximum number of items per batch request */
 const MAX_BATCH_SIZE = 100;
 
+/** Cache TTL for world/datacenter data (1 hour) */
+const WORLD_CACHE_TTL = 60 * 60 * 1000;
+
+// Module-level cache for world/datacenter data (OPT-001)
+// Persists across requests within the same Cloudflare Worker isolate
+let worldsCache: { data: UniversalisWorld[]; expiry: number } | null = null;
+let dataCentersCache: { data: UniversalisDataCenter[]; expiry: number } | null = null;
+
 // ============================================================================
 // Core Request Function
 // ============================================================================
@@ -287,6 +295,34 @@ export async function fetchDataCenters(
 }
 
 /**
+ * Get worlds with module-level caching (OPT-001)
+ *
+ * World lists change extremely rarely (only when SE adds servers).
+ * Caching for 1 hour eliminates redundant HTTP requests on every
+ * autocomplete keystroke.
+ */
+async function getCachedWorlds(env: Env, logger?: ExtendedLogger): Promise<UniversalisWorld[]> {
+  if (worldsCache && Date.now() < worldsCache.expiry) {
+    return worldsCache.data;
+  }
+  const data = await fetchWorlds(env, logger);
+  worldsCache = { data, expiry: Date.now() + WORLD_CACHE_TTL };
+  return data;
+}
+
+/**
+ * Get data centers with module-level caching (OPT-001)
+ */
+async function getCachedDataCenters(env: Env, logger?: ExtendedLogger): Promise<UniversalisDataCenter[]> {
+  if (dataCentersCache && Date.now() < dataCentersCache.expiry) {
+    return dataCentersCache.data;
+  }
+  const data = await fetchDataCenters(env, logger);
+  dataCentersCache = { data, expiry: Date.now() + WORLD_CACHE_TTL };
+  return data;
+}
+
+/**
  * Validate that a world/datacenter name exists
  *
  * @returns Normalized name if valid, null if not found
@@ -300,14 +336,14 @@ export async function validateWorld(
 
   try {
     // Check worlds first
-    const worlds = await fetchWorlds(env, logger);
+    const worlds = await getCachedWorlds(env, logger);
     const matchedWorld = worlds.find((w) => w.name.toLowerCase() === normalizedInput);
     if (matchedWorld) {
       return matchedWorld.name;
     }
 
     // Check data centers
-    const dataCenters = await fetchDataCenters(env, logger);
+    const dataCenters = await getCachedDataCenters(env, logger);
     const matchedDc = dataCenters.find((dc) => dc.name.toLowerCase() === normalizedInput);
     if (matchedDc) {
       return matchedDc.name;
@@ -334,8 +370,8 @@ export async function getWorldAutocomplete(
 
   try {
     const [worlds, dataCenters] = await Promise.all([
-      fetchWorlds(env, logger),
-      fetchDataCenters(env, logger),
+      getCachedWorlds(env, logger),
+      getCachedDataCenters(env, logger),
     ]);
 
     const suggestions: Array<{ name: string; value: string }> = [];

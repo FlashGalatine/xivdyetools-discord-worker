@@ -302,7 +302,7 @@ async function handleAdd(
   const result = await addDyeToCollection(env.KV, userId, name, dye.id);
 
   // Get localized dye name
-  const localizedDyeName = getLocalizedDyeName(dye.itemID, dye.name);
+  const localizedDyeName = getLocalizedDyeName(dye.itemID, dye.name, t.getLocale());
   const emoji = getDyeEmoji(dye.id);
   const emojiStr = emoji ? `${emoji} ` : '';
 
@@ -396,7 +396,7 @@ async function handleRemove(
   const removed = await removeDyeFromCollection(env.KV, userId, name, dye.id);
 
   // Get localized dye name
-  const localizedDyeName = getLocalizedDyeName(dye.itemID, dye.name);
+  const localizedDyeName = getLocalizedDyeName(dye.itemID, dye.name, t.getLocale());
   const emoji = getDyeEmoji(dye.id);
   const emojiStr = emoji ? `${emoji} ` : '';
 
@@ -482,7 +482,7 @@ async function handleShow(
   const dyeList = dyes.map((dye, index) => {
     const emoji = getDyeEmoji(dye.id);
     const emojiStr = emoji ? `${emoji} ` : '';
-    const localizedName = getLocalizedDyeName(dye.itemID, dye.name);
+    const localizedName = getLocalizedDyeName(dye.itemID, dye.name, t.getLocale());
     return `${index + 1}. ${emojiStr}**${localizedName}** (\`${dye.hex.toUpperCase()}\`)`;
   });
 

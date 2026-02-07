@@ -39,10 +39,10 @@ function excludeFacewear(dyes: Dye[]): Dye[] {
 /**
  * Formats a dye for a compact list display (with localized name)
  */
-function formatDyeListItem(dye: Dye): string {
+function formatDyeListItem(dye: Dye, locale: LocaleCode): string {
   const emoji = getDyeEmoji(dye.id);
   const emojiPrefix = emoji ? `${emoji} ` : '';
-  const localizedName = getLocalizedDyeName(dye.itemID, dye.name);
+  const localizedName = getLocalizedDyeName(dye.itemID, dye.name, locale);
   return `${emojiPrefix}**${localizedName}** (\`${dye.hex.toUpperCase()}\`)`;
 }
 
@@ -129,7 +129,7 @@ function handleSearchSubcommand(
 
   // Limit to 10 results for display
   const displayResults = results.slice(0, 10);
-  const dyeList = displayResults.map(formatDyeListItem).join('\n');
+  const dyeList = displayResults.map((d) => formatDyeListItem(d, t.getLocale())).join('\n');
 
   const moreText = results.length > 10 ? `\n\n*${t.t('dye.search.moreResults', { count: results.length - 10 })}*` : '';
 
@@ -207,8 +207,8 @@ async function processInfoCard(
 
   try {
     // Get localized names
-    const localizedName = getLocalizedDyeName(dye.itemID, dye.name);
-    const localizedCategory = getLocalizedCategory(dye.category);
+    const localizedName = getLocalizedDyeName(dye.itemID, dye.name, locale);
+    const localizedCategory = getLocalizedCategory(dye.category, locale);
 
     // Generate visual card SVG
     const svg = generateDyeInfoCard({
@@ -253,8 +253,8 @@ async function processInfoCard(
     });
   } catch (error) {
     // Fallback to text-based response on error
-    const localizedName = getLocalizedDyeName(dye.itemID, dye.name);
-    const localizedCategory = getLocalizedCategory(dye.category);
+    const localizedName = getLocalizedDyeName(dye.itemID, dye.name, locale);
+    const localizedCategory = getLocalizedCategory(dye.category, locale);
 
     const emoji = getDyeEmoji(dye.id);
     const emojiPrefix = emoji ? `${emoji} ` : '';
@@ -319,8 +319,8 @@ function handleListSubcommand(
     }
 
     // Format list
-    const dyeList = categoryDyes.map(formatDyeListItem).join('\n');
-    const localizedCategoryName = getLocalizedCategory(category);
+    const dyeList = categoryDyes.map((d) => formatDyeListItem(d, t.getLocale())).join('\n');
+    const localizedCategoryName = getLocalizedCategory(category, t.getLocale());
 
     return messageResponse({
       embeds: [
@@ -342,7 +342,7 @@ function handleListSubcommand(
   }
 
   const categoryList = Array.from(categories.entries())
-    .map(([cat, count]) => `**${getLocalizedCategory(cat)}**: ${count} ${t.t('common.dyes')}`)
+    .map(([cat, count]) => `**${getLocalizedCategory(cat, t.getLocale())}**: ${count} ${t.t('common.dyes')}`)
     .join('\n');
 
   return messageResponse({
@@ -445,8 +445,8 @@ async function processRandomGrid(
     // Build dye info with localized names
     const dyeInfos: RandomDyeInfo[] = dyes.map((dye) => ({
       dye,
-      localizedName: getLocalizedDyeName(dye.itemID, dye.name),
-      localizedCategory: getLocalizedCategory(dye.category),
+      localizedName: getLocalizedDyeName(dye.itemID, dye.name, locale),
+      localizedCategory: getLocalizedCategory(dye.category, locale),
     }));
 
     // Generate visual grid SVG
@@ -465,7 +465,7 @@ async function processRandomGrid(
       .map((dye, i) => {
         const emoji = getDyeEmoji(dye.id);
         const emojiPrefix = emoji ? `${emoji} ` : '';
-        const localizedName = getLocalizedDyeName(dye.itemID, dye.name);
+        const localizedName = getLocalizedDyeName(dye.itemID, dye.name, locale);
         return `**${i + 1}.** ${emojiPrefix}${localizedName} (\`${dye.hex.toUpperCase()}\`)`;
       })
       .join('\n');
@@ -493,8 +493,8 @@ async function processRandomGrid(
       .map((dye, i) => {
         const emoji = getDyeEmoji(dye.id);
         const emojiPrefix = emoji ? `${emoji} ` : '';
-        const localizedName = getLocalizedDyeName(dye.itemID, dye.name);
-        const localizedCategory = getLocalizedCategory(dye.category);
+        const localizedName = getLocalizedDyeName(dye.itemID, dye.name, locale);
+        const localizedCategory = getLocalizedCategory(dye.category, locale);
         return `**${i + 1}.** ${emojiPrefix}**${localizedName}** (\`${dye.hex.toUpperCase()}\`) • ${localizedCategory}`;
       })
       .join('\n');

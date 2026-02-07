@@ -180,7 +180,7 @@ async function processMatchImageCommand(
       extracted: match.extracted,
       matchedDye: {
         ...match.matchedDye,
-        name: getLocalizedDyeName(match.matchedDye.itemID, match.matchedDye.name),
+        name: getLocalizedDyeName(match.matchedDye.itemID, match.matchedDye.name, locale),
       },
       distance: match.distance,
       dominance: match.dominance,
@@ -271,7 +271,7 @@ function buildMatchDescription(matches: PaletteMatch[], t: Translator): string {
     const qualityLabel = t.t(`quality.${quality.shortLabel.toLowerCase()}`);
     const qualityBadge = `[${qualityLabel.toUpperCase()}]`;
     // Use localized dye name
-    const localizedName = getLocalizedDyeName(match.matchedDye.itemID, match.matchedDye.name);
+    const localizedName = getLocalizedDyeName(match.matchedDye.itemID, match.matchedDye.name, t.getLocale());
 
     // Format: **1.** 🎨 Dalamud Red (#AA1111) [EXCELLENT] - 42%
     return (

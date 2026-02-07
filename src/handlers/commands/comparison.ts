@@ -119,7 +119,7 @@ async function processComparisonCommand(
     // Build dyes with localized names for SVG
     const dyesWithLocalizedNames = dyes.map((dye) => ({
       ...dye,
-      name: getLocalizedDyeName(dye.itemID, dye.name),
+      name: getLocalizedDyeName(dye.itemID, dye.name, locale),
     }));
 
     // Generate SVG with localized names
@@ -137,7 +137,7 @@ async function processComparisonCommand(
       .map((dye, i) => {
         const emoji = getDyeEmoji(dye.id);
         const emojiPrefix = emoji ? `${emoji} ` : '';
-        const localizedName = getLocalizedDyeName(dye.itemID, dye.name);
+        const localizedName = getLocalizedDyeName(dye.itemID, dye.name, locale);
         return `**${i + 1}.** ${emojiPrefix}${localizedName} (\`${dye.hex.toUpperCase()}\`)`;
       })
       .join('\n');
