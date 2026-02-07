@@ -24,6 +24,7 @@ import {
   type Collection,
 } from '../../services/user-storage.js';
 import { getDyeEmoji } from '../../services/emoji.js';
+import { resolveDyeInput } from '../../utils/color.js';
 import { createUserTranslator, createTranslator, type Translator } from '../../services/bot-i18n.js';
 import { discordLocaleToLocaleCode, initializeLocale, getLocalizedDyeName } from '../../services/i18n.js';
 import type { Env, DiscordInteraction } from '../../types/env.js';
@@ -38,32 +39,8 @@ const DEPRECATION_NOTICE = '⚠️ **This command is deprecated.** Use `/preset`
 /** Color for deprecation warning embeds */
 const DEPRECATION_COLOR = 0xfee75c; // Yellow
 
-// Initialize DyeService
+// Initialize DyeService (still needed for getDyeById in show/list handlers)
 const dyeService = new DyeService(dyeDatabase);
-
-// ============================================================================
-// Utility Functions
-// ============================================================================
-
-/**
- * Resolve dye input to a Dye object
- */
-function resolveDyeInput(input: string): Dye | null {
-  // Try finding by name first
-  const dyes = dyeService.searchByName(input);
-  if (dyes.length > 0) {
-    const nonFacewear = dyes.filter((d) => d.category !== 'Facewear');
-    return nonFacewear[0] || dyes[0];
-  }
-
-  // Try as hex color - find closest dye
-  if (/^#?[0-9A-Fa-f]{6}$/.test(input)) {
-    const hex = input.startsWith('#') ? input : `#${input}`;
-    return dyeService.findClosestDye(hex);
-  }
-
-  return null;
-}
 
 // ============================================================================
 // Main Handler

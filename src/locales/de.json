@@ -537,19 +537,30 @@
     "title": "Deine Einstellungen",
     "show": {
       "title": "Aktuelle Einstellungen",
-      "description": "Deine personalisierten Einstellungen für XIV Dye Tools",
+      "description": "Diese Einstellungen beeinflussen die Funktionsweise der Befehle.\nParameter, die du angibst, überschreiben immer diese Standardwerte.",
       "default": "Standard",
-      "notSet": "Nicht gesetzt"
+      "notSet": "Nicht gesetzt",
+      "hint": "Verwende /preferences set zum Anpassen"
     },
     "set": {
       "success": "Einstellung aktualisiert",
       "updated": "**{key}** wurde auf **{value}** gesetzt.",
-      "affectedCommands": "Dies betrifft: {commands}"
+      "affectedCommands": "Dies betrifft: {commands}",
+      "successCount": "{count} Einstellungen aktualisiert",
+      "affects": "Betrifft",
+      "failedToUpdate": "Aktualisierung fehlgeschlagen",
+      "noOptions": "Bitte gib mindestens eine Einstellung an.\n\nBeispiel: `/preferences set language:de blending:oklab`",
+      "noValidOptions": "Keine gültigen Einstellungen angegeben.",
+      "overrideNote": "Befehlsparameter überschreiben diese Einstellungen"
     },
     "reset": {
       "success": "Einstellung zurückgesetzt",
       "single": "**{key}** wurde auf den Standardwert zurückgesetzt.",
-      "all": "Alle Einstellungen wurden auf die Standardwerte zurückgesetzt."
+      "all": "Alle Einstellungen wurden auf die Standardwerte zurückgesetzt.",
+      "allTitle": "Alle Einstellungen zurückgesetzt",
+      "allDescription": "Alle Einstellungen wurden auf Standardwerte zurückgesetzt.",
+      "failed": "Einstellung(en) konnten nicht zurückgesetzt werden. Bitte versuche es erneut.",
+      "showHint": "/preferences show zeigt aktuelle Einstellungen"
     },
     "keys": {
       "language": "Sprache",
@@ -573,7 +584,26 @@
     },
     "errors": {
       "invalidKey": "Unbekannter Einstellungsschlüssel: {key}",
-      "invalidValue": "Ungültiger Wert für {key}. Gültige Optionen: {options}"
+      "invalidValue": "Ungültiger Wert für {key}. Gültige Optionen: {options}",
+      "noSubcommand": "Kein Unterbefehl angegeben"
+    },
+    "values": {
+      "results": "{count} Ergebnisse",
+      "male": "Männlich ♂️",
+      "female": "Weiblich ♀️",
+      "yes": "Ja",
+      "no": "Nein"
+    },
+    "validation": {
+      "invalidLanguage": "Ungültige Sprache. Gültige Optionen: `en`, `ja`, `de`, `fr`, `ko`, `zh`",
+      "invalidBlendingMode": "Ungültiger Mischmodus. Gültige Optionen:\n{options}",
+      "invalidMatchingMethod": "Ungültige Matching-Methode. Gültige Optionen:\n{options}",
+      "invalidCount": "Ungültige Anzahl. Muss eine Zahl zwischen 1 und 10 sein.",
+      "invalidClan": "Ungültiger Stamm. Gültige Stämme:\n{options}",
+      "invalidGender": "Ungültiges Geschlecht. Gültige Optionen: `male`, `female`",
+      "invalidWorld": "Ungültige Welt. Bitte gib einen gültigen FFXIV Welt- oder Datenzentrum-Namen ein.",
+      "invalidMarket": "Ungültiger Wert. Verwende `on`/`off` oder `true`/`false`.",
+      "error": "Beim Speichern der Einstellung ist ein Fehler aufgetreten. Bitte versuche es erneut."
     }
   },
   "stats": {

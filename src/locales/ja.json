@@ -537,19 +537,30 @@
     "title": "設定",
     "show": {
       "title": "現在の設定",
-      "description": "XIV Dye Toolsのパーソナライズ設定",
+      "description": "これらの設定はコマンドの動作に影響します。\nコマンドパラメータは常にこの設定を上書きします。",
       "default": "デフォルト",
-      "notSet": "未設定"
+      "notSet": "未設定",
+      "hint": "/preferences set で設定を変更できます"
     },
     "set": {
       "success": "設定を更新しました",
       "updated": "**{key}**を**{value}**に設定しました。",
-      "affectedCommands": "影響するコマンド：{commands}"
+      "affectedCommands": "影響するコマンド：{commands}",
+      "successCount": "{count}件の設定を更新しました",
+      "affects": "影響するコマンド",
+      "failedToUpdate": "更新に失敗",
+      "noOptions": "少なくとも1つの設定を指定してください。\n\n例: `/preferences set language:ja blending:oklab`",
+      "noValidOptions": "有効な設定が指定されていません。",
+      "overrideNote": "コマンドパラメータはこの設定を上書きします"
     },
     "reset": {
       "success": "設定をリセットしました",
       "single": "**{key}**をデフォルト値にリセットしました。",
-      "all": "すべての設定をデフォルトにリセットしました。"
+      "all": "すべての設定をデフォルトにリセットしました。",
+      "allTitle": "すべての設定をリセット",
+      "allDescription": "すべての設定をデフォルトにリセットしました。",
+      "failed": "設定のリセットに失敗しました。もう一度お試しください。",
+      "showHint": "/preferences show で現在の設定を確認"
     },
     "keys": {
       "language": "言語",
@@ -573,7 +584,26 @@
     },
     "errors": {
       "invalidKey": "不明な設定キー：{key}",
-      "invalidValue": "{key}の値が無効です。有効なオプション：{options}"
+      "invalidValue": "{key}の値が無効です。有効なオプション：{options}",
+      "noSubcommand": "サブコマンドが指定されていません"
+    },
+    "values": {
+      "results": "{count}件の結果",
+      "male": "男性 ♂️",
+      "female": "女性 ♀️",
+      "yes": "はい",
+      "no": "いいえ"
+    },
+    "validation": {
+      "invalidLanguage": "無効な言語です。有効なオプション: `en`, `ja`, `de`, `fr`, `ko`, `zh`",
+      "invalidBlendingMode": "無効なブレンドモードです。有効なオプション:\n{options}",
+      "invalidMatchingMethod": "無効なマッチング方法です。有効なオプション:\n{options}",
+      "invalidCount": "無効な件数です。1から10の数字を入力してください。",
+      "invalidClan": "無効な部族です。有効な部族:\n{options}",
+      "invalidGender": "無効な性別です。有効なオプション: `male`, `female`",
+      "invalidWorld": "無効なワールドです。有効なFFXIVワールドまたはデータセンター名を入力してください。",
+      "invalidMarket": "無効な値です。`on`/`off` または `true`/`false` を使用してください。",
+      "error": "設定の保存中にエラーが発生しました。もう一度お試しください。"
     }
   },
   "stats": {

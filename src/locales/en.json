@@ -537,19 +537,30 @@
     "title": "Your Preferences",
     "show": {
       "title": "Current Preferences",
-      "description": "Your personalized settings for XIV Dye Tools",
+      "description": "These settings affect how commands work for you.\nParameters you provide always override these defaults.",
       "default": "Default",
-      "notSet": "Not set"
+      "notSet": "Not set",
+      "hint": "Use /preferences set to customize (e.g., /preferences set language:en)"
     },
     "set": {
       "success": "Preference Updated",
+      "successCount": "{count} Preferences Updated",
       "updated": "**{key}** has been set to **{value}**.",
-      "affectedCommands": "This affects: {commands}"
+      "affectedCommands": "This affects: {commands}",
+      "affects": "Affects",
+      "failedToUpdate": "Failed to Update",
+      "noOptions": "Please provide at least one preference to set.\n\nExample: `/preferences set language:en blending:oklab`",
+      "noValidOptions": "No valid preferences were provided.",
+      "overrideNote": "Command parameters will override these settings"
     },
     "reset": {
       "success": "Preference Reset",
+      "allTitle": "All Preferences Reset",
       "single": "**{key}** has been reset to its default value.",
-      "all": "All preferences have been reset to defaults."
+      "all": "All preferences have been reset to defaults.",
+      "allDescription": "All your preferences have been reset to system defaults.",
+      "failed": "Failed to reset preference(s). Please try again.",
+      "showHint": "Use /preferences show to see current values"
     },
     "keys": {
       "language": "Language",
@@ -571,9 +582,28 @@
       "world": "Default world/datacenter for market prices",
       "market": "Whether to show market prices by default"
     },
+    "values": {
+      "results": "{count} results",
+      "male": "Male ♂️",
+      "female": "Female ♀️",
+      "yes": "Yes",
+      "no": "No"
+    },
+    "validation": {
+      "invalidLanguage": "Invalid language. Valid options: `en`, `ja`, `de`, `fr`, `ko`, `zh`",
+      "invalidBlendingMode": "Invalid blending mode. Valid options:\n{options}",
+      "invalidMatchingMethod": "Invalid matching method. Valid options:\n{options}",
+      "invalidCount": "Invalid count. Must be a number between 1 and 10.",
+      "invalidClan": "Invalid clan. Valid clans:\n{options}",
+      "invalidGender": "Invalid gender. Valid options: `male`, `female`",
+      "invalidWorld": "Invalid world. Please enter a valid FFXIV world or datacenter name.",
+      "invalidMarket": "Invalid value. Use `on`/`off` or `true`/`false`.",
+      "error": "An error occurred while saving the preference. Please try again."
+    },
     "errors": {
       "invalidKey": "Unknown preference key: {key}",
-      "invalidValue": "Invalid value for {key}. Valid options: {options}"
+      "invalidValue": "Invalid value for {key}. Valid options: {options}",
+      "noSubcommand": "No subcommand provided"
     }
   },
   "stats": {

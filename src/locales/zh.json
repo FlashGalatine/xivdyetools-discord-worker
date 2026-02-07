@@ -537,19 +537,30 @@
     "title": "您的偏好设置",
     "show": {
       "title": "当前偏好设置",
-      "description": "您的 XIV Dye Tools 个性化设置",
+      "description": "这些设置会影响命令的运行方式。\n您提供的参数将始终覆盖这些默认值。",
       "default": "默认",
-      "notSet": "未设置"
+      "notSet": "未设置",
+      "hint": "使用 /preferences set 自定义设置"
     },
     "set": {
       "success": "偏好设置已更新",
       "updated": "**{key}** 已设置为 **{value}**。",
-      "affectedCommands": "影响的命令：{commands}"
+      "affectedCommands": "影响的命令：{commands}",
+      "successCount": "已更新{count}项设置",
+      "affects": "影响的命令",
+      "failedToUpdate": "更新失败",
+      "noOptions": "请至少提供一项设置。\n\n示例: `/preferences set language:zh blending:oklab`",
+      "noValidOptions": "未提供有效的设置。",
+      "overrideNote": "命令参数会覆盖这些设置"
     },
     "reset": {
       "success": "偏好设置已重置",
       "single": "**{key}** 已重置为默认值。",
-      "all": "所有偏好设置已重置为默认值。"
+      "all": "所有偏好设置已重置为默认值。",
+      "allTitle": "所有设置已重置",
+      "allDescription": "所有设置已恢复为系统默认值。",
+      "failed": "重置设置失败，请重试。",
+      "showHint": "使用 /preferences show 查看当前设置"
     },
     "keys": {
       "language": "语言",
@@ -573,7 +584,26 @@
     },
     "errors": {
       "invalidKey": "未知偏好设置键：{key}",
-      "invalidValue": "{key} 的值无效。有效选项：{options}"
+      "invalidValue": "{key} 的值无效。有效选项：{options}",
+      "noSubcommand": "未指定子命令"
+    },
+    "values": {
+      "results": "{count}个结果",
+      "male": "男性 ♂️",
+      "female": "女性 ♀️",
+      "yes": "是",
+      "no": "否"
+    },
+    "validation": {
+      "invalidLanguage": "无效的语言。有效选项: `en`, `ja`, `de`, `fr`, `ko`, `zh`",
+      "invalidBlendingMode": "无效的混合模式。有效选项:\n{options}",
+      "invalidMatchingMethod": "无效的匹配方法。有效选项:\n{options}",
+      "invalidCount": "无效的数量。必须是1到10之间的数字。",
+      "invalidClan": "无效的部族。有效部族:\n{options}",
+      "invalidGender": "无效的性别。有效选项: `male`, `female`",
+      "invalidWorld": "无效的服务器。请输入有效的FFXIV服务器或数据中心名称。",
+      "invalidMarket": "无效的值。请使用 `on`/`off` 或 `true`/`false`。",
+      "error": "保存设置时发生错误，请重试。"
     }
   },
   "stats": {

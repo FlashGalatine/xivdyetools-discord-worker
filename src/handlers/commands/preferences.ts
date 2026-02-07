@@ -8,6 +8,9 @@
  * - set: Set a preference value
  * - reset: Reset a preference to default
  *
+ * REFACTOR-004: All user-facing strings now use i18n keys from locale files
+ * instead of hardcoded English strings.
+ *
  * @module handlers/commands/preferences
  */
 
@@ -51,18 +54,6 @@ const PREFERENCE_ORDER: PreferenceKey[] = [
   'market',
 ];
 
-/** Human-readable labels for preference keys */
-const PREFERENCE_LABELS: Record<PreferenceKey, string> = {
-  language: 'Language',
-  blending: 'Blending Mode',
-  matching: 'Matching Method',
-  count: 'Result Count',
-  clan: 'Default Clan',
-  gender: 'Default Gender',
-  world: 'Market World',
-  market: 'Show Prices',
-};
-
 /** Emojis for preference categories */
 const PREFERENCE_EMOJIS: Record<PreferenceKey, string> = {
   language: '🌐',
@@ -99,7 +90,7 @@ export async function handlePreferencesCommand(
 
   if (!subcommandOption) {
     return messageResponse({
-      embeds: [errorEmbed(t.t('common.error'), 'No subcommand provided')],
+      embeds: [errorEmbed(t.t('common.error'), t.t('preferences.errors.noSubcommand'))],
       flags: 64,
     });
   }
@@ -118,7 +109,7 @@ export async function handlePreferencesCommand(
 
     default:
       return messageResponse({
-        embeds: [errorEmbed(t.t('common.error'), `Unknown subcommand: ${subcommand}`)],
+        embeds: [errorEmbed(t.t('common.error'), t.t('preferences.errors.noSubcommand'))],
         flags: 64,
       });
   }
@@ -144,18 +135,18 @@ async function handleShowSubcommand(
   // Build fields for each preference
   const fields = PREFERENCE_ORDER.map((key) => {
     const emoji = PREFERENCE_EMOJIS[key];
-    const label = PREFERENCE_LABELS[key];
+    const label = t.t(`preferences.keys.${key}`);
     const currentValue = prefs[key];
     const defaultValue = getDefaultValue(key);
 
     // Format the display value
     let displayValue: string;
     if (currentValue !== undefined) {
-      displayValue = formatPreferenceValue(key, currentValue);
+      displayValue = formatPreferenceValue(key, currentValue, t);
     } else if (defaultValue !== undefined) {
-      displayValue = `*${formatPreferenceValue(key, defaultValue)}* (default)`;
+      displayValue = `*${formatPreferenceValue(key, defaultValue, t)}* (${t.t('preferences.show.default').toLowerCase()})`;
     } else {
-      displayValue = '*Not set*';
+      displayValue = `*${t.t('preferences.show.notSet')}*`;
     }
 
     return {
@@ -168,13 +159,13 @@ async function handleShowSubcommand(
   // Add last updated timestamp if available
   const footer = prefs.updatedAt
     ? { text: `Last updated: ${new Date(prefs.updatedAt).toLocaleString()}` }
-    : { text: 'Use /preferences set to customize (e.g., /preferences set language:en)' };
+    : { text: t.t('preferences.show.hint') };
 
   return messageResponse({
     embeds: [
       {
-        title: '⚙️ Your Preferences',
-        description: 'These settings affect how commands work for you.\nParameters you provide always override these defaults.',
+        title: `⚙️ ${t.t('preferences.title')}`,
+        description: t.t('preferences.show.description'),
         color: PREFS_COLOR,
         fields,
         footer,
@@ -205,10 +196,7 @@ async function handleSetSubcommand(
   if (options.length === 0) {
     return messageResponse({
       embeds: [
-        errorEmbed(
-          t.t('common.error'),
-          'Please provide at least one preference to set.\n\nExample: `/preferences set language:en blending:oklab`'
-        ),
+        errorEmbed(t.t('common.error'), t.t('preferences.set.noOptions')),
       ],
       flags: 64,
     });
@@ -242,10 +230,7 @@ async function handleSetSubcommand(
   if (updates.length === 0) {
     return messageResponse({
       embeds: [
-        errorEmbed(
-          t.t('common.error'),
-          'No valid preferences were provided. Use options like `language`, `blending`, `matching`, etc.'
-        ),
+        errorEmbed(t.t('common.error'), t.t('preferences.set.noValidOptions')),
       ],
       flags: 64,
     });
@@ -260,8 +245,8 @@ async function handleSetSubcommand(
     // All failed
     const errorLines = failures.map((f) => {
       const emoji = PREFERENCE_EMOJIS[f.key];
-      const label = PREFERENCE_LABELS[f.key];
-      const reason = getValidationErrorMessage(f.key, f.reason);
+      const label = t.t(`preferences.keys.${f.key}`);
+      const reason = getValidationErrorMessage(t, f.key, f.reason);
       return `${emoji} **${label}**: ${reason}`;
     });
 
@@ -276,8 +261,8 @@ async function handleSetSubcommand(
   // Build success description
   const successLines = successes.map((s) => {
     const emoji = PREFERENCE_EMOJIS[s.key];
-    const label = PREFERENCE_LABELS[s.key];
-    const displayValue = formatPreferenceValue(s.key, s.value);
+    const label = t.t(`preferences.keys.${s.key}`);
+    const displayValue = formatPreferenceValue(s.key, s.value, t);
     return `${emoji} **${label}** → **${displayValue}**`;
   });
 
@@ -287,7 +272,7 @@ async function handleSetSubcommand(
   // Add affected commands field
   if (affectedCommandsSet.size > 0) {
     fields.push({
-      name: '📋 Affects',
+      name: `📋 ${t.t('preferences.set.affects')}`,
       value: Array.from(affectedCommandsSet).join(', '),
       inline: false,
     });
@@ -297,19 +282,19 @@ async function handleSetSubcommand(
   if (failures.length > 0) {
     const failureLines = failures.map((f) => {
       const emoji = PREFERENCE_EMOJIS[f.key];
-      const label = PREFERENCE_LABELS[f.key];
-      return `${emoji} ${label}: ${f.reason || 'Invalid value'}`;
+      const label = t.t(`preferences.keys.${f.key}`);
+      return `${emoji} ${label}: ${f.reason || t.t('preferences.errors.invalidValue', { key: label, options: '' })}`;
     });
     fields.push({
-      name: '⚠️ Failed to Update',
+      name: `⚠️ ${t.t('preferences.set.failedToUpdate')}`,
       value: failureLines.join('\n'),
       inline: false,
     });
   }
 
   const title = successes.length === 1
-    ? '✅ Preference Updated'
-    : `✅ ${successes.length} Preferences Updated`;
+    ? `✅ ${t.t('preferences.set.success')}`
+    : `✅ ${t.t('preferences.set.successCount', { count: successes.length })}`;
 
   return messageResponse({
     embeds: [
@@ -319,7 +304,7 @@ async function handleSetSubcommand(
         color: failures.length > 0 ? 0xfee75c : 0x57f287, // Yellow if partial, green if all succeeded
         fields,
         footer: {
-          text: 'Command parameters will override these settings',
+          text: t.t('preferences.set.overrideNote'),
         },
       },
     ],
@@ -351,7 +336,7 @@ async function handleResetSubcommand(
       embeds: [
         errorEmbed(
           t.t('common.error'),
-          `Invalid preference key: \`${key}\`\n\nValid keys: ${PREFERENCE_ORDER.map((k) => `\`${k}\``).join(', ')}`
+          t.t('preferences.errors.invalidKey', { key })
         ),
       ],
       flags: 64,
@@ -363,7 +348,7 @@ async function handleResetSubcommand(
 
   if (!success) {
     return messageResponse({
-      embeds: [errorEmbed(t.t('common.error'), 'Failed to reset preference(s). Please try again.')],
+      embeds: [errorEmbed(t.t('common.error'), t.t('preferences.reset.failed'))],
       flags: 64,
     });
   }
@@ -371,17 +356,17 @@ async function handleResetSubcommand(
   // Success response
   if (key) {
     const emoji = PREFERENCE_EMOJIS[key];
-    const label = PREFERENCE_LABELS[key];
+    const label = t.t(`preferences.keys.${key}`);
     const defaultValue = getDefaultValue(key);
     const defaultDisplay = defaultValue !== undefined
-      ? formatPreferenceValue(key, defaultValue)
-      : 'Not set';
+      ? formatPreferenceValue(key, defaultValue, t)
+      : t.t('preferences.show.notSet');
 
     return messageResponse({
       embeds: [
         {
-          title: '🔄 Preference Reset',
-          description: `**${emoji} ${label}** reset to default: **${defaultDisplay}**`,
+          title: `🔄 ${t.t('preferences.reset.success')}`,
+          description: t.t('preferences.reset.single', { key: `${emoji} ${label}` }),
           color: 0xfee75c, // Yellow
         },
       ],
@@ -390,11 +375,11 @@ async function handleResetSubcommand(
     return messageResponse({
       embeds: [
         {
-          title: '🔄 All Preferences Reset',
-          description: 'All your preferences have been reset to system defaults.',
+          title: `🔄 ${t.t('preferences.reset.allTitle')}`,
+          description: t.t('preferences.reset.allDescription'),
           color: 0xfee75c, // Yellow
           footer: {
-            text: 'Use /preferences show to see current values',
+            text: t.t('preferences.reset.showHint'),
           },
         },
       ],
@@ -408,34 +393,40 @@ async function handleResetSubcommand(
 
 /**
  * Format a preference value for display
+ *
+ * REFACTOR-004: Now uses i18n keys for display values
  */
-function formatPreferenceValue(key: PreferenceKey, value: unknown): string {
+function formatPreferenceValue(key: PreferenceKey, value: unknown, t: Translator): string {
   switch (key) {
     case 'language':
       return getLanguageDisplay(value as string);
 
-    case 'blending':
+    case 'blending': {
       const blendMode = BLENDING_MODES.find((m) => m.value === value);
       return blendMode ? `${blendMode.name}` : String(value);
+    }
 
-    case 'matching':
+    case 'matching': {
       const matchMethod = MATCHING_METHODS.find((m) => m.value === value);
       return matchMethod ? `${matchMethod.name}` : String(value);
+    }
 
     case 'count':
-      return `${value} results`;
+      return t.t('preferences.values.results', { count: value });
 
     case 'clan':
       return String(value);
 
     case 'gender':
-      return value === 'male' ? 'Male ♂️' : 'Female ♀️';
+      return value === 'male' ? t.t('preferences.values.male') : t.t('preferences.values.female');
 
     case 'world':
       return String(value);
 
     case 'market':
-      return value === true || value === 'on' || value === 'true' ? 'Yes' : 'No';
+      return value === true || value === 'on' || value === 'true'
+        ? t.t('preferences.values.yes')
+        : t.t('preferences.values.no');
 
     default:
       return String(value);
@@ -444,6 +435,9 @@ function formatPreferenceValue(key: PreferenceKey, value: unknown): string {
 
 /**
  * Get display name for a language code
+ *
+ * Language names are intentionally not localized — they should always
+ * display in their native form so users can identify their language.
  */
 function getLanguageDisplay(code: string): string {
   const languages: Record<string, string> = {
@@ -458,36 +452,46 @@ function getLanguageDisplay(code: string): string {
 }
 
 /**
- * Get a human-readable error message for validation failures
+ * Get a localized validation error message
+ *
+ * REFACTOR-004: Now uses i18n keys. For errors with dynamic option lists
+ * (blending modes, clans), the options are formatted in code and passed
+ * via the {options} placeholder.
  */
-function getValidationErrorMessage(key: PreferenceKey, reason?: string): string {
+function getValidationErrorMessage(t: Translator, key: PreferenceKey, reason?: string): string {
   switch (reason) {
     case 'invalidLanguage':
-      return 'Invalid language. Valid options: `en`, `ja`, `de`, `fr`, `ko`, `zh`';
+      return t.t('preferences.validation.invalidLanguage');
 
-    case 'invalidBlendingMode':
-      return `Invalid blending mode. Valid options:\n${BLENDING_MODES.map((m) => `• \`${m.value}\` - ${m.description}`).join('\n')}`;
+    case 'invalidBlendingMode': {
+      const options = BLENDING_MODES.map((m) => `• \`${m.value}\` - ${m.description}`).join('\n');
+      return t.t('preferences.validation.invalidBlendingMode', { options });
+    }
 
-    case 'invalidMatchingMethod':
-      return `Invalid matching method. Valid options:\n${MATCHING_METHODS.map((m) => `• \`${m.value}\` - ${m.description}`).join('\n')}`;
+    case 'invalidMatchingMethod': {
+      const options = MATCHING_METHODS.map((m) => `• \`${m.value}\` - ${m.description}`).join('\n');
+      return t.t('preferences.validation.invalidMatchingMethod', { options });
+    }
 
     case 'invalidCount':
-      return 'Invalid count. Must be a number between 1 and 10.';
+      return t.t('preferences.validation.invalidCount');
 
-    case 'invalidClan':
-      return `Invalid clan. Valid clans:\n${Object.entries(CLANS_BY_RACE).map(([race, clans]) => `• **${race}**: ${clans.join(', ')}`).join('\n')}`;
+    case 'invalidClan': {
+      const options = Object.entries(CLANS_BY_RACE).map(([race, clans]) => `• **${race}**: ${clans.join(', ')}`).join('\n');
+      return t.t('preferences.validation.invalidClan', { options });
+    }
 
     case 'invalidGender':
-      return 'Invalid gender. Valid options: `male`, `female`';
+      return t.t('preferences.validation.invalidGender');
 
     case 'invalidWorld':
-      return 'Invalid world. Please enter a valid FFXIV world or datacenter name.';
+      return t.t('preferences.validation.invalidWorld');
 
     case 'invalidMarket':
-      return 'Invalid value. Use `on`/`off` or `true`/`false`.';
+      return t.t('preferences.validation.invalidMarket');
 
     case 'error':
     default:
-      return 'An error occurred while saving the preference. Please try again.';
+      return t.t('preferences.validation.error');
   }
 }

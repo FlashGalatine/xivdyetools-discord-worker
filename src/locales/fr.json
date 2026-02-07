@@ -537,19 +537,30 @@
     "title": "Vos préférences",
     "show": {
       "title": "Préférences actuelles",
-      "description": "Vos paramètres personnalisés pour XIV Dye Tools",
+      "description": "Ces paramètres affectent le fonctionnement des commandes.\nLes paramètres que vous fournissez remplacent toujours ces valeurs par défaut.",
       "default": "Par défaut",
-      "notSet": "Non défini"
+      "notSet": "Non défini",
+      "hint": "Utilisez /preferences set pour personnaliser"
     },
     "set": {
       "success": "Préférence mise à jour",
       "updated": "**{key}** a été défini sur **{value}**.",
-      "affectedCommands": "Cela affecte : {commands}"
+      "affectedCommands": "Cela affecte : {commands}",
+      "successCount": "{count} préférences mises à jour",
+      "affects": "Affecte",
+      "failedToUpdate": "Échec de la mise à jour",
+      "noOptions": "Veuillez fournir au moins une préférence à définir.\n\nExemple : `/preferences set language:fr blending:oklab`",
+      "noValidOptions": "Aucune préférence valide fournie.",
+      "overrideNote": "Les paramètres de commande remplacent ces réglages"
     },
     "reset": {
       "success": "Préférence réinitialisée",
       "single": "**{key}** a été réinitialisé à sa valeur par défaut.",
-      "all": "Toutes les préférences ont été réinitialisées aux valeurs par défaut."
+      "all": "Toutes les préférences ont été réinitialisées aux valeurs par défaut.",
+      "allTitle": "Toutes les préférences réinitialisées",
+      "allDescription": "Toutes vos préférences ont été réinitialisées aux valeurs par défaut.",
+      "failed": "Impossible de réinitialiser la/les préférence(s). Veuillez réessayer.",
+      "showHint": "/preferences show pour voir les valeurs actuelles"
     },
     "keys": {
       "language": "Langue",
@@ -571,9 +582,28 @@
       "world": "Monde/centre de données par défaut pour les prix",
       "market": "Afficher les prix du marché par défaut"
     },
+    "values": {
+      "results": "{count} résultats",
+      "male": "Masculin ♂️",
+      "female": "Féminin ♀️",
+      "yes": "Oui",
+      "no": "Non"
+    },
+    "validation": {
+      "invalidLanguage": "Langue invalide. Options valides : `en`, `ja`, `de`, `fr`, `ko`, `zh`",
+      "invalidBlendingMode": "Mode de mélange invalide. Options valides :\n{options}",
+      "invalidMatchingMethod": "Méthode de correspondance invalide. Options valides :\n{options}",
+      "invalidCount": "Nombre invalide. Doit être un nombre entre 1 et 10.",
+      "invalidClan": "Clan invalide. Clans valides :\n{options}",
+      "invalidGender": "Genre invalide. Options valides : `male`, `female`",
+      "invalidWorld": "Monde invalide. Veuillez entrer un nom de monde ou de centre de données FFXIV valide.",
+      "invalidMarket": "Valeur invalide. Utilisez `on`/`off` ou `true`/`false`.",
+      "error": "Une erreur est survenue lors de l'enregistrement de la préférence. Veuillez réessayer."
+    },
     "errors": {
       "invalidKey": "Clé de préférence inconnue : {key}",
-      "invalidValue": "Valeur invalide pour {key}. Options valides : {options}"
+      "invalidValue": "Valeur invalide pour {key}. Options valides : {options}",
+      "noSubcommand": "Aucune sous-commande fournie"
     }
   },
   "stats": {

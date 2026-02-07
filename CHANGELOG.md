@@ -18,12 +18,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **BUG-003**: Fixed `renameCollection()` missing input sanitization
   - Added `sanitizeCollectionName()` call to match `createCollection()` behavior
   - Prevents control characters, Zalgo text, and invisible Unicode in renamed collections
+- **BUG-004**: Added timeouts to `sendFollowUp()` and `editOriginalResponse()` Discord API calls
+  - 5-second timeout (`AbortSignal.timeout`) for JSON webhook requests
+  - 10-second timeout for multipart/file upload requests (larger payloads need more time)
+  - Deadline-aware wrappers (`sendFollowUpWithDeadline`, `editOriginalResponseWithDeadline`) skip calls when Discord's 3-second interaction deadline is exceeded
+
+### Changed
+
+- **REFACTOR-001**: Consolidated duplicate `resolveDyeInput()` from `favorites.ts` and `collection.ts` into `utils/color.ts`
+  - Fixes subtle Facewear fallback bug: previously returned a Facewear dye when all search results were Facewear, now correctly returns `null`
+  - Both deprecated handlers import from the single shared implementation
+- **REFACTOR-004**: Localized all preferences command strings across 6 languages
+  - Preference key labels, display values, validation messages, and subcommand responses use `t.t('preferences.*')` i18n keys
+  - ~30 locale keys added to en, ja, de, fr, ko, zh locale files
 
 ### Performance
 
 - **OPT-001**: Added 1-hour in-memory cache for world/datacenter autocomplete data
   - `getWorldAutocomplete()` and `validateWorld()` now use cached results
   - Eliminates redundant HTTP requests on every Discord autocomplete keystroke
+- **OPT-002**: Pre-filter dyes by color distance before fetching market prices in `/budget find`
+  - Calculates color distance (CPU-only) for all 136 tradeable dyes, then fetches prices only for candidates within `maxDistance`
+  - Reduces Universalis API calls by 70–85% on cold cache (typically 15–40 candidates instead of 136)
 - **OPT-004**: Removed unnecessary SVG→PNG generation in budget "no world set" path
   - The rendered image was never attached to the response (wasted ~50-100ms CPU per invocation)
 

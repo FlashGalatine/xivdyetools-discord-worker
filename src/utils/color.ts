@@ -205,6 +205,40 @@ export function resolveColorInput(
 }
 
 /**
+ * Resolves a dye input (name or hex color) to a Dye object.
+ *
+ * Unlike resolveColorInput (which returns a ResolvedColor with optional dye),
+ * this always returns the full Dye object or null. Used by favorites and
+ * collection handlers that need a concrete Dye.
+ *
+ * REFACTOR-001: Consolidated from duplicate implementations in favorites.ts
+ * and collection.ts. Also fixes the Facewear fallback bug where
+ * `nonFacewear[0] || dyes[0]` would return a Facewear dye if ALL search
+ * results were Facewear — now correctly returns null in that case.
+ *
+ * @param input - Dye name or hex color code
+ * @returns Matching Dye object, or null if not found
+ */
+export function resolveDyeInput(input: string): Dye | null {
+  // Try finding by name first
+  const dyes = dyeService.searchByName(input);
+  if (dyes.length > 0) {
+    // Filter out Facewear dyes (synthetic IDs, not tradeable)
+    const nonFacewear = dyes.filter((d) => d.category !== 'Facewear');
+    // Return first non-Facewear match, or null if all are Facewear
+    return nonFacewear[0] ?? null;
+  }
+
+  // Try as hex color — find closest dye
+  if (isValidHex(input, { allowShorthand: false })) {
+    const hex = normalizeHex(input);
+    return dyeService.findClosestDye(hex);
+  }
+
+  return null;
+}
+
+/**
  * Re-export DyeService for commands that need direct access
  * (avoids duplicate imports and ensures singleton usage)
  */

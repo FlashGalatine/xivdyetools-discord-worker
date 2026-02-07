@@ -14,6 +14,18 @@ import type { ExtendedLogger } from '@xivdyetools/logger';
 const DISCORD_API_BASE = 'https://discord.com/api/v10';
 
 /**
+ * Timeout for Discord webhook API requests without file uploads (ms).
+ * BUG-004: Prevents indefinite hangs when Discord's webhook endpoint is slow.
+ */
+const DISCORD_WEBHOOK_TIMEOUT = 5000;
+
+/**
+ * Timeout for Discord webhook API requests with file uploads (ms).
+ * Multipart form data with PNG attachments needs more time to transmit.
+ */
+const DISCORD_WEBHOOK_FILE_TIMEOUT = 10000;
+
+/**
  * Discord's deadline for initial interaction response is 3 seconds.
  * We use 2800ms as our deadline with a 200ms safety buffer.
  */
@@ -130,6 +142,7 @@ export async function sendFollowUp(
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(body),
+    signal: AbortSignal.timeout(DISCORD_WEBHOOK_TIMEOUT),
   });
 }
 
@@ -186,6 +199,7 @@ async function sendFollowUpWithFile(
   return fetch(url, {
     method: 'POST',
     body: formData,
+    signal: AbortSignal.timeout(DISCORD_WEBHOOK_FILE_TIMEOUT),
   });
 }
 
@@ -217,6 +231,7 @@ export async function editOriginalResponse(
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(body),
+    signal: AbortSignal.timeout(DISCORD_WEBHOOK_TIMEOUT),
   });
 }
 
@@ -271,6 +286,7 @@ async function editResponseWithFile(
   return fetch(url, {
     method: 'PATCH',
     body: formData,
+    signal: AbortSignal.timeout(DISCORD_WEBHOOK_FILE_TIMEOUT),
   });
 }
 
@@ -285,6 +301,7 @@ export async function deleteOriginalResponse(
 
   return fetch(url, {
     method: 'DELETE',
+    signal: AbortSignal.timeout(DISCORD_WEBHOOK_TIMEOUT),
   });
 }
 

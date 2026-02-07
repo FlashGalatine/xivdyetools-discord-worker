@@ -60,11 +60,11 @@ function calculateValueScore(colorDistance: number, price: number): number {
 /**
  * Find cheaper alternatives to an expensive dye
  *
- * Algorithm:
+ * Algorithm (OPT-002: pre-filter by color distance before fetching prices):
  * 1. Get target dye from database
- * 2. Fetch prices for all dyes (with caching)
- * 3. Filter by max price and max distance
- * 4. Calculate savings and value scores
+ * 2. Pre-filter candidates by color distance (CPU-only, no I/O)
+ * 3. Fetch prices only for nearby-color candidates + target (with caching)
+ * 4. Filter by price constraints, calculate savings and value scores
  * 5. Sort by chosen method
  * 6. Return top N results
  *
@@ -93,35 +93,50 @@ export async function findCheaperAlternatives(
     throw new Error(`Dye not found: ${targetDyeId}`);
   }
 
-  // 2. Get all dyes and their item IDs for price fetch
-  // Filter out Facewear dyes which have synthetic negative itemIDs (not tradeable on market board)
+  // 2. Get all tradeable dyes and pre-filter by color distance (CPU-only)
+  // OPT-002: This reduces the number of price fetches from ~136 to typically 15-40,
+  // eliminating 70-85% of Universalis API calls on cold cache.
   const allDyes = dyeService.getAllDyes().filter((dye) => dye.itemID > 0);
-  const itemIds = allDyes.map((dye) => dye.itemID);
 
-  // 3. Fetch prices with caching (uses Cache API, not KV)
+  const candidatesWithDistance: Array<{ dye: Dye; colorDistance: number }> = [];
+  for (const dye of allDyes) {
+    if (dye.itemID === targetDyeId) continue;
+    const colorDistance = ColorService.getColorDistance(targetDye.hex, dye.hex);
+    if (colorDistance <= maxDistance) {
+      candidatesWithDistance.push({ dye, colorDistance });
+    }
+  }
+
+  // Build item IDs to fetch: candidates + target dye (for target price)
+  const itemIdsToFetch = [targetDyeId, ...candidatesWithDistance.map((c) => c.dye.itemID)];
+
+  if (logger) {
+    logger.info('Budget: pre-filtered candidates by color distance', {
+      total: allDyes.length,
+      candidates: candidatesWithDistance.length,
+      fetching: itemIdsToFetch.length,
+    });
+  }
+
+  // 3. Fetch prices only for pre-filtered candidates (with caching)
   const { prices, fromCache, fromApi } = await fetchWithCache(
     world,
-    itemIds,
+    itemIdsToFetch,
     (ids) => fetchPricesBatched(env, world, ids, logger),
     logger
   );
 
   if (logger) {
-    logger.info('Price fetch complete', { fromCache, fromApi, total: itemIds.length });
+    logger.info('Price fetch complete', { fromCache, fromApi, total: itemIdsToFetch.length });
   }
 
   // Get target price
   const targetPrice = prices.get(targetDyeId) ?? null;
 
-  // 4. Calculate alternatives
+  // 4. Calculate alternatives (color distance already computed)
   const alternatives: BudgetSuggestion[] = [];
 
-  for (const dye of allDyes) {
-    // Skip the target dye itself
-    if (dye.itemID === targetDyeId) {
-      continue;
-    }
-
+  for (const { dye, colorDistance } of candidatesWithDistance) {
     // Get price for this dye
     const dyePrice = prices.get(dye.itemID);
 
@@ -137,14 +152,6 @@ export async function findCheaperAlternatives(
 
     // Check max price filter
     if (maxPrice !== undefined && dyePrice.currentMinPrice > maxPrice) {
-      continue;
-    }
-
-    // Calculate color distance
-    const colorDistance = ColorService.getColorDistance(targetDye.hex, dye.hex);
-
-    // Check max distance filter
-    if (colorDistance > maxDistance) {
       continue;
     }
 
