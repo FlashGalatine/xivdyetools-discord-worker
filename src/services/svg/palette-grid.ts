@@ -310,9 +310,9 @@ function generatePaletteRow(
     })
   );
 
-  // Quality badge (right-aligned on the bottom line)
+  // Quality badge (right-aligned, vertically centered in row)
   const badgeX = rowRightEdge - QUALITY_BADGE_WIDTH;
-  const badgeY = y + 75 - QUALITY_BADGE_HEIGHT + 4; // vertically center with hex text baseline
+  const badgeY = y + (ROW_HEIGHT - QUALITY_BADGE_HEIGHT) / 2;
   const qualityLabel = labels.quality[quality.key] ?? quality.shortLabel;
   elements.push(generateQualityBadge(qualityLabel, badgeX, badgeY, entry.distance));
 

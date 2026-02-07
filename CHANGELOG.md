@@ -94,6 +94,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `/extractor image` quality badges (EXCELLENT, GOOD, FAIR) now vertically centered in each palette row instead of aligned to bottom text baseline
 - `/swatch` grid command registration now advertises 1-based row/col ranges matching handler validation
 - `/budget` command failures resolved:
   - Use `fetchPricesBatched` for >100 dyes on cold cache

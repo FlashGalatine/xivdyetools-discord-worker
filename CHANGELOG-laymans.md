@@ -98,6 +98,12 @@ These will be removed in a future update, so please start using the new commands
 
 ---
 
+## Visual Fixes
+
+- The quality labels (EXCELLENT, GOOD, FAIR, etc.) in `/extractor image` results are now properly centered in each row
+
+---
+
 ## Behind the Scenes
 
 - **Faster & cheaper**: Moved temporary data from KV storage to the Cache API, saving hundreds of write operations per command
