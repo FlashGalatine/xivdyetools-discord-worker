@@ -18,17 +18,27 @@ import {
     type LocaleCode,
 } from './i18n.js';
 
-// Mock xivdyetools-core LocalizationService
+// Shared mock functions for LocalizationService instances (BUG-001: per-locale instances)
+// vi.hoisted ensures these are available when vi.mock factory runs (hoisted above imports)
+const { mockSetLocale, mockGetDyeName, mockGetCategory } = vi.hoisted(() => ({
+    mockSetLocale: vi.fn().mockResolvedValue(undefined),
+    mockGetDyeName: vi.fn((itemID: number) => {
+        const names: Record<number, string> = { 5729: 'Snow White', 5730: 'Soot Black' };
+        return names[itemID] ?? null;
+    }),
+    mockGetCategory: vi.fn((category: string) => `Localized_${category}`),
+}));
+
+// Mock xivdyetools-core LocalizationService as constructor (BUG-001: no longer a singleton)
+// Must use regular function (not arrow) so it's constructable with `new`
 vi.mock('@xivdyetools/core', () => ({
-    LocalizationService: {
-        clear: vi.fn(),
-        setLocale: vi.fn().mockResolvedValue(undefined),
-        getDyeName: vi.fn((itemID: number) => {
-            const names: Record<number, string> = { 5729: 'Snow White', 5730: 'Soot Black' };
-            return names[itemID] ?? null;
-        }),
-        getCategory: vi.fn((category: string) => `Localized_${category}`),
-    },
+    LocalizationService: vi.fn().mockImplementation(function () {
+        return {
+            setLocale: mockSetLocale,
+            getDyeName: mockGetDyeName,
+            getCategory: mockGetCategory,
+        };
+    }),
 }));
 
 import { LocalizationService } from '@xivdyetools/core';
@@ -56,6 +66,13 @@ describe('i18n.ts', () => {
     beforeEach(() => {
         mockKV = createMockKV();
         vi.clearAllMocks();
+        // Reset shared mocks (clears once-queue) then restore default implementations
+        mockSetLocale.mockReset().mockResolvedValue(undefined);
+        mockGetDyeName.mockReset().mockImplementation((itemID: number) => {
+            const names: Record<number, string> = { 5729: 'Snow White', 5730: 'Soot Black' };
+            return names[itemID] ?? null;
+        });
+        mockGetCategory.mockReset().mockImplementation((category: string) => `Localized_${category}`);
     });
 
     describe('SUPPORTED_LOCALES', () => {
@@ -263,22 +280,21 @@ describe('i18n.ts', () => {
     });
 
     describe('initializeLocale', () => {
-        it('should clear and set the locale', async () => {
+        it('should create instance and set locale', async () => {
             await initializeLocale('ja');
 
-            expect(LocalizationService.clear).toHaveBeenCalled();
-            expect(LocalizationService.setLocale).toHaveBeenCalledWith('ja');
+            expect(LocalizationService).toHaveBeenCalled();
+            expect(mockSetLocale).toHaveBeenCalledWith('ja');
         });
 
         it('should fall back to English on error', async () => {
-            vi.mocked(LocalizationService.setLocale)
+            mockSetLocale
                 .mockRejectedValueOnce(new Error('Failed'))
                 .mockResolvedValueOnce(undefined);
 
             await initializeLocale('invalid' as LocaleCode);
 
-            expect(LocalizationService.clear).toHaveBeenCalledTimes(2);
-            expect(LocalizationService.setLocale).toHaveBeenLastCalledWith('en');
+            expect(mockSetLocale).toHaveBeenLastCalledWith('en');
         });
     });
 
@@ -299,18 +315,21 @@ describe('i18n.ts', () => {
     });
 
     describe('getLocalizedDyeName', () => {
-        it('should return localized dye name', () => {
+        it('should return localized dye name', async () => {
+            await initializeLocale('en');
             const result = getLocalizedDyeName(5729, 'Fallback');
             expect(result).toBe('Snow White');
         });
 
-        it('should return fallback when localization fails', () => {
+        it('should return fallback when localization fails', async () => {
+            await initializeLocale('en');
             const result = getLocalizedDyeName(9999, 'Unknown Dye');
             expect(result).toBe('Unknown Dye');
         });
 
-        it('should return fallback on error', () => {
-            vi.mocked(LocalizationService.getDyeName).mockImplementationOnce(() => {
+        it('should return fallback on error', async () => {
+            await initializeLocale('en');
+            mockGetDyeName.mockImplementationOnce(() => {
                 throw new Error('Error');
             });
 
@@ -320,13 +339,15 @@ describe('i18n.ts', () => {
     });
 
     describe('getLocalizedCategory', () => {
-        it('should return localized category name', () => {
+        it('should return localized category name', async () => {
+            await initializeLocale('en');
             const result = getLocalizedCategory('Reds');
             expect(result).toBe('Localized_Reds');
         });
 
-        it('should return original category on error', () => {
-            vi.mocked(LocalizationService.getCategory).mockImplementationOnce(() => {
+        it('should return original category on error', async () => {
+            await initializeLocale('en');
+            mockGetCategory.mockImplementationOnce(() => {
                 throw new Error('Error');
             });
 
@@ -376,14 +397,11 @@ describe('i18n.ts', () => {
         });
 
         it('should log error when initializeLocale fails with logger', async () => {
-            vi.mocked(LocalizationService.setLocale)
-                .mockRejectedValueOnce(new Error('Failed'))
-                .mockResolvedValueOnce(undefined);
+            mockSetLocale.mockRejectedValueOnce(new Error('Failed'));
 
             await initializeLocale('invalid' as LocaleCode, mockLogger);
 
-            expect(LocalizationService.clear).toHaveBeenCalled();
-            expect(LocalizationService.setLocale).toHaveBeenCalledWith('en');
+            expect((mockLogger as { error: typeof vi.fn }).error).toHaveBeenCalled();
         });
 
         // Tests for non-Error exceptions (covers the `error instanceof Error ? error : undefined` branches)
@@ -433,9 +451,7 @@ describe('i18n.ts', () => {
         });
 
         it('should pass undefined to logger for non-Error in initializeLocale', async () => {
-            vi.mocked(LocalizationService.setLocale)
-                .mockRejectedValueOnce('string error')
-                .mockResolvedValueOnce(undefined);
+            mockSetLocale.mockRejectedValueOnce('string error');
 
             await initializeLocale('invalid' as LocaleCode, mockLogger);
 

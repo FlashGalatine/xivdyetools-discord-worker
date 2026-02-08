@@ -294,31 +294,36 @@ describe('analytics.ts', () => {
   });
 
   describe('trackUniqueUser', () => {
+    // BUG-007: trackUniqueUser now uses per-user atomic keys (usertrack:YYYY-MM-DD:userId)
+    // instead of a single comma-separated string. This eliminates race conditions.
+
     it('should add user to daily set', async () => {
       await trackUniqueUser(mockKV, 'user-123');
 
-      const stored = mockKV._store.get('stats:users:2024-06-15');
-      expect(stored).toBe('user-123');
+      // BUG-007: Each user gets their own key
+      const stored = mockKV._store.get('usertrack:2024-06-15:user-123');
+      expect(stored).toBe('1');
     });
 
-    it('should append user to existing set', async () => {
-      mockKV._store.set('stats:users:2024-06-15', 'user-111,user-222');
-
+    it('should track multiple users with individual keys', async () => {
+      await trackUniqueUser(mockKV, 'user-111');
+      await trackUniqueUser(mockKV, 'user-222');
       await trackUniqueUser(mockKV, 'user-333');
 
-      const stored = mockKV._store.get('stats:users:2024-06-15');
-      expect(stored).toContain('user-111');
-      expect(stored).toContain('user-222');
-      expect(stored).toContain('user-333');
+      // BUG-007: Each user has their own key
+      expect(mockKV._store.get('usertrack:2024-06-15:user-111')).toBe('1');
+      expect(mockKV._store.get('usertrack:2024-06-15:user-222')).toBe('1');
+      expect(mockKV._store.get('usertrack:2024-06-15:user-333')).toBe('1');
     });
 
     it('should not duplicate existing user', async () => {
-      mockKV._store.set('stats:users:2024-06-15', 'user-123');
+      // Pre-populate the user key
+      mockKV._store.set('usertrack:2024-06-15:user-123', '1');
 
       await trackUniqueUser(mockKV, 'user-123');
 
-      const stored = mockKV._store.get('stats:users:2024-06-15');
-      expect(stored).toBe('user-123'); // Not duplicated
+      // BUG-007: Read-first check avoids unnecessary writes
+      expect(mockKV.put).not.toHaveBeenCalled();
     });
 
     it('should use correct date for key', async () => {
@@ -327,9 +332,9 @@ describe('analytics.ts', () => {
       await trackUniqueUser(mockKV, 'user-123');
 
       expect(mockKV.put).toHaveBeenCalledWith(
-        'stats:users:2024-12-25',
-        expect.any(String),
-        expect.any(Object)
+        'usertrack:2024-12-25:user-123',
+        '1',
+        expect.objectContaining({ expirationTtl: expect.any(Number) })
       );
     });
   });
@@ -352,7 +357,8 @@ describe('analytics.ts', () => {
       expect(mockKV._store.get('stats:total')).toBe('1');
       expect(mockKV._store.get('stats:cmd:harmony')).toBe('1');
       expect(mockKV._store.get('stats:success')).toBe('1');
-      expect(mockKV._store.get('stats:users:2024-06-15')).toBe('user-123');
+      // BUG-007: User tracking uses individual keys
+      expect(mockKV._store.get('usertrack:2024-06-15:user-123')).toBe('1');
     });
 
     it('should increment failure counter on failed command', async () => {
@@ -421,8 +427,10 @@ describe('analytics.ts', () => {
       mockKV._setWithMetadata('stats:cmd:harmony', '40', 40);
       mockKV._setWithMetadata('stats:cmd:dye', '30', 30);
       mockKV._setWithMetadata('stats:cmd:match', '20', 20);
-      // Users key stores comma-separated list, not count
-      mockKV._store.set('stats:users:2024-06-15', 'user-1,user-2,user-3');
+      // BUG-007: Unique users are tracked with individual keys under usertrack: prefix
+      mockKV._store.set('usertrack:2024-06-15:user-1', '1');
+      mockKV._store.set('usertrack:2024-06-15:user-2', '1');
+      mockKV._store.set('usertrack:2024-06-15:user-3', '1');
 
       const stats = await getStats(mockKV);
 
@@ -460,20 +468,19 @@ describe('analytics.ts', () => {
       expect(stats.successRate).toBe(75);
     });
 
-    it('should handle empty unique users string', async () => {
-      // Users key is fetched via get() not metadata, so use _store directly
-      mockKV._store.set('stats:users:2024-06-15', '');
-
+    it('should handle no unique users today', async () => {
+      // BUG-007: No usertrack: keys means 0 unique users
+      // (no setup needed — empty KV has no matching keys)
       const stats = await getStats(mockKV);
 
-      // Empty string returns 0 unique users today (correctly handles edge case)
       expect(stats.uniqueUsersToday).toBe(0);
     });
 
     it('should use current date for unique users', async () => {
       vi.setSystemTime(new Date('2024-12-31T23:59:59Z'));
-      // Users key is fetched via get() not metadata
-      mockKV._store.set('stats:users:2024-12-31', 'user-a,user-b');
+      // BUG-007: Individual user keys under usertrack: prefix
+      mockKV._store.set('usertrack:2024-12-31:user-a', '1');
+      mockKV._store.set('usertrack:2024-12-31:user-b', '1');
 
       const stats = await getStats(mockKV);
 

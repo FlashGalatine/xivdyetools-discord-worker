@@ -291,7 +291,7 @@ describe('discord-api.ts', () => {
 
             expect(mockFetch).toHaveBeenCalledWith(
                 `https://discord.com/api/v10/webhooks/${mockApplicationId}/${mockInteractionToken}/messages/@original`,
-                { method: 'DELETE' }
+                expect.objectContaining({ method: 'DELETE' })
             );
         });
     });

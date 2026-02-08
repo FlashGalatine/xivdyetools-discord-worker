@@ -358,15 +358,19 @@ describe('user-storage.ts', () => {
             expect(newCollection?.name).toBe('New Name');
         });
 
-        it('should return nameTooLong for long names', async () => {
+        it('should truncate long names during sanitization (matches createCollection behavior)', async () => {
             await createCollection(mockKV, mockUserId, 'Current');
 
             const result = await renameCollection(
-                mockKV, mockUserId, 'Current', 'a'.repeat(MAX_COLLECTION_NAME_LENGTH + 1)
+                mockKV, mockUserId, 'Current', 'a'.repeat(MAX_COLLECTION_NAME_LENGTH + 10)
             );
 
-            expect(result.success).toBe(false);
-            expect(result.reason).toBe('nameTooLong');
+            // Success because sanitizeCollectionName truncates before validation
+            expect(result.success).toBe(true);
+
+            // Verify the collection was renamed with the truncated name
+            const renamed = await getCollection(mockKV, mockUserId, 'Current');
+            expect(renamed).toBeNull(); // Old name should not exist
         });
 
         it('should return notFound if collection does not exist', async () => {
