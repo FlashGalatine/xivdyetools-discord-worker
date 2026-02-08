@@ -15,7 +15,8 @@
  * @module handlers/commands/swatch
  */
 
-import { CharacterColorService, DyeService, dyeDatabase } from '@xivdyetools/core';
+import { CharacterColorService } from '@xivdyetools/core';
+import { dyeService } from '../../utils/color.js';
 import type { CharacterColor, SubRace, Gender as CoreGender } from '@xivdyetools/types';
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import {
@@ -140,9 +141,6 @@ const CLAN_TO_SUBRACE: Record<string, SubRace> = {
 
 /** Character color service instance */
 const characterColorService = new CharacterColorService();
-
-/** Dye service instance */
-const dyeService = new DyeService(dyeDatabase);
 
 // ============================================================================
 // Main Handler

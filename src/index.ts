@@ -43,7 +43,7 @@ import { checkRateLimit, formatRateLimitMessage } from './services/rate-limiter.
 import { trackCommandWithKV } from './services/analytics.js';
 import { getCollections } from './services/user-storage.js';
 import { handleButtonInteraction } from './handlers/buttons/index.js';
-import { DyeService, dyeDatabase } from '@xivdyetools/core';
+import { dyeService } from './utils/color.js';
 import * as presetApi from './services/preset-api.js';
 import { sendMessage } from './utils/discord-api.js';
 import { STATUS_DISPLAY, type PresetNotificationPayload } from './types/preset.js';
@@ -55,9 +55,6 @@ import { loggerMiddleware, getLogger } from './middleware/logger.js';
 import { sanitizePresetName, sanitizePresetDescription } from './utils/sanitize.js';
 import { VALID_CLANS, CLANS_BY_RACE } from './types/preferences.js';
 import { getWorldAutocomplete } from './services/budget/index.js';
-
-// Initialize DyeService for autocomplete
-const dyeService = new DyeService(dyeDatabase);
 
 function formatDyesForEmbed(dyeIds: number[]): string {
   return dyeIds
@@ -284,12 +281,19 @@ app.post('/webhooks/github', async (c) => {
     return c.json({ error: 'Not configured' }, 500);
   }
 
+  // BUG-005: Check Content-Length before reading body to avoid buffering oversized payloads
+  const contentLength = parseInt(c.req.header('content-length') || '0', 10);
+  if (contentLength > 10240) {
+    logger.warn('GitHub webhook payload too large', { contentLength });
+    return c.json({ error: 'Payload too large' }, 413);
+  }
+
   // Read raw body for signature verification
   const rawBody = await c.req.text();
 
-  // DISCORD-HIGH-001: Validate request body size
+  // Defense-in-depth: verify actual body size (Content-Length can be missing or spoofed)
   if (rawBody.length > 10240) {
-    logger.warn('GitHub webhook payload too large', { size: rawBody.length });
+    logger.warn('GitHub webhook body exceeds limit despite Content-Length', { size: rawBody.length });
     return c.json({ error: 'Payload too large' }, 413);
   }
 

@@ -8,7 +8,7 @@
  * @module handlers/commands/favorites
  */
 
-import { DyeService, dyeDatabase, type Dye } from '@xivdyetools/core';
+import type { Dye } from '@xivdyetools/core';
 import { messageResponse, errorEmbed } from '../../utils/response.js';
 import {
   getFavorites,
@@ -18,7 +18,7 @@ import {
   MAX_FAVORITES,
 } from '../../services/user-storage.js';
 import { getDyeEmoji } from '../../services/emoji.js';
-import { resolveDyeInput } from '../../utils/color.js';
+import { resolveDyeInput, dyeService } from '../../utils/color.js';
 import { createUserTranslator, type Translator } from '../../services/bot-i18n.js';
 import { initializeLocale, getLocalizedDyeName, getLocalizedCategory } from '../../services/i18n.js';
 import type { Env, DiscordInteraction } from '../../types/env.js';
@@ -32,9 +32,6 @@ const DEPRECATION_NOTICE = '⚠️ **This command is deprecated.** Use `/preset`
 
 /** Color for deprecation warning embeds */
 const DEPRECATION_COLOR = 0xfee75c; // Yellow
-
-// Initialize DyeService (still needed for getDyeById in list handler)
-const dyeService = new DyeService(dyeDatabase);
 
 // ============================================================================
 // Main Handler

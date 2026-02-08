@@ -12,11 +12,10 @@
  */
 
 import {
-  DyeService,
-  dyeDatabase,
   PaletteService,
   type PaletteMatch,
 } from '@xivdyetools/core';
+import { dyeService } from '../../utils/color.js';
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import { deferredResponse, errorEmbed } from '../../utils/response.js';
 import { editOriginalResponse } from '../../utils/discord-api.js';
@@ -33,7 +32,6 @@ import type { Env, DiscordInteraction } from '../../types/env.js';
 // Service Initialization
 // ============================================================================
 
-const dyeService = new DyeService(dyeDatabase);
 const paletteService = new PaletteService();
 
 // ============================================================================

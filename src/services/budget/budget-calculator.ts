@@ -7,7 +7,8 @@
  * @module services/budget/budget-calculator
  */
 
-import { DyeService, ColorService, dyeDatabase } from '@xivdyetools/core';
+import { ColorService } from '@xivdyetools/core';
+import { dyeService } from '../../utils/color.js';
 import type { Dye } from '@xivdyetools/types';
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import type { Env } from '../../types/env.js';
@@ -36,9 +37,6 @@ const DEFAULT_SORT: BudgetSearchOptions['sortBy'] = 'value_score';
 // ============================================================================
 // Initialize Dye Service
 // ============================================================================
-
-// Singleton dye service - initialized once with the database
-const dyeService = new DyeService(dyeDatabase);
 
 // ============================================================================
 // Core Algorithm

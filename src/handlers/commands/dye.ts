@@ -14,7 +14,8 @@
  * - /dye random now generates a visual infographic grid
  */
 
-import { DyeService, dyeDatabase, type Dye } from '@xivdyetools/core';
+import type { Dye } from '@xivdyetools/core';
+import { dyeService } from '../../utils/color.js';
 import { messageResponse, deferredResponse, errorEmbed, hexToDiscordColor } from '../../utils/response.js';
 import { editOriginalResponse } from '../../utils/discord-api.js';
 import { getDyeEmoji } from '../../services/emoji.js';
@@ -25,9 +26,6 @@ import { generateDyeInfoCard } from '../../services/svg/dye-info-card.js';
 import { generateRandomDyesGrid, type RandomDyeInfo } from '../../services/svg/random-dyes-grid.js';
 import { renderSvgToPng } from '../../services/svg/renderer.js';
 import type { Env, DiscordInteraction } from '../../types/env.js';
-
-// Initialize DyeService with the database
-const dyeService = new DyeService(dyeDatabase);
 
 /**
  * Filters out Facewear dyes from results

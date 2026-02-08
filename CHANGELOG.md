@@ -22,12 +22,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - 5-second timeout (`AbortSignal.timeout`) for JSON webhook requests
   - 10-second timeout for multipart/file upload requests (larger payloads need more time)
   - Deadline-aware wrappers (`sendFollowUpWithDeadline`, `editOriginalResponseWithDeadline`) skip calls when Discord's 3-second interaction deadline is exceeded
+- **BUG-005**: Fixed GitHub webhook reading entire body before checking payload size
+  - Added `Content-Length` header pre-check before `c.req.text()` to reject oversized payloads without buffering
+  - Retains post-read body length check as defense-in-depth (in case header is missing or spoofed)
+- **BUG-007**: Fixed unique user tracking race condition and unbounded KV value growth
+  - Replaced single comma-separated string (`stats:users:{date}`) with individual KV keys (`usertrack:{date}:{userId}`)
+  - Eliminates read-modify-write race condition (concurrent requests could lose user IDs)
+  - Each key is a fixed 1-byte value with TTL auto-expiry instead of an ever-growing string
+  - Read-first optimization conserves KV write quota (100k reads/day free vs 1k writes/day)
 
 ### Changed
 
 - **REFACTOR-001**: Consolidated duplicate `resolveDyeInput()` from `favorites.ts` and `collection.ts` into `utils/color.ts`
   - Fixes subtle Facewear fallback bug: previously returned a Facewear dye when all search results were Facewear, now correctly returns `null`
   - Both deprecated handlers import from the single shared implementation
+- **REFACTOR-002**: Consolidated 9 duplicate `DyeService` instantiations into single shared singleton
+  - `utils/color.ts` exports the canonical `dyeService` instance; all other files now import it
+  - Eliminates 8 redundant `new DyeService(dyeDatabase)` calls across `index.ts`, `dye.ts`, `favorites.ts`, `collection.ts`, `match-image.ts`, `preset.ts`, `swatch.ts`, and `budget-calculator.ts`
 - **REFACTOR-004**: Localized all preferences command strings across 6 languages
   - Preference key labels, display values, validation messages, and subcommand responses use `t.t('preferences.*')` i18n keys
   - ~30 locale keys added to en, ja, de, fr, ko, zh locale files

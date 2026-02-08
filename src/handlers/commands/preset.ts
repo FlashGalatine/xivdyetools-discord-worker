@@ -16,7 +16,8 @@
  * by xivdyetools-moderation-worker.
  */
 
-import { DyeService, dyeDatabase, type Dye } from '@xivdyetools/core';
+import type { Dye } from '@xivdyetools/core';
+import { dyeService } from '../../utils/color.js';
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import {
   deferredResponse,
@@ -42,9 +43,6 @@ import {
 } from '../../types/preset.js';
 import * as presetApi from '../../services/preset-api.js';
 import type { DiscordInteraction } from '../../types/env.js';
-
-// Initialize DyeService
-const dyeService = new DyeService(dyeDatabase);
 
 // ============================================================================
 // Main Handler
