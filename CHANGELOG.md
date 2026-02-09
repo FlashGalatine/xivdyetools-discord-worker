@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [4.0.1] - 2026-02-09
 
 ### Fixed
 
@@ -53,6 +53,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Reduces Universalis API calls by 70–85% on cold cache (typically 15–40 candidates instead of 136)
 - **OPT-004**: Removed unnecessary SVG→PNG generation in budget "no world set" path
   - The rendered image was never attached to the response (wasted ~50-100ms CPU per invocation)
+
+### Dependencies
+
+- Bumped `@cloudflare/workers-types` to 4.20260207.0
+- Bumped `hono` to 4.11.9
+- Bumped `@types/node` to 25.2.2
 
 ---
 

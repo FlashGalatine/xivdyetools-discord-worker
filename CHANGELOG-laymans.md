@@ -1,123 +1,51 @@
-# What's New in v4.0.0
+# What's New in v4.0.1
 
-*Released: February 5, 2026*
-
----
-
-## Overview
-
-This is a **major update** that brings new commands, better visuals, full localization, and smarter performance. Whether you're a glamour enthusiast matching dyes to your character or a market board shopper budgeting your dye purchases, v4 has something for you.
+*Released: February 9, 2026*
 
 ---
 
-## New Commands
+## Bug Fixes
 
-### /extractor - One-Stop Color Matching
+### Localization Race Condition
+Fixed an issue where the bot's language could get confused under heavy load. If multiple users with different language settings used the bot at the same time, one user might briefly see responses in another user's language. Each language now has its own isolated instance, so this can no longer happen.
 
-Replaces the old `/match` and `/match_image` commands with a single, unified command:
-- **`/extractor color`** - Paste a hex code or dye name and find the closest FFXIV dyes
-- **`/extractor image`** - Upload a screenshot and let the bot extract and match colors automatically
+### Budget Command Fixes
+- The "no world set" error in `/budget` no longer shows a broken image — it now displays a clean text message instead
+- Fixed a missing input check when renaming collections, closing a gap that could allow unusual characters
 
-### /gradient - Color Gradients (Renamed from /mixer)
+### Discord API Reliability
+- Bot responses now have proper timeouts (5s for text, 10s for images) so they won't hang indefinitely if Discord is slow
+- If the bot takes too long to process a command, it now gracefully skips the response instead of sending an error after Discord's deadline has passed
 
-The old `/mixer` is now `/gradient` with powerful new options:
-- Choose from **5 color spaces** (HSV, OKLCH, LAB, LCH, RGB) to control how colors blend
-- Pick your preferred **matching algorithm** (OKLAB, CIEDE2000, and more)
+### Webhook Security
+- The GitHub webhook endpoint now rejects oversized payloads before reading them, rather than buffering the entire body first
 
-### /mixer - Dye Blending
-
-A brand-new command for blending two dyes together using real color science:
-- **6 blending algorithms**: RGB, LAB, OKLAB, RYB, HSL, and Spectral (Kubelka-Munk)
-- Finds the closest FFXIV dye to the blended result
-
-### /swatch - Character Color Matching
-
-Match dyes to your character's natural colors:
-- Supports skin, hair, eyes, highlights, lips, tattoos, and facepaint
-- Covers all **16 FFXIV clans** with gender variants
-- Great for finding dyes that complement your character
-
-### /preferences - Unified Settings
-
-Manage all your bot preferences in one place:
-- Set language, blending mode, matching algorithm, result count, and more
-- Change multiple settings at once with a single command
-- Replaces the old `/language` command
-
-### /stats - Expanded Bot Statistics
-
-Now with 5 focused views:
-- **summary** (everyone) - Quick bot overview
-- **overview**, **commands**, **preferences**, **health** (admins) - Detailed analytics
+### User Tracking
+- Fixed a race condition where rapid concurrent requests could lose unique user counts in analytics
 
 ---
 
-## Improved Commands
+## Performance Improvements
 
-### /harmony
-- New **color space** parameter lets you choose how hue rotations are calculated (HSV, OKLCH, LCH, HSL) for perceptually different results
-
-### /dye info
-- Beautiful new **visual card** showing a large color swatch with the dye name, category, and all color values (HEX, RGB, HSV, LAB)
-
-### /dye random
-- Eye-catching **infographic grid** displaying 5 random dyes in a polished card layout
-
-### /comparison
-- Now shows **LAB color values** alongside existing hex/RGB data for better perceptual comparison
+- **Faster autocomplete**: World and datacenter lists are now cached for 1 hour, eliminating a network request on every keystroke
+- **Smarter budget searches**: `/budget find` now pre-filters dyes by color similarity before checking market prices, reducing API calls by 70-85%
+- **Less wasted work**: Removed an unnecessary image render that was being generated but never shown in the budget "no world set" response
 
 ---
 
-## Better Language Support
+## Code Quality
 
-- **Korean, Japanese, and Chinese dye names** now render properly in all generated images
-- We bundled optimized CJK fonts (only ~377 KiB total) so text always looks crisp
-- All new v4 commands are fully translated into all 6 supported languages (English, Japanese, German, French, Korean, Chinese)
-- The `/about` command is now fully localized too
+- Consolidated duplicated code for dye input resolution and DyeService creation across the codebase
+- Localized all `/preferences` command strings across all 6 supported languages
 
 ---
 
-## /budget Fixes
+## Dependencies Updated
 
-Fixed several issues that were preventing the `/budget` command from working:
-- Now handles the full dye catalog correctly (was failing with more than 100 dyes)
-- Fixed market price data parsing
-- Facewear dyes (which can't be traded) are now properly excluded from market lookups
-- Added full language support to the budget comparison graphic
+- `@cloudflare/workers-types` 4.20260131.0 → 4.20260207.0
+- `hono` 4.11.7 → 4.11.9
+- `@types/node` 25.2.0 → 25.2.2
 
 ---
 
-## Deprecation Notices
-
-The following commands still work but now show a deprecation notice:
-- **`/language`** → Use `/preferences set language` instead
-- **`/favorites`** → Use `/preset` instead
-- **`/collection`** → Use `/preset` instead
-
-These will be removed in a future update, so please start using the new commands.
-
----
-
-## Visual Fixes
-
-- The quality labels (EXCELLENT, GOOD, FAIR, etc.) in `/extractor image` results are now properly centered in each row
-
----
-
-## Behind the Scenes
-
-- **Faster & cheaper**: Moved temporary data from KV storage to the Cache API, saving hundreds of write operations per command
-- **Better rate limiting**: Switched to Upstash Redis for atomic rate limit counters, fixing edge cases where rapid requests could bypass limits
-- **Security audit**: Comprehensive review of all internal libraries, hardening authentication, logging, and rate limiting
-- **Auto-announcements**: The bot can now automatically post release notes to Discord when we publish updates
-- **CI/CD pipeline**: Automated deployment to Cloudflare Workers
-
----
-
-## For Developers
-
-If you're interested in the technical details, check out [CHANGELOG.md](./CHANGELOG.md) for the full breakdown including commit references.
-
----
-
-*Enjoy the new features! If you run into any issues, let us know.*
+For the full technical changelog, see [CHANGELOG.md](./CHANGELOG.md).
