@@ -213,9 +213,9 @@ describe('accessibility.ts', () => {
       const data = (await response.json()) as InteractionResponseBody;
 
       expect(data.type).toBe(4);
-      expect(data.data.embeds[0].title).toContain('Error');
-      expect(data.data.embeds[0].description).toContain('Please provide at least one dye');
-      expect(data.data.flags).toBe(64);
+      expect(data.data!.embeds![0].title).toContain('Error');
+      expect(data.data!.embeds![0].description).toContain('Please provide at least one dye');
+      expect(data.data!.flags).toBe(64);
     });
 
     it('should return error for invalid color input', async () => {
@@ -237,9 +237,9 @@ describe('accessibility.ts', () => {
       const data = (await response.json()) as InteractionResponseBody;
 
       expect(data.type).toBe(4);
-      expect(data.data.embeds[0].title).toContain('Error');
-      expect(data.data.embeds[0].description).toContain('notfound');
-      expect(data.data.flags).toBe(64);
+      expect(data.data!.embeds![0].title).toContain('Error');
+      expect(data.data!.embeds![0].description).toContain('notfound');
+      expect(data.data!.flags).toBe(64);
     });
 
     it('should handle member.user.id for guild interactions', async () => {
@@ -276,7 +276,7 @@ describe('accessibility.ts', () => {
 
       expect(data.type).toBe(4);
       // Uses fallback translator which returns translation keys
-      expect(data.data.embeds[0].description).toContain('missingInput');
+      expect(data.data!.embeds![0].description).toContain('missingInput');
     });
   });
 

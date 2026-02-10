@@ -122,6 +122,9 @@ describe('/favorites command', () => {
   describe('Missing user ID', () => {
     it('should return error when user ID is missing', async () => {
       const interaction: DiscordInteraction = {
+        id: 'test-interaction',
+        application_id: 'test-app-id',
+        token: 'test-token',
         type: 2,
         data: {
           name: 'favorites',
@@ -133,14 +136,17 @@ describe('/favorites command', () => {
       const response = await handleFavoritesCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      expect(data.data.embeds[0].description).toContain('Could not identify user');
-      expect(data.data.flags).toBe(64); // Ephemeral flag
+      expect(data.data!.embeds![0].description).toContain('Could not identify user');
+      expect(data.data!.flags).toBe(64); // Ephemeral flag
     });
   });
 
   describe('Missing subcommand', () => {
     it('should return error when no subcommand provided', async () => {
       const interaction: DiscordInteraction = {
+        id: 'test-interaction',
+        application_id: 'test-app-id',
+        token: 'test-token',
         type: 2,
         data: {
           name: 'favorites',
@@ -155,13 +161,16 @@ describe('/favorites command', () => {
       const response = await handleFavoritesCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      expect(data.data.embeds[0].description).toContain('subcommand');
+      expect(data.data!.embeds![0].description).toContain('subcommand');
     });
   });
 
   describe('Unknown subcommand', () => {
     it('should return error for unknown subcommand', async () => {
       const interaction: DiscordInteraction = {
+        id: 'test-interaction',
+        application_id: 'test-app-id',
+        token: 'test-token',
         type: 2,
         data: {
           name: 'favorites',
@@ -176,7 +185,7 @@ describe('/favorites command', () => {
       const response = await handleFavoritesCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      expect(data.data.embeds[0].description).toContain('Unknown subcommand');
+      expect(data.data!.embeds![0].description).toContain('Unknown subcommand');
     });
   });
 
@@ -185,6 +194,9 @@ describe('/favorites command', () => {
       vi.mocked(addFavorite).mockResolvedValue({ success: true });
 
       const interaction: DiscordInteraction = {
+        id: 'test-interaction',
+        application_id: 'test-app-id',
+        token: 'test-token',
         type: 2,
         data: {
           name: 'favorites',
@@ -206,13 +218,16 @@ describe('/favorites command', () => {
       const data = (await response.json()) as InteractionResponseBody;
 
       expect(addFavorite).toHaveBeenCalledWith(mockEnv.KV, 'user-123', 1);
-      expect(data.data.embeds[0].description).toContain('Added Snow White to favorites');
+      expect(data.data!.embeds![0].description).toContain('Added Snow White to favorites');
     });
 
     it('should add a dye by hex color', async () => {
       vi.mocked(addFavorite).mockResolvedValue({ success: true });
 
       const interaction: DiscordInteraction = {
+        id: 'test-interaction',
+        application_id: 'test-app-id',
+        token: 'test-token',
         type: 2,
         data: {
           name: 'favorites',
@@ -234,11 +249,14 @@ describe('/favorites command', () => {
       const data = (await response.json()) as InteractionResponseBody;
 
       expect(addFavorite).toHaveBeenCalledWith(mockEnv.KV, 'user-123', 1);
-      expect(data.data.embeds[0].description).toContain('Added Snow White to favorites');
+      expect(data.data!.embeds![0].description).toContain('Added Snow White to favorites');
     });
 
     it('should return error when dye option is missing', async () => {
       const interaction: DiscordInteraction = {
+        id: 'test-interaction',
+        application_id: 'test-app-id',
+        token: 'test-token',
         type: 2,
         data: {
           name: 'favorites',
@@ -253,11 +271,14 @@ describe('/favorites command', () => {
       const response = await handleFavoritesCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      expect(data.data.embeds[0].description).toBe('Please specify a dye');
+      expect(data.data!.embeds![0].description).toBe('Please specify a dye');
     });
 
     it('should return error when dye is not found', async () => {
       const interaction: DiscordInteraction = {
+        id: 'test-interaction',
+        application_id: 'test-app-id',
+        token: 'test-token',
         type: 2,
         data: {
           name: 'favorites',
@@ -278,13 +299,16 @@ describe('/favorites command', () => {
       const response = await handleFavoritesCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      expect(data.data.embeds[0].description).toContain('Dye not found');
+      expect(data.data!.embeds![0].description).toContain('Dye not found');
     });
 
     it('should return info message when dye already in favorites', async () => {
       vi.mocked(addFavorite).mockResolvedValue({ success: false, reason: 'alreadyExists' });
 
       const interaction: DiscordInteraction = {
+        id: 'test-interaction',
+        application_id: 'test-app-id',
+        token: 'test-token',
         type: 2,
         data: {
           name: 'favorites',
@@ -305,13 +329,16 @@ describe('/favorites command', () => {
       const response = await handleFavoritesCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      expect(data.data.embeds[0].description).toContain('is already in your favorites');
+      expect(data.data!.embeds![0].description).toContain('is already in your favorites');
     });
 
     it('should return error when favorite limit reached', async () => {
       vi.mocked(addFavorite).mockResolvedValue({ success: false, reason: 'limitReached' });
 
       const interaction: DiscordInteraction = {
+        id: 'test-interaction',
+        application_id: 'test-app-id',
+        token: 'test-token',
         type: 2,
         data: {
           name: 'favorites',
@@ -332,13 +359,16 @@ describe('/favorites command', () => {
       const response = await handleFavoritesCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      expect(data.data.embeds[0].description).toContain('Limit reached');
+      expect(data.data!.embeds![0].description).toContain('Limit reached');
     });
 
     it('should return error on unknown failure', async () => {
-      vi.mocked(addFavorite).mockResolvedValue({ success: false, reason: 'kvError' });
+      vi.mocked(addFavorite).mockResolvedValue({ success: false, reason: 'error' });
 
       const interaction: DiscordInteraction = {
+        id: 'test-interaction',
+        application_id: 'test-app-id',
+        token: 'test-token',
         type: 2,
         data: {
           name: 'favorites',
@@ -359,7 +389,7 @@ describe('/favorites command', () => {
       const response = await handleFavoritesCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      expect(data.data.embeds[0].description).toBe('Failed to save');
+      expect(data.data!.embeds![0].description).toBe('Failed to save');
     });
   });
 
@@ -368,6 +398,9 @@ describe('/favorites command', () => {
       vi.mocked(removeFavorite).mockResolvedValue(true);
 
       const interaction: DiscordInteraction = {
+        id: 'test-interaction',
+        application_id: 'test-app-id',
+        token: 'test-token',
         type: 2,
         data: {
           name: 'favorites',
@@ -389,11 +422,14 @@ describe('/favorites command', () => {
       const data = (await response.json()) as InteractionResponseBody;
 
       expect(removeFavorite).toHaveBeenCalledWith(mockEnv.KV, 'user-123', 1);
-      expect(data.data.embeds[0].description).toContain('Removed Snow White from favorites');
+      expect(data.data!.embeds![0].description).toContain('Removed Snow White from favorites');
     });
 
     it('should return error when dye option is missing', async () => {
       const interaction: DiscordInteraction = {
+        id: 'test-interaction',
+        application_id: 'test-app-id',
+        token: 'test-token',
         type: 2,
         data: {
           name: 'favorites',
@@ -408,11 +444,14 @@ describe('/favorites command', () => {
       const response = await handleFavoritesCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      expect(data.data.embeds[0].description).toBe('Please specify a dye');
+      expect(data.data!.embeds![0].description).toBe('Please specify a dye');
     });
 
     it('should return error when dye is not found', async () => {
       const interaction: DiscordInteraction = {
+        id: 'test-interaction',
+        application_id: 'test-app-id',
+        token: 'test-token',
         type: 2,
         data: {
           name: 'favorites',
@@ -433,13 +472,16 @@ describe('/favorites command', () => {
       const response = await handleFavoritesCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      expect(data.data.embeds[0].description).toContain('Dye not found');
+      expect(data.data!.embeds![0].description).toContain('Dye not found');
     });
 
     it('should return info message when dye not in favorites', async () => {
       vi.mocked(removeFavorite).mockResolvedValue(false);
 
       const interaction: DiscordInteraction = {
+        id: 'test-interaction',
+        application_id: 'test-app-id',
+        token: 'test-token',
         type: 2,
         data: {
           name: 'favorites',
@@ -460,7 +502,7 @@ describe('/favorites command', () => {
       const response = await handleFavoritesCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      expect(data.data.embeds[0].description).toContain('is not in your favorites');
+      expect(data.data!.embeds![0].description).toContain('is not in your favorites');
     });
   });
 
@@ -469,6 +511,9 @@ describe('/favorites command', () => {
       vi.mocked(getFavorites).mockResolvedValue([1, 2, 3]);
 
       const interaction: DiscordInteraction = {
+        id: 'test-interaction',
+        application_id: 'test-app-id',
+        token: 'test-token',
         type: 2,
         data: {
           name: 'favorites',
@@ -484,15 +529,18 @@ describe('/favorites command', () => {
       const data = (await response.json()) as InteractionResponseBody;
 
       expect(getFavorites).toHaveBeenCalledWith(mockEnv.KV, 'user-123');
-      expect(data.data.embeds[0].description).toContain('Snow White');
-      expect(data.data.embeds[0].description).toContain('Soot Black');
-      expect(data.data.embeds[0].description).toContain('Rose Pink');
+      expect(data.data!.embeds![0].description).toContain('Snow White');
+      expect(data.data!.embeds![0].description).toContain('Soot Black');
+      expect(data.data!.embeds![0].description).toContain('Rose Pink');
     });
 
     it('should show empty message when no favorites', async () => {
       vi.mocked(getFavorites).mockResolvedValue([]);
 
       const interaction: DiscordInteraction = {
+        id: 'test-interaction',
+        application_id: 'test-app-id',
+        token: 'test-token',
         type: 2,
         data: {
           name: 'favorites',
@@ -507,7 +555,7 @@ describe('/favorites command', () => {
       const response = await handleFavoritesCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      expect(data.data.embeds[0].description).toContain('No favorites yet');
+      expect(data.data!.embeds![0].description).toContain('No favorites yet');
     });
   });
 
@@ -517,6 +565,9 @@ describe('/favorites command', () => {
       vi.mocked(clearFavorites).mockResolvedValue(true);
 
       const interaction: DiscordInteraction = {
+        id: 'test-interaction',
+        application_id: 'test-app-id',
+        token: 'test-token',
         type: 2,
         data: {
           name: 'favorites',
@@ -532,13 +583,16 @@ describe('/favorites command', () => {
       const data = (await response.json()) as InteractionResponseBody;
 
       expect(clearFavorites).toHaveBeenCalledWith(mockEnv.KV, 'user-123');
-      expect(data.data.embeds[0].description).toContain('All favorites cleared');
+      expect(data.data!.embeds![0].description).toContain('All favorites cleared');
     });
 
     it('should show info message when already empty', async () => {
       vi.mocked(getFavorites).mockResolvedValue([]);
 
       const interaction: DiscordInteraction = {
+        id: 'test-interaction',
+        application_id: 'test-app-id',
+        token: 'test-token',
         type: 2,
         data: {
           name: 'favorites',
@@ -553,7 +607,7 @@ describe('/favorites command', () => {
       const response = await handleFavoritesCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      expect(data.data.embeds[0].description).toContain('No favorites yet');
+      expect(data.data!.embeds![0].description).toContain('No favorites yet');
     });
 
     it('should return error on clear failure', async () => {
@@ -561,6 +615,9 @@ describe('/favorites command', () => {
       vi.mocked(clearFavorites).mockResolvedValue(false);
 
       const interaction: DiscordInteraction = {
+        id: 'test-interaction',
+        application_id: 'test-app-id',
+        token: 'test-token',
         type: 2,
         data: {
           name: 'favorites',
@@ -575,7 +632,7 @@ describe('/favorites command', () => {
       const response = await handleFavoritesCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      expect(data.data.embeds[0].description).toBe('Failed to reset');
+      expect(data.data!.embeds![0].description).toBe('Failed to reset');
     });
   });
 });

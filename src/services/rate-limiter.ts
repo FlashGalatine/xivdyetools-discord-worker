@@ -125,7 +125,7 @@ export async function checkRateLimit(
   logger?: ExtendedLogger
 ): Promise<RateLimitResult> {
   const limiter = getLimiter(config);
-  const limitConfig = getDiscordCommandLimit(commandName);
+  const limitConfig = getDiscordCommandLimit(commandName ?? 'default');
 
   // Build compound key for user:command rate limiting
   const key = commandName ? `${userId}:${commandName}` : `${userId}:global`;

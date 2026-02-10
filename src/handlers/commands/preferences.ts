@@ -412,7 +412,7 @@ function formatPreferenceValue(key: PreferenceKey, value: unknown, t: Translator
     }
 
     case 'count':
-      return t.t('preferences.values.results', { count: value });
+      return t.t('preferences.values.results', { count: value as string | number });
 
     case 'clan':
       return String(value);

@@ -144,7 +144,7 @@ describe('stats.ts', () => {
 
       expect(data.type).toBe(4);
       // Summary is public, so it should render the summary embed (not access denied)
-      expect(data.data.embeds[0].title).toContain('XIV Dye Tools Bot');
+      expect(data.data!.embeds![0].title).toContain('XIV Dye Tools Bot');
     });
 
     it('should default to summary when options is empty array', async () => {
@@ -160,7 +160,7 @@ describe('stats.ts', () => {
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      expect(data.data.embeds[0].title).toContain('XIV Dye Tools Bot');
+      expect(data.data!.embeds![0].title).toContain('XIV Dye Tools Bot');
     });
 
     it('should route to summary subcommand', async () => {
@@ -169,7 +169,7 @@ describe('stats.ts', () => {
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      expect(data.data.embeds[0].title).toContain('XIV Dye Tools Bot');
+      expect(data.data!.embeds![0].title).toContain('XIV Dye Tools Bot');
     });
 
     it('should route to overview subcommand for authorized user', async () => {
@@ -178,7 +178,7 @@ describe('stats.ts', () => {
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      expect(data.data.embeds[0].title).toContain('Usage Overview');
+      expect(data.data!.embeds![0].title).toContain('Usage Overview');
     });
 
     it('should route to commands subcommand for authorized user', async () => {
@@ -187,7 +187,7 @@ describe('stats.ts', () => {
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      expect(data.data.embeds[0].title).toContain('Command Usage Breakdown');
+      expect(data.data!.embeds![0].title).toContain('Command Usage Breakdown');
     });
 
     it('should route to preferences subcommand for authorized user', async () => {
@@ -196,7 +196,7 @@ describe('stats.ts', () => {
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      expect(data.data.embeds[0].title).toContain('Preference Adoption');
+      expect(data.data!.embeds![0].title).toContain('Preference Adoption');
     });
 
     it('should route to health subcommand for authorized user', async () => {
@@ -205,7 +205,7 @@ describe('stats.ts', () => {
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      expect(data.data.embeds[0].title).toContain('System Health');
+      expect(data.data!.embeds![0].title).toContain('System Health');
     });
 
     it('should return error for unknown subcommand', async () => {
@@ -214,8 +214,8 @@ describe('stats.ts', () => {
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      expect(data.data.embeds[0].description).toContain('Unknown subcommand');
-      expect(data.data.flags).toBe(64);
+      expect(data.data!.embeds![0].description).toContain('Unknown subcommand');
+      expect(data.data!.flags).toBe(64);
     });
   });
 
@@ -231,7 +231,7 @@ describe('stats.ts', () => {
       const data = (await response.json()) as InteractionResponseBody;
 
       expect(data.type).toBe(4);
-      expect(data.data.embeds[0].title).toContain('XIV Dye Tools Bot');
+      expect(data.data!.embeds![0].title).toContain('XIV Dye Tools Bot');
     });
 
     it.each(['overview', 'commands', 'preferences', 'health'])(
@@ -243,8 +243,8 @@ describe('stats.ts', () => {
         const data = (await response.json()) as InteractionResponseBody;
 
         expect(data.type).toBe(4);
-        expect(data.data.embeds[0].title).toContain('Access Denied');
-        expect(data.data.flags).toBe(64);
+        expect(data.data!.embeds![0].title).toContain('Access Denied');
+        expect(data.data!.flags).toBe(64);
       }
     );
 
@@ -256,7 +256,7 @@ describe('stats.ts', () => {
         const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
         const data = (await response.json()) as InteractionResponseBody;
 
-        expect(data.data.embeds[0].title).not.toContain('Access Denied');
+        expect(data.data!.embeds![0].title).not.toContain('Access Denied');
       }
     );
 
@@ -266,7 +266,7 @@ describe('stats.ts', () => {
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      expect(data.data.embeds[0].title).toContain('Usage Overview');
+      expect(data.data!.embeds![0].title).toContain('Usage Overview');
     });
 
     it('should deny admin subcommands when STATS_AUTHORIZED_USERS is not configured', async () => {
@@ -276,7 +276,7 @@ describe('stats.ts', () => {
       const response = await handleStatsCommand(interaction, envWithoutAuth, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      expect(data.data.embeds[0].title).toContain('Access Denied');
+      expect(data.data!.embeds![0].title).toContain('Access Denied');
     });
 
     it('should still allow summary when STATS_AUTHORIZED_USERS is not configured', async () => {
@@ -286,7 +286,7 @@ describe('stats.ts', () => {
       const response = await handleStatsCommand(interaction, envWithoutAuth, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      expect(data.data.embeds[0].title).toContain('XIV Dye Tools Bot');
+      expect(data.data!.embeds![0].title).toContain('XIV Dye Tools Bot');
     });
 
     it('should deny access when no userId is available', async () => {
@@ -302,7 +302,7 @@ describe('stats.ts', () => {
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      expect(data.data.embeds[0].title).toContain('Access Denied');
+      expect(data.data!.embeds![0].title).toContain('Access Denied');
     });
 
     it('should handle DM interactions with user field', async () => {
@@ -311,7 +311,7 @@ describe('stats.ts', () => {
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      expect(data.data.embeds[0].title).toContain('Usage Overview');
+      expect(data.data!.embeds![0].title).toContain('Usage Overview');
     });
 
     it('should trim whitespace from authorized user IDs', async () => {
@@ -324,7 +324,7 @@ describe('stats.ts', () => {
       const response = await handleStatsCommand(interaction, envWithSpaces, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      expect(data.data.embeds[0].title).toContain('Usage Overview');
+      expect(data.data!.embeds![0].title).toContain('Usage Overview');
     });
   });
 
@@ -339,7 +339,7 @@ describe('stats.ts', () => {
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      const embed = data.data.embeds[0];
+      const embed = data.data!.embeds![0];
       expect(embed.title).toBe('📊 XIV Dye Tools Bot');
       expect(embed.description).toContain('Discord bot for FFXIV dye matching');
     });
@@ -350,12 +350,12 @@ describe('stats.ts', () => {
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      const featuresField = data.data.embeds[0].fields.find(
+      const featuresField = data.data!.embeds![0].fields!.find(
         (f: { name: string }) => f.name.includes('Features')
       );
       expect(featuresField).toBeDefined();
-      expect(featuresField.value).toContain('Color matching');
-      expect(featuresField.value).toContain('Dye blending');
+      expect(featuresField!.value).toContain('Color matching');
+      expect(featuresField!.value).toContain('Dye blending');
     });
 
     it('should display basic stats (total commands and success rate)', async () => {
@@ -364,14 +364,14 @@ describe('stats.ts', () => {
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      const statsField = data.data.embeds[0].fields.find(
+      const statsField = data.data!.embeds![0].fields!.find(
         (f: { name: string }) => f.name.includes('Stats')
       );
       expect(statsField).toBeDefined();
-      expect(statsField.value).toContain('Commands Used');
-      expect(statsField.value).toContain('1,000');
-      expect(statsField.value).toContain('Success Rate');
-      expect(statsField.value).toContain('95.0%');
+      expect(statsField!.value).toContain('Commands Used');
+      expect(statsField!.value).toContain('1,000');
+      expect(statsField!.value).toContain('Success Rate');
+      expect(statsField!.value).toContain('95.0%');
     });
 
     it('should display links field', async () => {
@@ -380,11 +380,11 @@ describe('stats.ts', () => {
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      const linksField = data.data.embeds[0].fields.find(
+      const linksField = data.data!.embeds![0].fields!.find(
         (f: { name: string }) => f.name.includes('Links')
       );
       expect(linksField).toBeDefined();
-      expect(linksField.value).toContain('xivdyetools.com');
+      expect(linksField!.value).toContain('xivdyetools.com');
     });
 
     it('should display version in footer', async () => {
@@ -393,7 +393,7 @@ describe('stats.ts', () => {
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      expect(data.data.embeds[0].footer.text).toContain('Version 4.0.0');
+      expect(data.data!.embeds![0].footer!.text).toContain('Version 4.0.0');
     });
 
     it('should NOT be ephemeral (public embed)', async () => {
@@ -403,7 +403,7 @@ describe('stats.ts', () => {
       const data = (await response.json()) as InteractionResponseBody;
 
       // summary response does not set flags: 64
-      expect(data.data.flags).toBeUndefined();
+      expect(data.data!.flags).toBeUndefined();
     });
 
     it('should use blurple color', async () => {
@@ -412,7 +412,7 @@ describe('stats.ts', () => {
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      expect(data.data.embeds[0].color).toBe(0x5865f2);
+      expect(data.data!.embeds![0].color).toBe(0x5865f2);
     });
   });
 
@@ -427,19 +427,19 @@ describe('stats.ts', () => {
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      const embed = data.data.embeds[0];
+      const embed = data.data!.embeds![0];
       expect(embed.title).toContain('Usage Overview');
 
-      const volumeField = embed.fields.find(
+      const volumeField = embed.fields!.find(
         (f: { name: string }) => f.name.includes('Volume')
       );
       expect(volumeField).toBeDefined();
-      expect(volumeField.value).toContain('Total Commands');
-      expect(volumeField.value).toContain('1,000');
-      expect(volumeField.value).toContain('Successful');
-      expect(volumeField.value).toContain('950');
-      expect(volumeField.value).toContain('Failed');
-      expect(volumeField.value).toContain('50');
+      expect(volumeField!.value).toContain('Total Commands');
+      expect(volumeField!.value).toContain('1,000');
+      expect(volumeField!.value).toContain('Successful');
+      expect(volumeField!.value).toContain('950');
+      expect(volumeField!.value).toContain('Failed');
+      expect(volumeField!.value).toContain('50');
     });
 
     it('should display user metrics', async () => {
@@ -448,13 +448,13 @@ describe('stats.ts', () => {
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      const usersField = data.data.embeds[0].fields.find(
+      const usersField = data.data!.embeds![0].fields!.find(
         (f: { name: string }) => f.name.includes('Users')
       );
       expect(usersField).toBeDefined();
-      expect(usersField.value).toContain('Unique Today');
-      expect(usersField.value).toContain('42');
-      expect(usersField.value).toContain('Avg Cmds/User');
+      expect(usersField!.value).toContain('Unique Today');
+      expect(usersField!.value).toContain('42');
+      expect(usersField!.value).toContain('Avg Cmds/User');
     });
 
     it('should calculate average commands per user', async () => {
@@ -463,11 +463,11 @@ describe('stats.ts', () => {
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      const usersField = data.data.embeds[0].fields.find(
+      const usersField = data.data!.embeds![0].fields!.find(
         (f: { name: string }) => f.name.includes('Users')
       );
       // 1000 total / 42 unique = 23.8
-      expect(usersField.value).toContain('23.8');
+      expect(usersField!.value).toContain('23.8');
     });
 
     it('should handle zero unique users without division by zero', async () => {
@@ -485,10 +485,10 @@ describe('stats.ts', () => {
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      const usersField = data.data.embeds[0].fields.find(
+      const usersField = data.data!.embeds![0].fields!.find(
         (f: { name: string }) => f.name.includes('Users')
       );
-      expect(usersField.value).toContain('0');
+      expect(usersField!.value).toContain('0');
     });
 
     it('should display quality metrics (success/error rates)', async () => {
@@ -497,14 +497,14 @@ describe('stats.ts', () => {
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      const qualityField = data.data.embeds[0].fields.find(
+      const qualityField = data.data!.embeds![0].fields!.find(
         (f: { name: string }) => f.name.includes('Quality')
       );
       expect(qualityField).toBeDefined();
-      expect(qualityField.value).toContain('Success Rate');
-      expect(qualityField.value).toContain('95.00%');
-      expect(qualityField.value).toContain('Error Rate');
-      expect(qualityField.value).toContain('5.00%');
+      expect(qualityField!.value).toContain('Success Rate');
+      expect(qualityField!.value).toContain('95.00%');
+      expect(qualityField!.value).toContain('Error Rate');
+      expect(qualityField!.value).toContain('5.00%');
     });
 
     it('should include KV retention info in footer', async () => {
@@ -513,7 +513,7 @@ describe('stats.ts', () => {
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      expect(data.data.embeds[0].footer.text).toContain('30-day retention');
+      expect(data.data!.embeds![0].footer!.text).toContain('30-day retention');
     });
 
     it('should be ephemeral', async () => {
@@ -522,7 +522,7 @@ describe('stats.ts', () => {
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      expect(data.data.flags).toBe(64);
+      expect(data.data!.flags).toBe(64);
     });
   });
 
@@ -537,16 +537,16 @@ describe('stats.ts', () => {
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      const embed = data.data.embeds[0];
+      const embed = data.data!.embeds![0];
       expect(embed.title).toContain('Command Usage Breakdown');
 
-      const topField = embed.fields.find(
+      const topField = embed.fields!.find(
         (f: { name: string }) => f.name.includes('Top')
       );
       expect(topField).toBeDefined();
       // harmony has 300 uses (most), so it should be first with gold medal
-      expect(topField.value).toContain('/harmony');
-      expect(topField.value).toContain('300');
+      expect(topField!.value).toContain('/harmony');
+      expect(topField!.value).toContain('300');
     });
 
     it('should show medal emojis for top 3 commands', async () => {
@@ -555,12 +555,12 @@ describe('stats.ts', () => {
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      const topField = data.data.embeds[0].fields.find(
+      const topField = data.data!.embeds![0].fields!.find(
         (f: { name: string }) => f.name.includes('Top')
       );
-      expect(topField.value).toContain('\u{1F947}'); // gold medal
-      expect(topField.value).toContain('\u{1F948}'); // silver medal
-      expect(topField.value).toContain('\u{1F949}'); // bronze medal
+      expect(topField!.value).toContain('\u{1F947}'); // gold medal
+      expect(topField!.value).toContain('\u{1F948}'); // silver medal
+      expect(topField!.value).toContain('\u{1F949}'); // bronze medal
     });
 
     it('should display usage percentage for each command', async () => {
@@ -569,11 +569,11 @@ describe('stats.ts', () => {
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      const topField = data.data.embeds[0].fields.find(
+      const topField = data.data!.embeds![0].fields!.find(
         (f: { name: string }) => f.name.includes('Top')
       );
       // harmony: 300/1000 = 30.0%
-      expect(topField.value).toContain('30.0%');
+      expect(topField!.value).toContain('30.0%');
     });
 
     it('should display least used commands', async () => {
@@ -582,7 +582,7 @@ describe('stats.ts', () => {
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      const leastField = data.data.embeds[0].fields.find(
+      const leastField = data.data!.embeds![0].fields!.find(
         (f: { name: string }) => f.name.includes('Least Used')
       );
       expect(leastField).toBeDefined();
@@ -594,12 +594,12 @@ describe('stats.ts', () => {
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      const migrationField = data.data.embeds[0].fields.find(
+      const migrationField = data.data!.embeds![0].fields!.find(
         (f: { name: string }) => f.name.includes('V4 Migration')
       );
       expect(migrationField).toBeDefined();
-      expect(migrationField.value).toContain('V4 Commands');
-      expect(migrationField.value).toContain('Legacy Commands');
+      expect(migrationField!.value).toContain('V4 Commands');
+      expect(migrationField!.value).toContain('Legacy Commands');
     });
 
     it('should show "No commands executed yet" when no commands', async () => {
@@ -617,10 +617,10 @@ describe('stats.ts', () => {
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      const topField = data.data.embeds[0].fields.find(
+      const topField = data.data!.embeds![0].fields!.find(
         (f: { name: string }) => f.name.includes('Top')
       );
-      expect(topField.value).toBe('No commands executed yet');
+      expect(topField!.value).toBe('No commands executed yet');
     });
 
     it('should display total unique commands count in footer', async () => {
@@ -629,7 +629,7 @@ describe('stats.ts', () => {
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      expect(data.data.embeds[0].footer.text).toContain('Total unique commands');
+      expect(data.data!.embeds![0].footer!.text).toContain('Total unique commands');
     });
 
     it('should be ephemeral', async () => {
@@ -638,7 +638,7 @@ describe('stats.ts', () => {
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      expect(data.data.flags).toBe(64);
+      expect(data.data!.flags).toBe(64);
     });
 
     it('should use purple color', async () => {
@@ -647,7 +647,7 @@ describe('stats.ts', () => {
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      expect(data.data.embeds[0].color).toBe(0x9b59b6);
+      expect(data.data!.embeds![0].color).toBe(0x9b59b6);
     });
   });
 
@@ -662,7 +662,7 @@ describe('stats.ts', () => {
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      const embed = data.data.embeds[0];
+      const embed = data.data!.embeds![0];
       expect(embed.title).toContain('Preference Adoption');
       expect(embed.description).toContain('0 user sample');
     });
@@ -688,7 +688,7 @@ describe('stats.ts', () => {
       } as unknown as KVNamespaceListResult<unknown>);
 
       // Return preference data for each user
-      vi.mocked(mockKV.get)
+      (mockKV.get as ReturnType<typeof vi.fn>)
         .mockResolvedValueOnce(JSON.stringify({ language: 'ja', blending: 'multiply' }))
         .mockResolvedValueOnce(JSON.stringify({ language: 'en', clan: 'hyur_midlander' }))
         .mockResolvedValueOnce(JSON.stringify({ world: 'Gilgamesh', market: true }));
@@ -698,7 +698,7 @@ describe('stats.ts', () => {
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      const embed = data.data.embeds[0];
+      const embed = data.data!.embeds![0];
       expect(embed.description).toContain('3 user sample');
       expect(embed.description).toContain('3 total users');
     });
@@ -709,14 +709,14 @@ describe('stats.ts', () => {
         list_complete: true,
         cursor: '',
       } as unknown as KVNamespaceListResult<unknown>);
-      vi.mocked(mockKV.get).mockResolvedValueOnce(JSON.stringify({ language: 'en' }));
+      (mockKV.get as ReturnType<typeof vi.fn>).mockResolvedValueOnce(JSON.stringify({ language: 'en' }));
 
       const interaction = makeInteraction('admin-123', 'preferences');
 
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      const fieldNames = data.data.embeds[0].fields.map((f: { name: string }) => f.name);
+      const fieldNames = data.data!.embeds![0].fields!.map((f: { name: string }) => f.name);
       expect(fieldNames).toEqual(
         expect.arrayContaining([
           expect.stringContaining('Localization'),
@@ -736,7 +736,7 @@ describe('stats.ts', () => {
       } as unknown as KVNamespaceListResult<unknown>);
 
       // First returns invalid JSON, second returns valid
-      vi.mocked(mockKV.get)
+      (mockKV.get as ReturnType<typeof vi.fn>)
         .mockResolvedValueOnce('not valid json')
         .mockResolvedValueOnce(JSON.stringify({ language: 'en' }));
 
@@ -747,7 +747,7 @@ describe('stats.ts', () => {
 
       // Should not throw, embed should still render
       expect(data.type).toBe(4);
-      expect(data.data.embeds[0].title).toContain('Preference Adoption');
+      expect(data.data!.embeds![0].title).toContain('Preference Adoption');
     });
 
     it('should be ephemeral', async () => {
@@ -756,7 +756,7 @@ describe('stats.ts', () => {
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      expect(data.data.flags).toBe(64);
+      expect(data.data!.flags).toBe(64);
     });
 
     it('should use yellow color', async () => {
@@ -765,7 +765,7 @@ describe('stats.ts', () => {
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      expect(data.data.embeds[0].color).toBe(0xfee75c);
+      expect(data.data!.embeds![0].color).toBe(0xfee75c);
     });
   });
 
@@ -780,7 +780,7 @@ describe('stats.ts', () => {
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      expect(data.data.embeds[0].title).toContain('System Health');
+      expect(data.data!.embeds![0].title).toContain('System Health');
     });
 
     it('should display KV storage status', async () => {
@@ -789,13 +789,13 @@ describe('stats.ts', () => {
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      const storageField = data.data.embeds[0].fields.find(
+      const storageField = data.data!.embeds![0].fields!.find(
         (f: { name: string }) => f.name.includes('Storage')
       );
       expect(storageField).toBeDefined();
-      expect(storageField.value).toContain('KV Namespace');
-      expect(storageField.value).toContain('Healthy');
-      expect(storageField.value).toContain('KV Latency');
+      expect(storageField!.value).toContain('KV Namespace');
+      expect(storageField!.value).toContain('Healthy');
+      expect(storageField!.value).toContain('KV Latency');
     });
 
     it('should check KV health by performing a get operation', async () => {
@@ -817,11 +817,11 @@ describe('stats.ts', () => {
       const response = await handleStatsCommand(interaction, envWithAnalytics, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      const analyticsField = data.data.embeds[0].fields.find(
+      const analyticsField = data.data!.embeds![0].fields!.find(
         (f: { name: string }) => f.name.includes('Analytics')
       );
       expect(analyticsField).toBeDefined();
-      expect(analyticsField.value).toContain('Enabled');
+      expect(analyticsField!.value).toContain('Enabled');
     });
 
     it('should show Analytics Engine as disabled when not configured', async () => {
@@ -830,11 +830,11 @@ describe('stats.ts', () => {
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      const analyticsField = data.data.embeds[0].fields.find(
+      const analyticsField = data.data!.embeds![0].fields!.find(
         (f: { name: string }) => f.name.includes('Analytics')
       );
       expect(analyticsField).toBeDefined();
-      expect(analyticsField.value).toContain('Disabled');
+      expect(analyticsField!.value).toContain('Disabled');
     });
 
     it('should show external service configuration status', async () => {
@@ -843,13 +843,13 @@ describe('stats.ts', () => {
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      const externalField = data.data.embeds[0].fields.find(
+      const externalField = data.data!.embeds![0].fields!.find(
         (f: { name: string }) => f.name.includes('External Services')
       );
       expect(externalField).toBeDefined();
-      expect(externalField.value).toContain('Universalis API');
-      expect(externalField.value).toContain('Configured');
-      expect(externalField.value).toContain('Preset API');
+      expect(externalField!.value).toContain('Universalis API');
+      expect(externalField!.value).toContain('Configured');
+      expect(externalField!.value).toContain('Preset API');
     });
 
     it('should show configuration field with version and platform', async () => {
@@ -858,13 +858,13 @@ describe('stats.ts', () => {
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      const configField = data.data.embeds[0].fields.find(
+      const configField = data.data!.embeds![0].fields!.find(
         (f: { name: string }) => f.name.includes('Configuration')
       );
       expect(configField).toBeDefined();
-      expect(configField.value).toContain('4.0.0');
-      expect(configField.value).toContain('Cloudflare Workers');
-      expect(configField.value).toContain('production');
+      expect(configField!.value).toContain('4.0.0');
+      expect(configField!.value).toContain('Cloudflare Workers');
+      expect(configField!.value).toContain('production');
     });
 
     it('should show security status', async () => {
@@ -873,13 +873,13 @@ describe('stats.ts', () => {
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      const securityField = data.data.embeds[0].fields.find(
+      const securityField = data.data!.embeds![0].fields!.find(
         (f: { name: string }) => f.name.includes('Security')
       );
       expect(securityField).toBeDefined();
-      expect(securityField.value).toContain('Webhook Secret');
-      expect(securityField.value).toContain('Set');
-      expect(securityField.value).toContain('Mod Channel');
+      expect(securityField!.value).toContain('Webhook Secret');
+      expect(securityField!.value).toContain('Set');
+      expect(securityField!.value).toContain('Mod Channel');
     });
 
     it('should use green color when KV is healthy', async () => {
@@ -888,7 +888,7 @@ describe('stats.ts', () => {
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      expect(data.data.embeds[0].color).toBe(0x57f287); // green
+      expect(data.data!.embeds![0].color).toBe(0x57f287); // green
     });
 
     it('should use red color when KV health check fails', async () => {
@@ -899,11 +899,11 @@ describe('stats.ts', () => {
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      const storageField = data.data.embeds[0].fields.find(
+      const storageField = data.data!.embeds![0].fields!.find(
         (f: { name: string }) => f.name.includes('Storage')
       );
-      expect(storageField.value).toContain('Error');
-      expect(data.data.embeds[0].color).toBe(0xed4245); // red
+      expect(storageField!.value).toContain('Error');
+      expect(data.data!.embeds![0].color).toBe(0xed4245); // red
     });
 
     it('should be ephemeral', async () => {
@@ -912,7 +912,7 @@ describe('stats.ts', () => {
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      expect(data.data.flags).toBe(64);
+      expect(data.data!.flags).toBe(64);
     });
 
     it('should show services as not configured when env vars are missing', async () => {
@@ -922,22 +922,22 @@ describe('stats.ts', () => {
         PRESETS_API_URL: undefined,
         INTERNAL_WEBHOOK_SECRET: undefined,
         MODERATION_CHANNEL_ID: undefined,
-      };
+      } as unknown as Env;
 
       const interaction = makeInteraction('admin-123', 'health');
 
       const response = await handleStatsCommand(interaction, minimalEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      const externalField = data.data.embeds[0].fields.find(
+      const externalField = data.data!.embeds![0].fields!.find(
         (f: { name: string }) => f.name.includes('External Services')
       );
-      expect(externalField.value).toContain('Not configured');
+      expect(externalField!.value).toContain('Not configured');
 
-      const securityField = data.data.embeds[0].fields.find(
+      const securityField = data.data!.embeds![0].fields!.find(
         (f: { name: string }) => f.name.includes('Security')
       );
-      expect(securityField.value).toContain('Not set');
+      expect(securityField!.value).toContain('Not set');
     });
   });
 
@@ -1034,8 +1034,8 @@ describe('stats.ts', () => {
       const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      expect(data.data.embeds[0].description).toContain('Unknown subcommand');
-      expect(data.data.flags).toBe(64);
+      expect(data.data!.embeds![0].description).toContain('Unknown subcommand');
+      expect(data.data!.flags).toBe(64);
     });
   });
 });

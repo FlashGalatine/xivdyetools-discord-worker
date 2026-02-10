@@ -14,7 +14,7 @@ import {
 
 // Mock the @xivdyetools/auth package's internal verification
 // The package uses Web Crypto API for Ed25519 verification
-const mockVerifyResult = { isValid: true, body: '', error: undefined };
+const mockVerifyResult: { isValid: boolean; body: string; error: string | undefined } = { isValid: true, body: '', error: undefined };
 
 vi.mock('@xivdyetools/auth', async (importOriginal) => {
     const actual = await importOriginal<typeof import('@xivdyetools/auth')>();

@@ -3,7 +3,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { handleMixerCommand } from './mixer.js';
-import type { DiscordInteraction, Env } from '../../types/env.js';
+import type { DiscordInteraction, Env, InteractionResponseBody } from '../../types/env.js';
 
 // ---------------------------------------------------------------------------
 // Mock Dyes
@@ -166,8 +166,8 @@ describe('/mixer command', () => {
         const res = await handleMixerCommand(interaction, env, ctx);
         const body = (await res.json()) as InteractionResponseBody;
 
-        expect(body.data.embeds[0].description).toBe('Missing input');
-        expect(body.data.flags).toBe(64);
+        expect(body.data!.embeds![0].description).toBe('Missing input');
+        expect(body.data!.flags).toBe(64);
     });
 
     it('returns error when end_color is missing', async () => {
@@ -184,8 +184,8 @@ describe('/mixer command', () => {
         const res = await handleMixerCommand(interaction, env, ctx);
         const body = (await res.json()) as InteractionResponseBody;
 
-        expect(body.data.embeds[0].description).toBe('Missing input');
-        expect(body.data.flags).toBe(64);
+        expect(body.data!.embeds![0].description).toBe('Missing input');
+        expect(body.data!.flags).toBe(64);
     });
 
     it('returns error for invalid start color', async () => {
@@ -203,8 +203,8 @@ describe('/mixer command', () => {
         const res = await handleMixerCommand(interaction, env, ctx);
         const body = (await res.json()) as InteractionResponseBody;
 
-        expect(body.data.embeds[0].description).toContain('Invalid color');
-        expect(body.data.flags).toBe(64);
+        expect(body.data!.embeds![0].description).toContain('Invalid color');
+        expect(body.data!.flags).toBe(64);
     });
 
     it('returns error for invalid end color', async () => {
@@ -222,8 +222,8 @@ describe('/mixer command', () => {
         const res = await handleMixerCommand(interaction, env, ctx);
         const body = (await res.json()) as InteractionResponseBody;
 
-        expect(body.data.embeds[0].description).toContain('Invalid color');
-        expect(body.data.flags).toBe(64);
+        expect(body.data!.embeds![0].description).toContain('Invalid color');
+        expect(body.data!.flags).toBe(64);
     });
 
     it('defers response and processes with hex colors', async () => {
@@ -401,7 +401,7 @@ describe('/mixer command', () => {
         };
 
         const res = await handleMixerCommand(interaction, env, ctx);
-        expect((await res.json()).type).toBe(5);
+        expect((await res.json() as InteractionResponseBody).type).toBe(5);
 
         // Wait for background processing
         await new Promise((resolve) => setTimeout(resolve, 100));

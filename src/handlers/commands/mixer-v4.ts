@@ -218,6 +218,8 @@ function buildMixerResponse(
   matches: Array<{ dye: Dye; distance: number }>,
   t: Translator
 ): Response {
+  const locale = t.getLocale();
+
   // Format input dyes
   const dye1Emoji = dye1.id ? getDyeEmoji(dye1.id) : undefined;
   const dye2Emoji = dye2.id ? getDyeEmoji(dye2.id) : undefined;

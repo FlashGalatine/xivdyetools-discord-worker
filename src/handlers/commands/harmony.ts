@@ -118,7 +118,7 @@ export async function handleHarmonyCommand(
 
   // Process in background
   ctx.waitUntil(
-    processHarmonyCommand(interaction, env, resolved.hex, resolved.name, resolved.id, resolved.itemID, harmonyType, locale, logger, harmonyOptions)
+    processHarmonyCommand(interaction, env, resolved.hex, resolved.name, resolved.id, resolved.itemID ?? undefined, harmonyType, locale, logger, harmonyOptions)
   );
 
   return deferResponse;

@@ -141,7 +141,7 @@ interface ResolvedColor {
   hex: string;
   name?: string;
   id?: number;
-  itemID?: number;
+  itemID?: number | null;
 }
 
 /**

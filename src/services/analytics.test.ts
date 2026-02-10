@@ -90,6 +90,7 @@ describe('analytics.ts', () => {
       PRESETS_API_URL: 'https://test-api.example.com',
       INTERNAL_WEBHOOK_SECRET: 'test-secret', // pragma: allowlist secret
       KV: mockKV,
+      DB: {} as unknown as D1Database,
       ANALYTICS: mockAnalytics as unknown as AnalyticsEngineDataset,
     } as Env;
 

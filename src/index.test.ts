@@ -6,6 +6,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import app from './index.js';
 import { InteractionType, InteractionResponseType, type InteractionResponseBody } from './types/env.js';
 import type { Env } from './types/env.js';
+import type { CommunityPreset } from '@xivdyetools/types/preset';
 
 // Mock dependencies
 vi.mock('./utils/verify.js', () => ({
@@ -123,17 +124,19 @@ describe('index.ts', () => {
     mockEnv = {
       DISCORD_PUBLIC_KEY: 'test-public-key',
       DISCORD_TOKEN: 'test-token',
-      DISCORD_APPLICATION_ID: 'test-app-id',
-      PRESET_API_URL: 'https://test-api.example.com',
+      DISCORD_CLIENT_ID: 'test-app-id',
+      PRESETS_API_URL: 'https://test-api.example.com',
       INTERNAL_WEBHOOK_SECRET: 'test-webhook-secret', // pragma: allowlist secret
       KV: mockKV,
       MODERATION_CHANNEL_ID: 'test-moderation-channel',
       SUBMISSION_LOG_CHANNEL_ID: 'test-submission-log-channel',
+      DB: {} as any,
     };
 
     mockCtx = {
       waitUntil: vi.fn(),
       passThroughOnException: vi.fn(),
+      props: {},
     };
 
     vi.clearAllMocks();
@@ -150,7 +153,7 @@ describe('index.ts', () => {
         status: 'healthy',
         service: 'xivdyetools-discord-worker',
       });
-      expect(data.timestamp).toBeDefined();
+      expect((data as any).timestamp).toBeDefined();
     });
   });
 
@@ -201,7 +204,7 @@ describe('index.ts', () => {
       const { timingSafeEqual } = await import('./utils/verify.js');
       const { sendMessage } = await import('./utils/discord-api.js');
       vi.mocked(timingSafeEqual).mockResolvedValue(true);
-      vi.mocked(sendMessage).mockResolvedValue(undefined);
+      vi.mocked(sendMessage).mockResolvedValue(new Response(null));
 
       const preset = {
         id: 'preset-123',
@@ -242,7 +245,7 @@ describe('index.ts', () => {
       const { timingSafeEqual } = await import('./utils/verify.js');
       const { sendMessage } = await import('./utils/discord-api.js');
       vi.mocked(timingSafeEqual).mockResolvedValue(true);
-      vi.mocked(sendMessage).mockResolvedValue(undefined);
+      vi.mocked(sendMessage).mockResolvedValue(new Response(null));
 
       const preset = {
         id: 'preset-456',
@@ -414,8 +417,8 @@ describe('index.ts', () => {
         vi.mocked(checkRateLimit).mockResolvedValue({
           allowed: false,
           retryAfter: 30,
-          limit: 5,
           remaining: 0,
+          resetAt: Date.now() + 30000,
         });
         vi.mocked(formatRateLimitMessage).mockReturnValue('Rate limited');
 
@@ -431,7 +434,7 @@ describe('index.ts', () => {
         const res = await app.fetch(req, mockEnv, mockCtx);
         expect(res.status).toBe(200);
         const data = (await res.json()) as InteractionResponseBody;
-        expect(data.data.flags).toBe(64); // Ephemeral
+        expect(data.data!.flags).toBe(64); // Ephemeral
       });
 
       it('should handle unknown command', async () => {
@@ -461,7 +464,7 @@ describe('index.ts', () => {
         const res = await app.fetch(req, mockEnv, mockCtx);
         expect(res.status).toBe(200);
         const data = (await res.json()) as InteractionResponseBody;
-        expect(data.data.content).toContain('not yet implemented');
+        expect(data.data!.content).toContain('not yet implemented');
       });
     });
 
@@ -510,7 +513,7 @@ describe('index.ts', () => {
         expect(res.status).toBe(200);
         const data = (await res.json()) as InteractionResponseBody;
         expect(data.type).toBe(InteractionResponseType.APPLICATION_COMMAND_AUTOCOMPLETE_RESULT);
-        expect(data.data.choices).toBeInstanceOf(Array);
+        expect(data.data!.choices).toBeInstanceOf(Array);
       });
 
       it('should handle collection autocomplete', async () => {
@@ -536,7 +539,7 @@ describe('index.ts', () => {
           error: '',
         });
         vi.mocked(getCollections).mockResolvedValue([
-          { name: 'My Collection', dyes: [1, 2, 3], created_at: Date.now() },
+          { id: 'coll-1', name: 'My Collection', dyes: [1, 2, 3], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
         ]);
 
         const req = new Request('http://localhost/', {
@@ -561,7 +564,7 @@ describe('index.ts', () => {
         expect(res.status).toBe(200);
         const data = (await res.json()) as InteractionResponseBody;
         expect(data.type).toBe(InteractionResponseType.APPLICATION_COMMAND_AUTOCOMPLETE_RESULT);
-        expect(data.data.choices[0].name).toContain('My Collection');
+        expect(data.data!.choices![0].name).toContain('My Collection');
       });
 
       it('should handle preset autocomplete for approved presets', async () => {
@@ -641,8 +644,8 @@ describe('index.ts', () => {
           error: '',
         });
         vi.mocked(getMyPresets).mockResolvedValue([
-          { id: 'preset-1', name: 'My Preset', status: 'approved' },
-          { id: 'preset-2', name: 'My Pending Preset', status: 'pending' },
+          { id: 'preset-1', name: 'My Preset', status: 'approved' } as CommunityPreset,
+          { id: 'preset-2', name: 'My Pending Preset', status: 'pending' } as CommunityPreset,
         ]);
 
         const req = new Request('http://localhost/', {
@@ -800,7 +803,7 @@ describe('index.ts', () => {
         expect(res.status).toBe(200);
         const data = (await res.json()) as InteractionResponseBody;
         expect(data.type).toBe(InteractionResponseType.APPLICATION_COMMAND_AUTOCOMPLETE_RESULT);
-        expect(data.data.choices).toBeInstanceOf(Array);
+        expect(data.data!.choices).toBeInstanceOf(Array);
       });
 
       it('should handle collection dye autocomplete', async () => {
@@ -894,7 +897,7 @@ describe('index.ts', () => {
         const res = await app.fetch(req, mockEnv, mockCtx);
         expect(res.status).toBe(200);
         const data = (await res.json()) as InteractionResponseBody;
-        expect(data.data.choices).toEqual([]);
+        expect(data.data!.choices).toEqual([]);
       });
 
       it('should handle collection autocomplete error gracefully', async () => {
@@ -942,7 +945,7 @@ describe('index.ts', () => {
         const res = await app.fetch(req, mockEnv, mockCtx);
         expect(res.status).toBe(200);
         const data = (await res.json()) as InteractionResponseBody;
-        expect(data.data.choices).toEqual([]);
+        expect(data.data!.choices).toEqual([]);
       });
 
       it('should handle getMyPresets with empty presets', async () => {
@@ -990,7 +993,7 @@ describe('index.ts', () => {
         const res = await app.fetch(req, mockEnv, mockCtx);
         expect(res.status).toBe(200);
         const data = (await res.json()) as InteractionResponseBody;
-        expect(data.data.choices).toEqual([]);
+        expect(data.data!.choices).toEqual([]);
       });
 
       it('should handle getMyPresets error gracefully', async () => {
@@ -1038,7 +1041,7 @@ describe('index.ts', () => {
         const res = await app.fetch(req, mockEnv, mockCtx);
         expect(res.status).toBe(200);
         const data = (await res.json()) as InteractionResponseBody;
-        expect(data.data.choices).toEqual([]);
+        expect(data.data!.choices).toEqual([]);
       });
     });
 
@@ -1096,7 +1099,7 @@ describe('index.ts', () => {
         const res = await app.fetch(req, mockEnv, mockCtx);
         expect(res.status).toBe(200);
         const data = (await res.json()) as InteractionResponseBody;
-        expect(data.data.content).toContain('not yet supported');
+        expect(data.data!.content).toContain('not yet supported');
       });
     });
 
@@ -1129,7 +1132,7 @@ describe('index.ts', () => {
         const res = await app.fetch(req, mockEnv, mockCtx);
         expect(res.status).toBe(200);
         const data = (await res.json()) as InteractionResponseBody;
-        expect(data.data.content).toContain('Unknown modal');
+        expect(data.data!.content).toContain('Unknown modal');
       });
     });
 
@@ -1256,7 +1259,7 @@ describe('index.ts', () => {
         const res = await app.fetch(req, mockEnv, mockCtx);
         expect(res.status).toBe(200);
         const data = (await res.json()) as InteractionResponseBody;
-        expect(data.data.choices).toEqual([]);
+        expect(data.data!.choices).toEqual([]);
       });
     });
 
@@ -1303,7 +1306,7 @@ describe('index.ts', () => {
         const res = await app.fetch(req, mockEnv, mockCtx);
         expect(res.status).toBe(200);
         const data = (await res.json()) as InteractionResponseBody;
-        expect(data.data.choices).toEqual([]);
+        expect(data.data!.choices).toEqual([]);
       });
     });
 
@@ -1450,7 +1453,7 @@ describe('index.ts', () => {
         const res = await app.fetch(req, mockEnv, mockCtx);
         expect(res.status).toBe(200);
         const data = (await res.json()) as InteractionResponseBody;
-        expect(data.data.choices.length).toBe(2); // All collections returned
+        expect(data.data!.choices!.length).toBe(2); // All collections returned
       });
     });
   });

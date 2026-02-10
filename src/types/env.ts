@@ -142,6 +142,7 @@ export interface DiscordInteraction {
         name: string;
         type?: number;
         value?: string | number | boolean;
+        focused?: boolean;
       }>;
     }>;
     components?: Array<{
@@ -219,6 +220,7 @@ export interface InteractionResponseBody {
       fields?: Array<{ name: string; value: string; inline?: boolean }>;
       image?: { url: string };
       footer?: { text: string };
+      timestamp?: string;
     }>;
     components?: Array<{
       type: number;

@@ -3,7 +3,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { handleMatchImageCommand } from './match-image.js';
-import type { DiscordInteraction, Env } from '../../types/env.js';
+import type { DiscordInteraction, Env, InteractionResponseBody } from '../../types/env.js';
 
 // ---------------------------------------------------------------------------
 // Mock Dyes
@@ -218,8 +218,8 @@ describe('/match_image command', () => {
         const res = await handleMatchImageCommand(interaction, env, ctx);
         const body = (await res.json()) as InteractionResponseBody;
 
-        expect(body.data.embeds[0].description).toBe('Please attach an image');
-        expect(body.data.flags).toBe(64);
+        expect(body.data!.embeds![0].description).toBe('Please attach an image');
+        expect(body.data!.flags).toBe(64);
     });
 
     it('returns error when attachment is not found in resolved', async () => {
@@ -239,8 +239,8 @@ describe('/match_image command', () => {
         const res = await handleMatchImageCommand(interaction, env, ctx);
         const body = (await res.json()) as InteractionResponseBody;
 
-        expect(body.data.embeds[0].description).toBe('Invalid attachment');
-        expect(body.data.flags).toBe(64);
+        expect(body.data!.embeds![0].description).toBe('Invalid attachment');
+        expect(body.data!.flags).toBe(64);
     });
 
     it('defers response and processes image', async () => {
@@ -257,6 +257,7 @@ describe('/match_image command', () => {
                             id: 'attachment-id-123',
                             filename: 'test.png',
                             url: 'https://cdn.discordapp.com/attachments/test.png',
+                            proxy_url: 'https://media.discordapp.net/attachments/test.png',
                             size: 1000,
                             content_type: 'image/png',
                         },
@@ -293,6 +294,7 @@ describe('/match_image command', () => {
                             id: 'attachment-id-123',
                             filename: 'test.png',
                             url: 'https://cdn.discordapp.com/attachments/test.png',
+                            proxy_url: 'https://media.discordapp.net/attachments/test.png',
                             size: 1000,
                             content_type: 'image/png',
                         },
@@ -326,6 +328,7 @@ describe('/match_image command', () => {
                             id: 'attachment-id-123',
                             filename: 'test.png',
                             url: 'https://cdn.discordapp.com/attachments/test.png',
+                            proxy_url: 'https://media.discordapp.net/attachments/test.png',
                             size: 1000,
                             content_type: 'image/png',
                         },
@@ -358,6 +361,7 @@ describe('/match_image command', () => {
                             id: 'attachment-id-123',
                             filename: 'test.png',
                             url: 'https://cdn.discordapp.com/attachments/test.png',
+                            proxy_url: 'https://media.discordapp.net/attachments/test.png',
                             size: 1000,
                             content_type: 'image/png',
                         },
@@ -387,6 +391,7 @@ describe('/match_image command', () => {
                             id: 'attachment-id-123',
                             filename: 'test.png',
                             url: 'https://cdn.discordapp.com/attachments/test.png',
+                            proxy_url: 'https://media.discordapp.net/attachments/test.png',
                             size: 1000,
                             content_type: 'image/png',
                         },
@@ -427,6 +432,7 @@ describe('/match_image command', () => {
                             id: 'attachment-id-123',
                             filename: 'test.png',
                             url: 'https://cdn.discordapp.com/attachments/test.png',
+                            proxy_url: 'https://media.discordapp.net/attachments/test.png',
                             size: 1000,
                             content_type: 'image/png',
                         },
@@ -467,6 +473,7 @@ describe('/match_image command', () => {
                             id: 'attachment-id-123',
                             filename: 'test.png',
                             url: 'https://cdn.discordapp.com/attachments/test.png',
+                            proxy_url: 'https://media.discordapp.net/attachments/test.png',
                             size: 1000,
                             content_type: 'image/png',
                         },
@@ -507,6 +514,7 @@ describe('/match_image command', () => {
                             id: 'attachment-id-123',
                             filename: 'test.png',
                             url: 'https://cdn.discordapp.com/attachments/test.png',
+                            proxy_url: 'https://media.discordapp.net/attachments/test.png',
                             size: 1000,
                             content_type: 'image/png',
                         },
@@ -547,6 +555,7 @@ describe('/match_image command', () => {
                             id: 'attachment-id-123',
                             filename: 'test.png',
                             url: 'https://cdn.discordapp.com/attachments/test.png',
+                            proxy_url: 'https://media.discordapp.net/attachments/test.png',
                             size: 1000,
                             content_type: 'image/png',
                         },
@@ -578,6 +587,7 @@ describe('/match_image command', () => {
                             id: 'attachment-id-123',
                             filename: 'test.png',
                             url: 'https://cdn.discordapp.com/attachments/test.png',
+                            proxy_url: 'https://media.discordapp.net/attachments/test.png',
                             size: 1000,
                             content_type: 'image/png',
                         },
@@ -619,6 +629,7 @@ describe('/match_image command', () => {
                             id: 'attachment-id-123',
                             filename: 'test.png',
                             url: 'https://cdn.discordapp.com/attachments/test.png',
+                            proxy_url: 'https://media.discordapp.net/attachments/test.png',
                             size: 1000,
                             content_type: 'image/png',
                         },
@@ -659,6 +670,7 @@ describe('/match_image command', () => {
                             id: 'attachment-id-123',
                             filename: 'test.png',
                             url: 'https://cdn.discordapp.com/attachments/test.png',
+                            proxy_url: 'https://media.discordapp.net/attachments/test.png',
                             size: 1000,
                             content_type: 'image/png',
                         },
@@ -699,6 +711,7 @@ describe('/match_image command', () => {
                             id: 'attachment-id-123',
                             filename: 'test.png',
                             url: 'https://cdn.discordapp.com/attachments/test.png',
+                            proxy_url: 'https://media.discordapp.net/attachments/test.png',
                             size: 1000,
                             content_type: 'image/png',
                         },
@@ -740,6 +753,7 @@ describe('/match_image command', () => {
                             id: 'attachment-id-123',
                             filename: 'test.png',
                             url: 'https://cdn.discordapp.com/attachments/test.png',
+                            proxy_url: 'https://media.discordapp.net/attachments/test.png',
                             size: 1000,
                             content_type: 'image/png',
                         },
@@ -774,6 +788,7 @@ describe('/match_image command', () => {
                             id: 'attachment-id-123',
                             filename: 'test.png',
                             url: 'https://cdn.discordapp.com/attachments/test.png',
+                            proxy_url: 'https://media.discordapp.net/attachments/test.png',
                             size: 1000,
                             content_type: 'image/png',
                         },
@@ -807,6 +822,7 @@ describe('/match_image command', () => {
                             id: 'attachment-id-123',
                             filename: 'test.png',
                             url: 'https://cdn.discordapp.com/attachments/test.png',
+                            proxy_url: 'https://media.discordapp.net/attachments/test.png',
                             size: 1000,
                             content_type: 'image/png',
                         },
@@ -836,6 +852,7 @@ describe('/match_image command', () => {
                             id: 'attachment-id-123',
                             filename: 'test.png',
                             url: 'https://cdn.discordapp.com/attachments/test.png',
+                            proxy_url: 'https://media.discordapp.net/attachments/test.png',
                             size: 1000,
                             content_type: 'image/png',
                         },

@@ -410,7 +410,7 @@ export async function handleBudgetAutocomplete(
 
   // Find the focused option
   const focusedOption = subcommand.options.find(
-    (opt: { focused?: boolean }) => opt.focused
+    (opt) => opt.focused === true
   ) as { name: string; value?: string } | undefined;
 
   if (!focusedOption) {

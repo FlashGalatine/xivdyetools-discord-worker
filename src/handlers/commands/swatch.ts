@@ -602,6 +602,7 @@ function buildSwatchResponse(
   matches: Array<{ characterColor: CharacterColor; dye: any; distance: number }>,
   t: Translator
 ): Response {
+  const locale = t.getLocale();
   const typeInfo = COLOR_TYPES[colorType];
   const colorTypeName = getLocalizedColorTypeName(colorType, t);
   const row = Math.floor(characterColor.index / GRID_COLUMNS) + 1; // 1-based

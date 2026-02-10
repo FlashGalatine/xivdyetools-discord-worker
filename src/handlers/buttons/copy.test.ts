@@ -21,8 +21,8 @@ describe('copy.ts', () => {
 
             const body = (await response.json()) as InteractionResponseBody;
             expect(body.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
-            expect(body.data.content).toContain('#FF5733');
-            expect(body.data.flags).toBe(64); // Ephemeral
+            expect(body.data!.content).toContain('#FF5733');
+            expect(body.data!.flags).toBe(64); // Ephemeral
         });
 
         it('should handle hex code that already has hash prefix', async () => {
@@ -30,7 +30,7 @@ describe('copy.ts', () => {
             const response = handleCopyHex(interaction);
 
             const body = (await response.json()) as InteractionResponseBody;
-            expect(body.data.content).toContain('#AABBCC');
+            expect(body.data!.content).toContain('#AABBCC');
         });
 
         it('should handle lowercase hex codes', async () => {
@@ -38,7 +38,7 @@ describe('copy.ts', () => {
             const response = handleCopyHex(interaction);
 
             const body = (await response.json()) as InteractionResponseBody;
-            expect(body.data.content).toContain('#ABC123');
+            expect(body.data!.content).toContain('#ABC123');
         });
 
         it('should handle empty custom_id gracefully', async () => {
@@ -46,7 +46,7 @@ describe('copy.ts', () => {
             const response = handleCopyHex(interaction);
 
             const body = (await response.json()) as InteractionResponseBody;
-            expect(body.data.content).toBeDefined();
+            expect(body.data!.content).toBeDefined();
         });
 
         it('should handle missing data gracefully', async () => {
@@ -55,7 +55,7 @@ describe('copy.ts', () => {
 
             const body = (await response.json()) as InteractionResponseBody;
             // With no custom_id, the hex extracted is 'copy_hex_' replaced with '', leaving '#'
-            expect(body.data.content).toBeDefined();
+            expect(body.data!.content).toBeDefined();
         });
 
         it('should handle undefined custom_id gracefully', async () => {
@@ -63,7 +63,7 @@ describe('copy.ts', () => {
             const response = handleCopyHex(interaction);
 
             const body = (await response.json()) as InteractionResponseBody;
-            expect(body.data.content).toBeDefined();
+            expect(body.data!.content).toBeDefined();
         });
     });
 
@@ -74,9 +74,9 @@ describe('copy.ts', () => {
 
             const body = (await response.json()) as InteractionResponseBody;
             expect(body.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
-            expect(body.data.content).toContain('rgb(255, 87, 51)');
-            expect(body.data.content).toContain('255, 87, 51');
-            expect(body.data.flags).toBe(64);
+            expect(body.data!.content).toContain('rgb(255, 87, 51)');
+            expect(body.data!.content).toContain('255, 87, 51');
+            expect(body.data!.flags).toBe(64);
         });
 
         it('should handle edge case RGB values', async () => {
@@ -84,7 +84,7 @@ describe('copy.ts', () => {
             const response = handleCopyRgb(interaction);
 
             const body = (await response.json()) as InteractionResponseBody;
-            expect(body.data.content).toContain('rgb(0, 0, 0)');
+            expect(body.data!.content).toContain('rgb(0, 0, 0)');
         });
 
         it('should return error for invalid RGB format', async () => {
@@ -92,8 +92,8 @@ describe('copy.ts', () => {
             const response = handleCopyRgb(interaction);
 
             const body = (await response.json()) as InteractionResponseBody;
-            expect(body.data.content).toBe('Invalid RGB format.');
-            expect(body.data.flags).toBe(64);
+            expect(body.data!.content).toBe('Invalid RGB format.');
+            expect(body.data!.flags).toBe(64);
         });
 
         it('should return error for too many RGB parts', async () => {
@@ -101,7 +101,7 @@ describe('copy.ts', () => {
             const response = handleCopyRgb(interaction);
 
             const body = (await response.json()) as InteractionResponseBody;
-            expect(body.data.content).toBe('Invalid RGB format.');
+            expect(body.data!.content).toBe('Invalid RGB format.');
         });
 
         it('should handle missing data gracefully', async () => {
@@ -110,7 +110,7 @@ describe('copy.ts', () => {
 
             const body = (await response.json()) as InteractionResponseBody;
             // With no custom_id, split results in wrong parts count
-            expect(body.data.content).toBe('Invalid RGB format.');
+            expect(body.data!.content).toBe('Invalid RGB format.');
         });
 
         it('should handle undefined custom_id gracefully', async () => {
@@ -118,7 +118,7 @@ describe('copy.ts', () => {
             const response = handleCopyRgb(interaction);
 
             const body = (await response.json()) as InteractionResponseBody;
-            expect(body.data.content).toBe('Invalid RGB format.');
+            expect(body.data!.content).toBe('Invalid RGB format.');
         });
     });
 
@@ -129,8 +129,8 @@ describe('copy.ts', () => {
 
             const body = (await response.json()) as InteractionResponseBody;
             expect(body.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
-            expect(body.data.content).toContain('H: 11°, S: 80%, V: 100%');
-            expect(body.data.flags).toBe(64);
+            expect(body.data!.content).toContain('H: 11°, S: 80%, V: 100%');
+            expect(body.data!.flags).toBe(64);
         });
 
         it('should handle zero values', async () => {
@@ -138,7 +138,7 @@ describe('copy.ts', () => {
             const response = handleCopyHsv(interaction);
 
             const body = (await response.json()) as InteractionResponseBody;
-            expect(body.data.content).toContain('H: 0°, S: 0%, V: 0%');
+            expect(body.data!.content).toContain('H: 0°, S: 0%, V: 0%');
         });
 
         it('should return error for invalid HSV format', async () => {
@@ -146,8 +146,8 @@ describe('copy.ts', () => {
             const response = handleCopyHsv(interaction);
 
             const body = (await response.json()) as InteractionResponseBody;
-            expect(body.data.content).toBe('Invalid HSV format.');
-            expect(body.data.flags).toBe(64);
+            expect(body.data!.content).toBe('Invalid HSV format.');
+            expect(body.data!.flags).toBe(64);
         });
 
         it('should handle missing data gracefully', async () => {
@@ -156,7 +156,7 @@ describe('copy.ts', () => {
 
             const body = (await response.json()) as InteractionResponseBody;
             // With no custom_id, split results in wrong parts count
-            expect(body.data.content).toBe('Invalid HSV format.');
+            expect(body.data!.content).toBe('Invalid HSV format.');
         });
 
         it('should handle undefined custom_id gracefully', async () => {
@@ -164,7 +164,7 @@ describe('copy.ts', () => {
             const response = handleCopyHsv(interaction);
 
             const body = (await response.json()) as InteractionResponseBody;
-            expect(body.data.content).toBe('Invalid HSV format.');
+            expect(body.data!.content).toBe('Invalid HSV format.');
         });
     });
 

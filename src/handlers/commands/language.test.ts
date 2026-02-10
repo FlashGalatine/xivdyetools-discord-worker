@@ -27,9 +27,9 @@ vi.mock('../../services/i18n.js', () => ({
 }));
 
 // Mock preferences service with overridable functions
-let mockGetUserPreferences = vi.fn(() => Promise.resolve({}));
-let mockSetPreference = vi.fn(() => Promise.resolve({ success: true }));
-let mockResetPreference = vi.fn(() => Promise.resolve(true));
+let mockGetUserPreferences = vi.fn((..._args: any[]) => Promise.resolve({}));
+let mockSetPreference = vi.fn((..._args: any[]) => Promise.resolve({ success: true }));
+let mockResetPreference = vi.fn((..._args: any[]) => Promise.resolve(true));
 
 vi.mock('../../services/preferences.js', () => ({
     getUserPreferences: (...args: any[]) => mockGetUserPreferences(...args),
@@ -63,9 +63,9 @@ describe('handlers/commands/language.ts', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         // Reset mock implementations to default
-        mockGetUserPreferences = vi.fn(() => Promise.resolve({}));
-        mockSetPreference = vi.fn(() => Promise.resolve({ success: true }));
-        mockResetPreference = vi.fn(() => Promise.resolve(true));
+        mockGetUserPreferences = vi.fn((..._args: any[]) => Promise.resolve({}));
+        mockSetPreference = vi.fn((..._args: any[]) => Promise.resolve({ success: true }));
+        mockResetPreference = vi.fn((..._args: any[]) => Promise.resolve(true));
         mockGetLocaleInfo = vi.fn((locale: string) => {
             if (locale === 'en') return { code: 'en', name: 'English', nativeName: 'English', flag: '🇺🇸' };
             if (locale === 'ja') return { code: 'ja', name: 'Japanese', nativeName: '日本語', flag: '🇯🇵' };
@@ -192,7 +192,7 @@ describe('handlers/commands/language.ts', () => {
 
             it('should return error when KV save fails', async () => {
                 // Override mock to return failure (KV failure)
-                mockSetPreference = vi.fn(() => Promise.resolve({ success: false }));
+                mockSetPreference = vi.fn((..._args: any[]) => Promise.resolve({ success: false }));
 
                 const interaction = {
                     id: '123',
@@ -269,7 +269,7 @@ describe('handlers/commands/language.ts', () => {
 
             it('should show existing user preference', async () => {
                 // User has an existing preference
-                mockGetUserPreferences = vi.fn(() => Promise.resolve({ language: 'ja' }));
+                mockGetUserPreferences = vi.fn((..._args: any[]) => Promise.resolve({ language: 'ja' }));
 
                 const interaction = {
                     id: '123',
@@ -334,7 +334,7 @@ describe('handlers/commands/language.ts', () => {
 
             it('should handle unknown preference locale info (getLocaleInfo returns null for preference)', async () => {
                 // User has preference but getLocaleInfo returns null
-                mockGetUserPreferences = vi.fn(() => Promise.resolve({ language: 'unknown-locale' }));
+                mockGetUserPreferences = vi.fn((..._args: any[]) => Promise.resolve({ language: 'unknown-locale' }));
                 mockGetLocaleInfo = vi.fn(() => null);
 
                 const interaction = {
@@ -379,7 +379,7 @@ describe('handlers/commands/language.ts', () => {
 
             it('should return error when KV clear fails', async () => {
                 // Override mock to return false (KV failure)
-                mockResetPreference = vi.fn(() => Promise.resolve(false));
+                mockResetPreference = vi.fn((..._args: any[]) => Promise.resolve(false));
 
                 const interaction = {
                     id: '123',

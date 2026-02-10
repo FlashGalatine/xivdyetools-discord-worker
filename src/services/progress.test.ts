@@ -2,7 +2,7 @@
  * Tests for Progress Feedback Service
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
   ProgressTracker,
   createProgressTracker,
@@ -87,7 +87,6 @@ describe('Progress Feedback Service', () => {
       await tracker.updateStage('rendering');
 
       expect(editOriginalResponse).toHaveBeenCalledWith(
-        'botToken789',
         'app123',
         'token456',
         expect.objectContaining({

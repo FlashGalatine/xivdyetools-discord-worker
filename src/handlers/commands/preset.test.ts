@@ -202,7 +202,7 @@ describe('/preset command', () => {
             const res = await handlePresetCommand(interaction, env, ctx);
             const body = (await res.json()) as InteractionResponseBody;
 
-            expect(body.data.embeds[0].description).toBe('Preset API is disabled');
+            expect(body.data!.embeds![0].description).toBe('Preset API is disabled');
         });
     });
 
@@ -219,7 +219,7 @@ describe('/preset command', () => {
             const res = await handlePresetCommand(interaction, env, ctx);
             const body = (await res.json()) as InteractionResponseBody;
 
-            expect(body.data.content).toBe('Invalid command structure');
+            expect(body.data!.content).toBe('Invalid command structure');
         });
 
         it('returns error for unknown subcommand', async () => {
@@ -234,7 +234,7 @@ describe('/preset command', () => {
             const res = await handlePresetCommand(interaction, env, ctx);
             const body = (await res.json()) as InteractionResponseBody;
 
-            expect(body.data.content).toContain('Unknown subcommand');
+            expect(body.data!.content).toContain('Unknown subcommand');
         });
     });
 
@@ -330,7 +330,7 @@ describe('/preset command', () => {
             const res = await handlePresetCommand(interaction, env, ctx);
             const body = (await res.json()) as InteractionResponseBody;
 
-            expect(body.data.embeds[0].description).toBe('Missing input');
+            expect(body.data!.embeds![0].description).toBe('Missing input');
         });
 
         it('shows preset details', async () => {
@@ -440,7 +440,7 @@ describe('/preset command', () => {
             const res = await handlePresetCommand(interaction, env, ctx);
             const body = (await res.json()) as InteractionResponseBody;
 
-            expect(body.data.embeds[0].description).toBe('Missing input');
+            expect(body.data!.embeds![0].description).toBe('Missing input');
         });
 
         it('returns error when less than 2 dyes provided', async () => {
@@ -464,7 +464,7 @@ describe('/preset command', () => {
             const res = await handlePresetCommand(interaction, env, ctx);
             const body = (await res.json()) as InteractionResponseBody;
 
-            expect(body.data.embeds[0].description).toBe('At least 2 dyes required');
+            expect(body.data!.embeds![0].description).toBe('At least 2 dyes required');
         });
 
         it('returns error for invalid dye name', async () => {
@@ -489,7 +489,7 @@ describe('/preset command', () => {
             const res = await handlePresetCommand(interaction, env, ctx);
             const body = (await res.json()) as InteractionResponseBody;
 
-            expect(body.data.embeds[0].description).toBe('Invalid dye name');
+            expect(body.data!.embeds![0].description).toBe('Invalid dye name');
         });
 
         it('submits preset successfully', async () => {
@@ -563,7 +563,7 @@ describe('/preset command', () => {
             const res = await handlePresetCommand(interaction, env, ctx);
             const body = (await res.json()) as InteractionResponseBody;
 
-            expect(body.data.embeds[0].description).toBe('Missing input');
+            expect(body.data!.embeds![0].description).toBe('Missing input');
         });
 
         it('adds vote when not already voted', async () => {
@@ -622,7 +622,7 @@ describe('/preset command', () => {
             const res = await handlePresetCommand(interaction, env, ctx);
             const body = (await res.json()) as InteractionResponseBody;
 
-            expect(body.data.embeds[0].description).toBe('Missing input');
+            expect(body.data!.embeds![0].description).toBe('Missing input');
         });
 
         it('returns error when no updates provided', async () => {
@@ -641,7 +641,7 @@ describe('/preset command', () => {
             const res = await handlePresetCommand(interaction, env, ctx);
             const body = (await res.json()) as InteractionResponseBody;
 
-            expect(body.data.embeds[0].description).toContain('at least one field');
+            expect(body.data!.embeds![0].description).toContain('at least one field');
         });
 
         it('edits preset successfully', async () => {
@@ -1250,6 +1250,7 @@ describe('/preset command', () => {
     describe('/preset submit notifications', () => {
         it('notifies submission log channel when approved and SUBMISSION_LOG_CHANNEL_ID is set', async () => {
             mockSubmitPreset.mockResolvedValueOnce({
+                success: true,
                 preset: mockPreset,
                 moderation_status: 'approved',
             });
@@ -1289,6 +1290,7 @@ describe('/preset command', () => {
 
         it('notifies moderation channel when pending and MODERATION_CHANNEL_ID is set', async () => {
             mockSubmitPreset.mockResolvedValueOnce({
+                success: true,
                 preset: mockPreset,
                 moderation_status: 'pending',
             });
@@ -1329,7 +1331,7 @@ describe('/preset command', () => {
         it('handles PresetAPIError in submit command', async () => {
             const { PresetAPIError } = await import('../../types/preset.js');
             mockSubmitPreset.mockRejectedValueOnce(
-                new PresetAPIError('Preset name already exists', 409)
+                new PresetAPIError(409, 'Preset name already exists')
             );
 
             const interaction: DiscordInteraction = {
@@ -1531,7 +1533,7 @@ describe('/preset command', () => {
         it('handles PresetAPIError in edit command', async () => {
             const { PresetAPIError } = await import('../../types/preset.js');
             mockEditPreset.mockRejectedValueOnce(
-                new PresetAPIError('Unauthorized to edit this preset', 403)
+                new PresetAPIError(403, 'Unauthorized to edit this preset')
             );
 
             const interaction: DiscordInteraction = {

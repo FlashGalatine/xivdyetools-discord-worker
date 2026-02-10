@@ -105,7 +105,7 @@ const PROGRESS_DOTS = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '
  * Progress tracker for a single operation
  */
 export class ProgressTracker {
-  private config: Required<ProgressConfig>;
+  private config: Omit<Required<ProgressConfig>, 'logger'> & Pick<ProgressConfig, 'logger'>;
   private state: ProgressState;
   private animationFrame: number = 0;
 
@@ -186,7 +186,6 @@ export class ProgressTracker {
     };
 
     await editOriginalResponse(
-      this.config.botToken,
       this.config.applicationId,
       this.config.interactionToken,
       { embeds: [embed] }
@@ -261,9 +260,9 @@ export function buildProgressEmbed(stage: ProgressStage, elapsedMs: number): Dis
   return {
     description: `${display.emoji} ${display.message}`,
     color: 0x5865f2,
-    footer: {
-      text: elapsedMs > 0 ? `Elapsed: ${Math.round(elapsedMs / 1000)}s` : undefined,
-    },
+    ...(elapsedMs > 0 && {
+      footer: { text: `Elapsed: ${Math.round(elapsedMs / 1000)}s` },
+    }),
   };
 }
 

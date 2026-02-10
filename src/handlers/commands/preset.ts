@@ -429,7 +429,7 @@ async function processSubmitCommand(
     const response = await presetApi.submitPreset(env, submission, userId, userName);
 
     // Handle duplicate
-    if (response.duplicate) {
+    if ('duplicate' in response) {
       await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
         embeds: [
           {
@@ -448,8 +448,16 @@ async function processSubmitCommand(
       return;
     }
 
-    // Handle success
-    const preset = response.preset!;
+    // Handle error
+    if (!response.success) {
+      await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+        embeds: [errorEmbed(t.t('common.error'), response.error)],
+      });
+      return;
+    }
+
+    // Handle success — response is now PresetSubmitCreatedResponse
+    const preset = response.preset;
     const isApproved = response.moderation_status === 'approved';
 
     const embed = {
@@ -548,6 +556,13 @@ async function processVoteCommand(
       // Add vote
       response = await presetApi.voteForPreset(env, presetId, userId);
       actionMessage = t.t('preset.voteAdded');
+    }
+
+    if (!response.success) {
+      await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+        embeds: [errorEmbed(t.t('common.error'), response.error)],
+      });
+      return;
     }
 
     await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
@@ -723,7 +738,7 @@ async function processEditCommand(
     const response = await presetApi.editPreset(env, presetId, editPayload, userId, userName);
 
     // Handle duplicate dyes error
-    if (!response.success && response.error === 'duplicate_dyes' && response.duplicate) {
+    if (!response.success && 'duplicate' in response) {
       await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
         embeds: [
           {
@@ -741,8 +756,16 @@ async function processEditCommand(
       return;
     }
 
-    // Handle success
-    const updatedPreset = response.preset!;
+    // Handle other errors
+    if (!response.success) {
+      await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+        embeds: [errorEmbed(t.t('common.error'), response.error)],
+      });
+      return;
+    }
+
+    // Handle success — response is now PresetEditSuccessResponse
+    const updatedPreset = response.preset;
     const isPending = response.moderation_status === 'pending';
 
     const embed = {

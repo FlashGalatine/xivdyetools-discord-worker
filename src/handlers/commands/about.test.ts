@@ -97,8 +97,8 @@ describe('about.ts', () => {
       const data = (await response.json()) as InteractionResponseBody;
 
       expect(data.type).toBe(4); // CHANNEL_MESSAGE_WITH_SOURCE
-      expect(data.data.embeds).toBeDefined();
-      expect(data.data.embeds.length).toBe(1);
+      expect(data.data!.embeds).toBeDefined();
+      expect(data.data!.embeds!.length).toBe(1);
     });
 
     it('should include version in title', async () => {
@@ -114,7 +114,7 @@ describe('about.ts', () => {
       const response = await handleAboutCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      const embed = data.data.embeds[0];
+      const embed = data.data!.embeds![0];
       expect(embed.title).toContain('XIV Dye Tools');
       expect(embed.title).toMatch(/v\d+\.\d+\.\d+/); // Version pattern
     });
@@ -132,8 +132,8 @@ describe('about.ts', () => {
       const response = await handleAboutCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      const embed = data.data.embeds[0];
-      const commandListField = embed.fields[0];
+      const embed = data.data!.embeds![0];
+      const commandListField = embed.fields![0];
 
       // Check all category sections are present
       expect(commandListField.value).toContain('Color Tools');
@@ -157,7 +157,7 @@ describe('about.ts', () => {
       const response = await handleAboutCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      const commandListField = data.data.embeds[0].fields[0];
+      const commandListField = data.data!.embeds![0].fields![0];
 
       // Color Tools
       expect(commandListField.value).toContain('/harmony');
@@ -202,7 +202,7 @@ describe('about.ts', () => {
       const response = await handleAboutCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      const embed = data.data.embeds[0];
+      const embed = data.data!.embeds![0];
       // Should show total command count (18 commands based on COMMAND_CATEGORIES)
       expect(embed.description).toContain('total');
     });
@@ -220,15 +220,15 @@ describe('about.ts', () => {
       const response = await handleAboutCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      const linksField = data.data.embeds[0].fields.find(
+      const linksField = data.data!.embeds![0].fields!.find(
         (f: { name: string }) => f.name.includes('Links')
       );
       expect(linksField).toBeDefined();
-      expect(linksField.value).toContain('Web App');
-      expect(linksField.value).toContain('GitHub');
-      expect(linksField.value).toContain('Invite Bot');
-      expect(linksField.value).toContain('Patreon');
-      expect(linksField.value).toContain('xivdyetools.app');
+      expect(linksField!.value).toContain('Web App');
+      expect(linksField!.value).toContain('GitHub');
+      expect(linksField!.value).toContain('Invite Bot');
+      expect(linksField!.value).toContain('Patreon');
+      expect(linksField!.value).toContain('xivdyetools.app');
     });
 
     it('should include footer with powered by info', async () => {
@@ -244,10 +244,10 @@ describe('about.ts', () => {
       const response = await handleAboutCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      const embed = data.data.embeds[0];
+      const embed = data.data!.embeds![0];
       expect(embed.footer).toBeDefined();
-      expect(embed.footer.text).toContain('Powered by');
-      expect(embed.footer.text).toMatch(/v\d+\.\d+\.\d+/);
+      expect(embed.footer!.text).toContain('Powered by');
+      expect(embed.footer!.text).toMatch(/v\d+\.\d+\.\d+/);
     });
 
     it('should include timestamp', async () => {
@@ -263,9 +263,9 @@ describe('about.ts', () => {
       const response = await handleAboutCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      expect(data.data.embeds[0].timestamp).toBeDefined();
+      expect(data.data!.embeds![0].timestamp).toBeDefined();
       // Should be valid ISO timestamp
-      expect(() => new Date(data.data.embeds[0].timestamp)).not.toThrow();
+      expect(() => new Date(data.data!.embeds![0].timestamp!)).not.toThrow();
     });
 
     it('should use blurple embed color', async () => {
@@ -282,7 +282,7 @@ describe('about.ts', () => {
       const data = (await response.json()) as InteractionResponseBody;
 
       // Discord blurple is 0x5865F2
-      expect(data.data.embeds[0].color).toBe(0x5865f2);
+      expect(data.data!.embeds![0].color).toBe(0x5865f2);
     });
 
     it('should handle DM interactions with user field', async () => {
@@ -299,7 +299,7 @@ describe('about.ts', () => {
       const data = (await response.json()) as InteractionResponseBody;
 
       expect(data.type).toBe(4);
-      expect(data.data.embeds[0].title).toContain('XIV Dye Tools');
+      expect(data.data!.embeds![0].title).toContain('XIV Dye Tools');
     });
 
     it('should handle missing user ID gracefully', async () => {
@@ -317,7 +317,7 @@ describe('about.ts', () => {
 
       // Should still work, using 'unknown' as userId
       expect(data.type).toBe(4);
-      expect(data.data.embeds[0].title).toBeDefined();
+      expect(data.data!.embeds![0].title).toBeDefined();
     });
 
     it('should use locale from interaction', async () => {
@@ -355,7 +355,7 @@ describe('about.ts', () => {
       const response = await handleAboutCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      const commandListField = data.data.embeds[0].fields[0];
+      const commandListField = data.data!.embeds![0].fields![0];
 
       // Check for command descriptions
       expect(commandListField.value).toContain('Generate color harmonies');
@@ -377,7 +377,7 @@ describe('about.ts', () => {
       const response = await handleAboutCommand(interaction, mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
-      const commandListField = data.data.embeds[0].fields[0];
+      const commandListField = data.data!.embeds![0].fields![0];
 
       // Check for category emojis
       expect(commandListField.value).toMatch(/🎨.*Color Tools/);

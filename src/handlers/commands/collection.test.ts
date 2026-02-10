@@ -119,6 +119,9 @@ const ctx: ExecutionContext = {
 } as unknown as ExecutionContext;
 
 const baseInteraction: DiscordInteraction = {
+  id: 'test-interaction',
+  application_id: 'test-app-id',
+  token: 'test-token',
   type: 2,
   data: { name: 'collection', options: [] },
   locale: 'en-US',
@@ -136,14 +139,14 @@ describe('/collection command', () => {
   it('returns error when user is missing', async () => {
     const res = await handleCollectionCommand({ ...baseInteraction }, env, ctx);
     const body = (await res.json()) as InteractionResponseBody;
-    expect(body.data.embeds[0].description).toContain('user not found');
+    expect(body.data!.embeds![0].description).toContain('user not found');
   });
 
   it('returns error when subcommand missing', async () => {
     const interaction = { ...baseInteraction, member: { user: { id: 'u1', username: 't' } } };
     const res = await handleCollectionCommand(interaction, env, ctx);
     const body = (await res.json()) as InteractionResponseBody;
-    expect(body.data.embeds[0].description).toContain('subcommand');
+    expect(body.data!.embeds![0].description).toContain('subcommand');
   });
 
   it('returns error for unknown subcommand', async () => {
@@ -154,7 +157,7 @@ describe('/collection command', () => {
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
     const body = (await res.json()) as InteractionResponseBody;
-    expect(body.data.embeds[0].description).toContain('Unknown subcommand');
+    expect(body.data!.embeds![0].description).toContain('Unknown subcommand');
   });
 
   it('creates a collection successfully', async () => {
@@ -166,7 +169,7 @@ describe('/collection command', () => {
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
     const body = (await res.json()) as InteractionResponseBody;
-    expect(body.data.embeds[0].description).toContain('created MyCol');
+    expect(body.data!.embeds![0].description).toContain('created MyCol');
   });
 
   it('adds dye and handles alreadyExists', async () => {
@@ -183,7 +186,7 @@ describe('/collection command', () => {
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
     const body = (await res.json()) as InteractionResponseBody;
-    expect(body.data.embeds[0].description).toContain('is already in **MyCol**');
+    expect(body.data!.embeds![0].description).toContain('is already in **MyCol**');
   });
 
   it('shows empty collection info', async () => {
@@ -195,7 +198,7 @@ describe('/collection command', () => {
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
     const body = (await res.json()) as InteractionResponseBody;
-    expect(body.data.embeds[0].description).toContain('collection empty');
+    expect(body.data!.embeds![0].description).toContain('collection empty');
   });
 
   it('lists empty collections', async () => {
@@ -207,7 +210,7 @@ describe('/collection command', () => {
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
     const body = (await res.json()) as InteractionResponseBody;
-    expect(body.data.embeds[0].description).toContain('no collections');
+    expect(body.data!.embeds![0].description).toContain('no collections');
   });
 
   it('renames collection not found', async () => {
@@ -222,7 +225,7 @@ describe('/collection command', () => {
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
     const body = (await res.json()) as InteractionResponseBody;
-    expect(body.data.embeds[0].description).toContain('collection not found');
+    expect(body.data!.embeds![0].description).toContain('collection not found');
   });
 
   // Additional create tests
@@ -235,7 +238,7 @@ describe('/collection command', () => {
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
     const body = (await res.json()) as InteractionResponseBody;
-    expect(body.data.embeds[0].description).toContain('name too long');
+    expect(body.data!.embeds![0].description).toContain('name too long');
   });
 
   it('handles create with alreadyExists error', async () => {
@@ -247,7 +250,7 @@ describe('/collection command', () => {
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
     const body = (await res.json()) as InteractionResponseBody;
-    expect(body.data.embeds[0].description).toContain('collection exists');
+    expect(body.data!.embeds![0].description).toContain('collection exists');
   });
 
   it('handles create with limitReached error', async () => {
@@ -259,7 +262,7 @@ describe('/collection command', () => {
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
     const body = (await res.json()) as InteractionResponseBody;
-    expect(body.data.embeds[0].description).toContain('collection limit');
+    expect(body.data!.embeds![0].description).toContain('collection limit');
   });
 
   it('handles create with generic failure', async () => {
@@ -271,7 +274,7 @@ describe('/collection command', () => {
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
     const body = (await res.json()) as InteractionResponseBody;
-    expect(body.data.embeds[0].description).toContain('failed to save');
+    expect(body.data!.embeds![0].description).toContain('failed to save');
   });
 
   it('handles create with missing name', async () => {
@@ -282,7 +285,7 @@ describe('/collection command', () => {
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
     const body = (await res.json()) as InteractionResponseBody;
-    expect(body.data.embeds[0].description).toContain('missing name');
+    expect(body.data!.embeds![0].description).toContain('missing name');
   });
 
   it('handles create with description', async () => {
@@ -294,8 +297,8 @@ describe('/collection command', () => {
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
     const body = (await res.json()) as InteractionResponseBody;
-    expect(body.data.embeds[0].description).toContain('created MyCol');
-    expect(body.data.embeds[0].description).toContain('My awesome collection');
+    expect(body.data!.embeds![0].description).toContain('created MyCol');
+    expect(body.data!.embeds![0].description).toContain('My awesome collection');
   });
 
   // Delete tests
@@ -307,7 +310,7 @@ describe('/collection command', () => {
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
     const body = (await res.json()) as InteractionResponseBody;
-    expect(body.data.embeds[0].description).toContain('missing name');
+    expect(body.data!.embeds![0].description).toContain('missing name');
   });
 
   it('handles delete success', async () => {
@@ -319,7 +322,7 @@ describe('/collection command', () => {
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
     const body = (await res.json()) as InteractionResponseBody;
-    expect(body.data.embeds[0].title).toContain('Success');
+    expect(body.data!.embeds![0].title).toContain('Success');
   });
 
   it('handles delete not found', async () => {
@@ -331,7 +334,7 @@ describe('/collection command', () => {
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
     const body = (await res.json()) as InteractionResponseBody;
-    expect(body.data.embeds[0].description).toContain('collection not found');
+    expect(body.data!.embeds![0].description).toContain('collection not found');
   });
 
   // Add tests
@@ -343,7 +346,7 @@ describe('/collection command', () => {
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
     const body = (await res.json()) as InteractionResponseBody;
-    expect(body.data.embeds[0].description).toContain('missing input');
+    expect(body.data!.embeds![0].description).toContain('missing input');
   });
 
   it('handles add dye not found', async () => {
@@ -357,7 +360,7 @@ describe('/collection command', () => {
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
     const body = (await res.json()) as InteractionResponseBody;
-    expect(body.data.embeds[0].description).toContain('dye not found');
+    expect(body.data!.embeds![0].description).toContain('dye not found');
   });
 
   it('handles add with hex color', async () => {
@@ -372,7 +375,7 @@ describe('/collection command', () => {
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
     const body = (await res.json()) as InteractionResponseBody;
-    expect(body.data.embeds[0].description).toContain('added to MyCol');
+    expect(body.data!.embeds![0].description).toContain('added to MyCol');
   });
 
   it('handles add with hex color without hash', async () => {
@@ -387,7 +390,7 @@ describe('/collection command', () => {
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
     const body = (await res.json()) as InteractionResponseBody;
-    expect(body.data.embeds[0].description).toContain('added to MyCol');
+    expect(body.data!.embeds![0].description).toContain('added to MyCol');
   });
 
   it('handles add success', async () => {
@@ -402,7 +405,7 @@ describe('/collection command', () => {
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
     const body = (await res.json()) as InteractionResponseBody;
-    expect(body.data.embeds[0].description).toContain('added to MyCol');
+    expect(body.data!.embeds![0].description).toContain('added to MyCol');
   });
 
   it('handles add notFound error', async () => {
@@ -417,7 +420,7 @@ describe('/collection command', () => {
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
     const body = (await res.json()) as InteractionResponseBody;
-    expect(body.data.embeds[0].description).toContain('collection not found');
+    expect(body.data!.embeds![0].description).toContain('collection not found');
   });
 
   it('handles add limitReached error', async () => {
@@ -432,7 +435,7 @@ describe('/collection command', () => {
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
     const body = (await res.json()) as InteractionResponseBody;
-    expect(body.data.embeds[0].description).toContain('dye limit');
+    expect(body.data!.embeds![0].description).toContain('dye limit');
   });
 
   it('handles add generic failure', async () => {
@@ -447,7 +450,7 @@ describe('/collection command', () => {
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
     const body = (await res.json()) as InteractionResponseBody;
-    expect(body.data.embeds[0].description).toContain('failed to save');
+    expect(body.data!.embeds![0].description).toContain('failed to save');
   });
 
   // Remove tests
@@ -459,7 +462,7 @@ describe('/collection command', () => {
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
     const body = (await res.json()) as InteractionResponseBody;
-    expect(body.data.embeds[0].description).toContain('missing input');
+    expect(body.data!.embeds![0].description).toContain('missing input');
   });
 
   it('handles remove dye not found', async () => {
@@ -473,7 +476,7 @@ describe('/collection command', () => {
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
     const body = (await res.json()) as InteractionResponseBody;
-    expect(body.data.embeds[0].description).toContain('dye not found');
+    expect(body.data!.embeds![0].description).toContain('dye not found');
   });
 
   it('handles remove success', async () => {
@@ -488,7 +491,7 @@ describe('/collection command', () => {
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
     const body = (await res.json()) as InteractionResponseBody;
-    expect(body.data.embeds[0].description).toContain('removed from MyCol');
+    expect(body.data!.embeds![0].description).toContain('removed from MyCol');
   });
 
   it('handles remove not in collection', async () => {
@@ -503,7 +506,7 @@ describe('/collection command', () => {
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
     const body = (await res.json()) as InteractionResponseBody;
-    expect(body.data.embeds[0].description).toContain('is not in **MyCol**');
+    expect(body.data!.embeds![0].description).toContain('is not in **MyCol**');
   });
 
   // Show tests
@@ -515,7 +518,7 @@ describe('/collection command', () => {
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
     const body = (await res.json()) as InteractionResponseBody;
-    expect(body.data.embeds[0].description).toContain('missing name');
+    expect(body.data!.embeds![0].description).toContain('missing name');
   });
 
   it('handles show not found', async () => {
@@ -527,7 +530,7 @@ describe('/collection command', () => {
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
     const body = (await res.json()) as InteractionResponseBody;
-    expect(body.data.embeds[0].description).toContain('collection not found');
+    expect(body.data!.embeds![0].description).toContain('collection not found');
   });
 
   it('handles show with dyes', async () => {
@@ -544,9 +547,9 @@ describe('/collection command', () => {
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
     const body = (await res.json()) as InteractionResponseBody;
-    expect(body.data.embeds[0].title).toContain('MyCol');
-    expect(body.data.embeds[0].description).toContain('Snow White-loc');
-    expect(body.data.embeds[0].description).toContain('A cool collection');
+    expect(body.data!.embeds![0].title).toContain('MyCol');
+    expect(body.data!.embeds![0].description).toContain('Snow White-loc');
+    expect(body.data!.embeds![0].description).toContain('A cool collection');
   });
 
   it('handles show empty without description', async () => {
@@ -562,7 +565,7 @@ describe('/collection command', () => {
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
     const body = (await res.json()) as InteractionResponseBody;
-    expect(body.data.embeds[0].description).toContain('collection empty');
+    expect(body.data!.embeds![0].description).toContain('collection empty');
   });
 
   // List tests
@@ -579,12 +582,12 @@ describe('/collection command', () => {
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
     const body = (await res.json()) as InteractionResponseBody;
-    expect(body.data.embeds[0].title).toContain('Collections');
-    expect(body.data.embeds[0].description).toContain('Col1');
-    expect(body.data.embeds[0].description).toContain('Col2');
-    expect(body.data.embeds[0].description).toContain('Col3');
-    expect(body.data.embeds[0].description).toContain('1 Dye'); // singular
-    expect(body.data.embeds[0].description).toContain('2 dyes'); // plural
+    expect(body.data!.embeds![0].title).toContain('Collections');
+    expect(body.data!.embeds![0].description).toContain('Col1');
+    expect(body.data!.embeds![0].description).toContain('Col2');
+    expect(body.data!.embeds![0].description).toContain('Col3');
+    expect(body.data!.embeds![0].description).toContain('1 Dye'); // singular
+    expect(body.data!.embeds![0].description).toContain('2 dyes'); // plural
   });
 
   // Rename tests
@@ -596,7 +599,7 @@ describe('/collection command', () => {
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
     const body = (await res.json()) as InteractionResponseBody;
-    expect(body.data.embeds[0].description).toContain('missing input');
+    expect(body.data!.embeds![0].description).toContain('missing input');
   });
 
   it('handles rename success', async () => {
@@ -611,8 +614,8 @@ describe('/collection command', () => {
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
     const body = (await res.json()) as InteractionResponseBody;
-    expect(body.data.embeds[0].description).toContain('OldName');
-    expect(body.data.embeds[0].description).toContain('NewName');
+    expect(body.data!.embeds![0].description).toContain('OldName');
+    expect(body.data!.embeds![0].description).toContain('NewName');
   });
 
   it('handles rename nameTooLong', async () => {
@@ -627,7 +630,7 @@ describe('/collection command', () => {
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
     const body = (await res.json()) as InteractionResponseBody;
-    expect(body.data.embeds[0].description).toContain('name too long');
+    expect(body.data!.embeds![0].description).toContain('name too long');
   });
 
   it('handles rename alreadyExists', async () => {
@@ -642,7 +645,7 @@ describe('/collection command', () => {
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
     const body = (await res.json()) as InteractionResponseBody;
-    expect(body.data.embeds[0].description).toContain('collection exists');
+    expect(body.data!.embeds![0].description).toContain('collection exists');
   });
 
   it('handles rename generic failure', async () => {
@@ -657,6 +660,6 @@ describe('/collection command', () => {
     };
     const res = await handleCollectionCommand(interaction, env, ctx);
     const body = (await res.json()) as InteractionResponseBody;
-    expect(body.data.embeds[0].description).toContain('failed to save');
+    expect(body.data!.embeds![0].description).toContain('failed to save');
   });
 });

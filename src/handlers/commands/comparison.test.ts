@@ -176,9 +176,9 @@ describe('comparison.ts', () => {
       const data = (await response.json()) as InteractionResponseBody;
 
       expect(data.type).toBe(4);
-      expect(data.data.embeds[0].title).toContain('Error');
-      expect(data.data.embeds[0].description).toContain('Please provide');
-      expect(data.data.flags).toBe(64);
+      expect(data.data!.embeds![0].title).toContain('Error');
+      expect(data.data!.embeds![0].description).toContain('Please provide');
+      expect(data.data!.flags).toBe(64);
     });
 
     it('should return error when no dye1 provided', async () => {
@@ -198,7 +198,7 @@ describe('comparison.ts', () => {
       const data = (await response.json()) as InteractionResponseBody;
 
       expect(data.type).toBe(4);
-      expect(data.data.flags).toBe(64);
+      expect(data.data!.flags).toBe(64);
     });
 
     it('should return error for invalid color input', async () => {
@@ -221,8 +221,8 @@ describe('comparison.ts', () => {
       const data = (await response.json()) as InteractionResponseBody;
 
       expect(data.type).toBe(4);
-      expect(data.data.embeds[0].description).toContain('notfound');
-      expect(data.data.flags).toBe(64);
+      expect(data.data!.embeds![0].description).toContain('notfound');
+      expect(data.data!.flags).toBe(64);
     });
 
     it('should return error for multiple invalid inputs', async () => {
@@ -245,8 +245,8 @@ describe('comparison.ts', () => {
       const data = (await response.json()) as InteractionResponseBody;
 
       expect(data.type).toBe(4);
-      expect(data.data.embeds[0].description).toContain('notfound1');
-      expect(data.data.embeds[0].description).toContain('notfound2');
+      expect(data.data!.embeds![0].description).toContain('notfound1');
+      expect(data.data!.embeds![0].description).toContain('notfound2');
     });
   });
 

@@ -1,6 +1,6 @@
 /**
  * Shared test utilities for xivdyetools-discord-worker tests
- * 
+ *
  * Provides consistent mock factories for Env, ExecutionContext, and common test data.
  */
 
@@ -90,6 +90,7 @@ export function createMockDye(overrides: Partial<Dye> = {}): Dye {
 
   return {
     itemID,
+    stainID: overrides.stainID ?? id,
     id,
     name: `Test Dye ${id}`,
     hex: '#888888',
