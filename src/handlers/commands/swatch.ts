@@ -57,10 +57,10 @@ import type { Env, DiscordInteraction } from '../../types/env.js';
 /** Grid columns for FFXIV character color grids */
 const GRID_COLUMNS = 8;
 
-/** Maximum index for standard color arrays (192 colors = 24 rows Ã— 8 cols) */
+/** Maximum index for standard color arrays (192 colors = 24 rows × 8 cols) */
 const STANDARD_MAX_INDEX = 191;
 
-/** Maximum index for lip color arrays (96 colors = 12 rows Ã— 8 cols) */
+/** Maximum index for lip color arrays (96 colors = 12 rows × 8 cols) */
 const LIP_MAX_INDEX = 95;
 
 /**
@@ -81,20 +81,20 @@ type ColorType =
  * Color type metadata for validation
  */
 const COLOR_TYPES: Record<ColorType, { emoji: string; maxIndex: number; needsClan: boolean }> = {
-  skin: { emoji: 'ðŸ‘¤', maxIndex: STANDARD_MAX_INDEX, needsClan: true },
-  hair: { emoji: 'ðŸ’‡', maxIndex: STANDARD_MAX_INDEX, needsClan: true },
-  eye: { emoji: 'ðŸ‘ï¸', maxIndex: STANDARD_MAX_INDEX, needsClan: false },
-  highlight: { emoji: 'âœ¨', maxIndex: STANDARD_MAX_INDEX, needsClan: false },
-  lip_dark: { emoji: 'ðŸ’‹', maxIndex: LIP_MAX_INDEX, needsClan: false },
-  lip_light: { emoji: 'ðŸ’‹', maxIndex: LIP_MAX_INDEX, needsClan: false },
-  tattoo: { emoji: 'ðŸŽ­', maxIndex: STANDARD_MAX_INDEX, needsClan: false },
-  facepaint_dark: { emoji: 'ðŸŽ¨', maxIndex: LIP_MAX_INDEX, needsClan: false },
-  facepaint_light: { emoji: 'ðŸŽ¨', maxIndex: LIP_MAX_INDEX, needsClan: false },
+  skin: { emoji: '👤', maxIndex: STANDARD_MAX_INDEX, needsClan: true },
+  hair: { emoji: '💇', maxIndex: STANDARD_MAX_INDEX, needsClan: true },
+  eye: { emoji: '👁️', maxIndex: STANDARD_MAX_INDEX, needsClan: false },
+  highlight: { emoji: '✨', maxIndex: STANDARD_MAX_INDEX, needsClan: false },
+  lip_dark: { emoji: '💋', maxIndex: LIP_MAX_INDEX, needsClan: false },
+  lip_light: { emoji: '💋', maxIndex: LIP_MAX_INDEX, needsClan: false },
+  tattoo: { emoji: '🎭', maxIndex: STANDARD_MAX_INDEX, needsClan: false },
+  facepaint_dark: { emoji: '🎨', maxIndex: LIP_MAX_INDEX, needsClan: false },
+  facepaint_light: { emoji: '🎨', maxIndex: LIP_MAX_INDEX, needsClan: false },
 };
 
 /**
  * Maps ColorType code values to locale key paths
- * (handles mismatches: eyeâ†’eyes, lip_darkâ†’lips_dark, lip_lightâ†’lips_light)
+ * (handles mismatches: eye→eyes, lip_dark→lips_dark, lip_light→lips_light)
  */
 const COLOR_TYPE_LOCALE_KEYS: Record<ColorType, string> = {
   skin: 'swatch.colorTypes.skin',
@@ -616,7 +616,7 @@ function buildSwatchResponse(
     const emojiPrefix = emoji ? `${emoji} ` : '';
     const localizedName = getLocalizedDyeName(dye.itemID, dye.name, locale);
 
-    return `**${i + 1}.** ${emojiPrefix}**${localizedName}** â€¢ \`${dye.hex.toUpperCase()}\` â€¢ ${quality.emoji} ${quality.label} (Î” ${distance.toFixed(1)})`;
+    return `**${i + 1}.** ${emojiPrefix}**${localizedName}** • \`${dye.hex.toUpperCase()}\` • ${quality.emoji} ${quality.label} (Δ ${distance.toFixed(1)})`;
   }).join('\n');
 
   // Build description
@@ -629,7 +629,7 @@ function buildSwatchResponse(
   // Add clan/gender for race-specific colors
   if (typeInfo.needsClan && clan && gender) {
     const genderDisplay = gender === 'Male' ? t.t('swatch.genders.male') : t.t('swatch.genders.female');
-    description.push(`${t.t('swatch.clan')}: **${clan}** â€¢ ${t.t('swatch.gender')}: **${genderDisplay}**`);
+    description.push(`${t.t('swatch.clan')}: **${clan}** • ${t.t('swatch.gender')}: **${genderDisplay}**`);
   }
 
   // Add matching method (localized)
@@ -651,7 +651,7 @@ function buildSwatchResponse(
   return messageResponse({
     embeds: [
       {
-        title: `ðŸŽ¨ ${t.t('swatch.title')}`,
+        title: `🎨 ${t.t('swatch.title')}`,
         description: description.join('\n'),
         color: hexToDiscordColor(characterColor.hex),
         footer: {
@@ -666,9 +666,9 @@ function buildSwatchResponse(
  * Gets match quality emoji and label based on color distance
  */
 function getMatchQuality(distance: number, t: Translator): { emoji: string; label: string } {
-  if (distance === 0) return { emoji: 'ðŸŽ¯', label: t.t('quality.perfect') };
-  if (distance < 5) return { emoji: 'âœ¨', label: t.t('quality.excellent') };
-  if (distance < 15) return { emoji: 'ðŸ‘', label: t.t('quality.good') };
-  if (distance < 30) return { emoji: 'âš ï¸', label: t.t('quality.fair') };
-  return { emoji: 'ðŸ”', label: t.t('quality.approximate') };
+  if (distance === 0) return { emoji: '🎯', label: t.t('quality.perfect') };
+  if (distance < 5) return { emoji: '✨', label: t.t('quality.excellent') };
+  if (distance < 15) return { emoji: '👍', label: t.t('quality.good') };
+  if (distance < 30) return { emoji: '⚠️', label: t.t('quality.fair') };
+  return { emoji: '🔍', label: t.t('quality.approximate') };
 }

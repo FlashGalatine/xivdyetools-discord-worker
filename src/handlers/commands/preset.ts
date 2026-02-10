@@ -175,15 +175,15 @@ async function processListCommand(
       : t.t('preset.title');
 
     const presetLines = response.presets.map((preset, index) => {
-      const catIcon = CATEGORY_DISPLAY[preset.category_id]?.icon || 'ðŸŽ¨';
+      const catIcon = CATEGORY_DISPLAY[preset.category_id]?.icon || '🎨';
       const author = preset.author_name ? ` by ${preset.author_name}` : '';
-      return `**${index + 1}.** ${catIcon} ${preset.name} (${preset.vote_count}â˜…)${author}`;
+      return `**${index + 1}.** ${catIcon} ${preset.name} (${preset.vote_count}★)${author}`;
     });
 
     const description = [
       presetLines.join('\n'),
       '',
-      `ðŸ“Š Showing ${response.presets.length} of ${response.total} presets`,
+      `📊 Showing ${response.presets.length} of ${response.total} presets`,
       '',
       t.t('preset.useShowTip'),
     ].join('\n');
@@ -433,13 +433,13 @@ async function processSubmitCommand(
       await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
         embeds: [
           {
-            title: `âš ï¸ ${t.t('preset.duplicateExists')}`,
+            title: `⚠️ ${t.t('preset.duplicateExists')}`,
             description: [
               `A preset with the same dyes already exists:`,
               `**"${response.duplicate.name}"** by ${response.duplicate.author_name || 'Official'}`,
-              `(${response.duplicate.vote_count}â˜…)`,
+              `(${response.duplicate.vote_count}★)`,
               '',
-              response.vote_added ? `âœ… ${t.t('preset.duplicateVoted')}` : '',
+              response.vote_added ? `✅ ${t.t('preset.duplicateVoted')}` : '',
             ].join('\n'),
             color: 0xf5a623,
           },
@@ -462,8 +462,8 @@ async function processSubmitCommand(
 
     const embed = {
       title: isApproved
-        ? `âœ… ${t.t('preset.submitted')}`
-        : `â³ ${t.t('preset.submitted')}`,
+        ? `✅ ${t.t('preset.submitted')}`
+        : `⏳ ${t.t('preset.submitted')}`,
       description: isApproved
         ? t.t('preset.submittedApproved')
         : t.t('preset.submittedPending'),
@@ -742,7 +742,7 @@ async function processEditCommand(
       await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
         embeds: [
           {
-            title: 'âš ï¸ Duplicate Dye Combination',
+            title: '⚠️ Duplicate Dye Combination',
             description: [
               'This dye combination already exists in another preset:',
               `**"${response.duplicate.name}"** by ${response.duplicate.author_name || 'Unknown'}`,
@@ -769,7 +769,7 @@ async function processEditCommand(
     const isPending = response.moderation_status === 'pending';
 
     const embed = {
-      title: isPending ? 'â³ Preset Updated - Pending Review' : 'âœ… Preset Updated',
+      title: isPending ? '⏳ Preset Updated - Pending Review' : '✅ Preset Updated',
       description: isPending
         ? 'Your changes have been submitted for review due to content moderation.'
         : 'Your changes have been applied.',
@@ -851,7 +851,7 @@ async function sendPresetEmbed(
   await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
     embeds: [
       {
-        title: `${categoryDisplay?.icon || 'ðŸŽ¨'} ${preset.name}`,
+        title: `${categoryDisplay?.icon || '🎨'} ${preset.name}`,
         description: [
           preset.description,
           '',
@@ -864,7 +864,7 @@ async function sendPresetEmbed(
         image: { url: 'attachment://preset.png' },
         fields: [
           { name: t.t('preset.author'), value: author, inline: true },
-          { name: t.t('preset.votes'), value: `${preset.vote_count}â˜…`, inline: true },
+          { name: t.t('preset.votes'), value: `${preset.vote_count}★`, inline: true },
         ],
         footer: { text: t.t('common.footer') },
       },
@@ -935,7 +935,7 @@ async function notifyModerationChannel(
     await sendMessage(env.DISCORD_TOKEN, env.MODERATION_CHANNEL_ID, {
       embeds: [
         {
-          title: `ðŸŸ¡ ${adminT.t('webhook.newPresetPending')}`,
+          title: `🟡 ${adminT.t('webhook.newPresetPending')}`,
           description: [
             `**Name:** ${preset.name}`,
             `**Description:** ${preset.description}`,
@@ -957,14 +957,14 @@ async function notifyModerationChannel(
               style: 3, // Success (green)
               label: adminT.t('webhook.buttons.approve'),
               custom_id: `preset_approve_${preset.id}`,
-              emoji: { name: 'âœ…' },
+              emoji: { name: '✅' },
             },
             {
               type: 2, // Button
               style: 4, // Danger (red)
               label: adminT.t('webhook.buttons.reject'),
               custom_id: `preset_reject_${preset.id}`,
-              emoji: { name: 'âŒ' },
+              emoji: { name: '❌' },
             },
           ],
         },
@@ -995,13 +995,13 @@ async function notifyEditModerationChannel(
   // Build a diff summary
   const changes: string[] = [];
   if (updatedPreset.name !== originalPreset.name) {
-    changes.push(`**Name:** "${originalPreset.name}" â†’ "${updatedPreset.name}"`);
+    changes.push(`**Name:** "${originalPreset.name}" → "${updatedPreset.name}"`);
   }
   if (updatedPreset.description !== originalPreset.description) {
     changes.push(`**Description:** Changed`);
   }
   if (JSON.stringify(updatedPreset.dyes) !== JSON.stringify(originalPreset.dyes)) {
-    changes.push(`**${adminT.t('webhook.fields.dyes')}:** ${originalPreset.dyes.length} â†’ ${updatedPreset.dyes.length} colors`);
+    changes.push(`**${adminT.t('webhook.fields.dyes')}:** ${originalPreset.dyes.length} → ${updatedPreset.dyes.length} colors`);
   }
   if (JSON.stringify(updatedPreset.tags) !== JSON.stringify(originalPreset.tags)) {
     changes.push(`**${adminT.t('webhook.fields.tags')}:** Updated`);
@@ -1011,7 +1011,7 @@ async function notifyEditModerationChannel(
     await sendMessage(env.DISCORD_TOKEN, env.MODERATION_CHANNEL_ID, {
       embeds: [
         {
-          title: `âœï¸ ${adminT.t('webhook.editPending')}`,
+          title: `✏️ ${adminT.t('webhook.editPending')}`,
           description: [
             `**Preset:** ${updatedPreset.name}`,
             `**${adminT.t('webhook.fields.author')}:** ${updatedPreset.author_name} (<@${updatedPreset.author_discord_id}>)`,
@@ -1036,21 +1036,21 @@ async function notifyEditModerationChannel(
               style: 3, // Success (green)
               label: adminT.t('webhook.buttons.approve'),
               custom_id: `preset_approve_${updatedPreset.id}`,
-              emoji: { name: 'âœ…' },
+              emoji: { name: '✅' },
             },
             {
               type: 2, // Button
               style: 4, // Danger (red)
               label: adminT.t('webhook.buttons.reject'),
               custom_id: `preset_reject_${updatedPreset.id}`,
-              emoji: { name: 'âŒ' },
+              emoji: { name: '❌' },
             },
             {
               type: 2, // Button
               style: 4, // Danger (red)
               label: adminT.t('webhook.buttons.revert'),
               custom_id: `preset_revert_${updatedPreset.id}`,
-              emoji: { name: 'â†©ï¸' },
+              emoji: { name: '↩️' },
             },
           ],
         },
