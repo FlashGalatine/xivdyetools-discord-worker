@@ -1,3 +1,5 @@
+# NOTICE! This repo has been DEPRECATED! For the latest updates to the XIV Dye Tools app, see the mono-repo here: https://github.com/FlashGalatine/xivdyetools
+
 # XIV Dye Tools Discord Worker
 
 **v4.0.0** | Discord bot for FFXIV dye color exploration, running on Cloudflare Workers using HTTP Interactions.
